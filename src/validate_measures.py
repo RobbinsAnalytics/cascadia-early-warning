@@ -38,6 +38,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 CONF = REPO / "data" / "conformed"
 STAGING = REPO / "data" / "raw" / "staging" / "event"
 COUNTS = REPO / "data" / "raw" / "counts"
+DOCS = REPO / "docs"
 LOCAL = REPO / "governance" / "exclusion-list.local.txt"
 CONFIG = REPO / "config" / "model.json"
 WINDOW_START, WINDOW_END = "20160101", "20260831"
@@ -435,6 +436,7 @@ def main() -> int:
         return report(checked, failures)
     queue = [r for r in read_csv(CONF / "review_queue.csv") if r["product_code"]]
     work = read_csv(CONF / "review_workload.csv")
+    q2 = {}
     for w in work:
         code, use = w["product_code"], w["model_in_use"]
         checked += 1
@@ -452,15 +454,61 @@ def main() -> int:
                                                    and r["point"] != "" and r["lower80"] != ""
                                                    and elig.get((r["product_code"], r["target"])) is not None])]
                 if c == code and mdl == use and h == 1 and per in ("locked", "recent")]
-        eps = golden_episodes(rows) if enabled else []
+        ungated = golden_episodes(rows)
+        eps = ungated if enabled else []
         pub = [(q["episode_start"], q["episode_end"], int(q["months_in_episode"])) for q in queue if q["product_code"] == code]
         if sorted(eps) != sorted(pub):
             fail("M-05 %s: published episodes %s, re-derived %s" % (code, pub, eps))
         if int(w["evaluated_months"]) != len(rows) or int(w["episodes"]) != len(eps):
             fail("M-05 %s: workload evaluated/episodes %s/%s, re-derived %d/%d" % (code, w["evaluated_months"], w["episodes"], len(rows), len(eps)))
+        q2[code] = {"enabled": enabled, "months": len(rows), "ungated": len(ungated), "gated": len(eps),
+                    "flagged": sorted(r["target"] for r in rows if r["actual"] > r["upper80"] and r["actual"] - r["point"] >= 5)}
     print("M-05: %d codes compared, %d published episodes" % (len(work), len(queue)))
 
+    # -- the page's own figures ------------------------------------------------------
+    # Some figures are computed by the page build from the tables and written to no table: the
+    # queue with and without its coverage gate, and the flagged months chart 4 draws. The page's
+    # data block is what publishes them, so that is what they are compared against.
+    n_page = 0
+    for page in sorted(DOCS.glob("*.html")):
+        if "template" in page.name:
+            continue
+        data = page_data(page)
+        if data is None:
+            fail("page %s: no cascadia-data block to compare" % page.name)
+            continue
+        facts = data.get("facts", {})
+        want = {"gatedEpisodes": sum(v["gated"] for v in q2.values()), "ungatedEpisodes": sum(v["ungated"] for v in q2.values()),
+                "enabledMonths": sum(v["months"] for v in q2.values() if v["enabled"]),
+                "evaluatedMonths": sum(v["months"] for v in q2.values())}
+        got = facts.get("queue")
+        checked += 1
+        if not got:
+            fail("page %s: the data block carries no queue figures" % page.name)
+        else:
+            for k, v in want.items():
+                if got.get(k) != v:
+                    fail("page %s queue %s: published %s, re-derived %s" % (page.name, k, got.get(k), v))
+            for code, v in q2.items():
+                pc = got.get("perCode", {}).get(code, {})
+                if (pc.get("ungated"), pc.get("flagged")) != (v["ungated"], len(v["flagged"])):
+                    fail("page %s queue %s: published ungated/flagged %s/%s, re-derived %d/%d"
+                         % (page.name, code, pc.get("ungated"), pc.get("flagged"), v["ungated"], len(v["flagged"])))
+        for lane in (data.get("c4") or {}).get("lanes", []):
+            checked += 1
+            if sorted(lane["flagged"]) != q2.get(lane["code"], {}).get("flagged"):
+                fail("page %s chart 4 %s: draws flagged months %s, re-derived %s" % (page.name, lane["code"], lane["flagged"], q2.get(lane["code"], {}).get("flagged")))
+        n_page += 1
+    if not n_page:
+        fail("no built page under docs/ to compare")
+    print("page: %d page(s) compared (queue with and without the gate, chart 4's flagged months)" % n_page)
+
     return report(checked, failures)
+
+
+def page_data(path: pathlib.Path):
+    m = re.search(r'<script id="cascadia-data" type="application/json">(.*?)</script>', path.read_text(encoding="utf-8"), re.S)
+    return json.loads(m.group(1)) if m else None
 
 
 def report(checked: int, failures: list[str]) -> int:

@@ -41,6 +41,7 @@ import numpy as np
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from forecast import add_months, months_between  # noqa: E402
+from review import EVALUATED, flagged as rule_flagged, golden_episodes as rule_episodes  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -241,6 +242,36 @@ def what_is_counted(d, cf: dict, rf: dict) -> str:
     return s
 
 
+def period_span(d, name: str) -> str:
+    a, b = d["cfg"]["periods"][name]["targets"]
+    return "%s to %s" % (a, b)
+
+
+def queue_diagnostic(d) -> dict:
+    """The review rule with and without its coverage gate, by review.py's own flagged() and
+    golden_episodes() over forecast_scored.csv. The gated count must equal the published queue
+    (the build fails otherwise); the ungated count is a diagnostic, computed here, written to no
+    table, and re-derived by src/validate_measures.py from the page's data block."""
+    per = {}
+    for code in d["forecast_codes"]:
+        use = d["in_use"][code]
+        rows = sorted(({"target": r["target"], "actual": float(r["actual"]), "point": float(r["point"]), "upper80": float(r["upper80"])}
+                       for r in d["scored"] if r["product_code"] == code and r["model"] == use and r["horizon"] == "1"
+                       and r["period"] in EVALUATED), key=lambda r: r["target"])
+        w = next(x for x in d["work"] if x["product_code"] == code)
+        per[code] = {"months": len(rows), "flagged": sum(1 for r in rows if rule_flagged(r)), "ungated": len(rule_episodes(rows)),
+                     "enabled": w["rule_enabled"] == "true"}
+    gated = sum(p["ungated"] for p in per.values() if p["enabled"])
+    if gated != len(d["queue"]):
+        raise SystemExit("the rule re-run here opens %d episodes in the enabled codes; the published queue holds %d" % (gated, len(d["queue"])))
+    return {"gatedEpisodes": gated, "ungatedEpisodes": sum(p["ungated"] for p in per.values()),
+            "enabledMonths": sum(p["months"] for p in per.values() if p["enabled"]),
+            "evaluatedMonths": sum(p["months"] for p in per.values()),
+            "enabledCodes": sum(1 for p in per.values() if p["enabled"]),
+            "perCode": {c: {"ungated": p["ungated"], "flagged": p["flagged"], "months": p["months"], "enabled": p["enabled"]}
+                        for c, p in per.items()}}
+
+
 def model_label(m: str) -> str:
     return {"baseline_a": "trailing three-month mean", "baseline_b": "same month last year",
             "candidate": "ETS candidate"}[m]
@@ -434,8 +465,8 @@ def chart4(d):
         use = d["in_use"][code]
         flagged = []
         for r in d["scored"]:
-            if r["product_code"] == code and r["model"] == use and r["horizon"] == "1" and r["period"] in ("locked", "recent"):
-                if float(r["actual"]) > float(r["upper80"]) and float(r["actual"]) - float(r["point"]) >= 5:
+            if r["product_code"] == code and r["model"] == use and r["horizon"] == "1" and r["period"] in EVALUATED:
+                if rule_flagged({"actual": float(r["actual"]), "point": float(r["point"]), "upper80": float(r["upper80"])}):
                     flagged.append(r["target"])
         eps = [{"start": q["episode_start"], "end": q["episode_end"], "months": int(q["months_in_episode"]),
                 "excess": float(q["max_excess_over_point"]), "status": q["status"]}
@@ -459,20 +490,28 @@ def chart4(d):
     n_fl = sum(len(l["flagged"]) for l in lanes)
     n_rec = sum(len(l["classI"]) for l in lanes)
     eval_months = sum(int(w["evaluated_months"]) for w in d["work"])
-    rate = n_ep / eval_months if eval_months else 0.0
-    if n_ep == 0:
-        finding = ("The review rule opened no episode in %d evaluated months across %s codes; %d single months were flagged and %d Class I recall%s began in the span"
-                   % (eval_months, num_word(len(lanes)), n_fl, n_rec, "" if n_rec == 1 else "s"))
-    else:
-        finding = ("The review rule opened %d episode%s in %d evaluated months across %s codes, %.3f per month; %d Class I recall%s began in the span"
-                   % (n_ep, "" if n_ep == 1 else "s", eval_months, num_word(len(lanes)), rate, n_rec, "" if n_rec == 1 else "s"))
+    qd = queue_diagnostic(d)
+    if qd["gatedEpisodes"] != n_ep:
+        raise SystemExit("chart 4 draws %d episodes; the rule re-run gives %d" % (n_ep, qd["gatedEpisodes"]))
+    if n_fl != sum(p["flagged"] for p in qd["perCode"].values()):
+        raise SystemExit("chart 4 draws %d flagged months; the rule re-run gives %d" % (n_fl, sum(p["flagged"] for p in qd["perCode"].values())))
+    rate = n_ep / qd["enabledMonths"] if qd["enabledMonths"] else 0.0
+    ep_word = lambda n: "%s episode%s" % (nf(n), "" if n == 1 else "s")  # noqa: E731
+    finding = ("A retrospective, filtered demonstration: the rule opened %s in the %d code-months where coverage enabled it, "
+               "and %s in all %d without that gate"
+               % (ep_word(qd["gatedEpisodes"]) if qd["gatedEpisodes"] else "no episode", qd["enabledMonths"],
+                  nf(qd["ungatedEpisodes"]) if qd["ungatedEpisodes"] else "none", qd["evaluatedMonths"]))
+    off_ungated = sum(p["ungated"] for p in qd["perCode"].values() if not p["enabled"])
     subtitle = ("One lane per code, %s to %s; lanes with the rule on come first, each group ordered by flagged months. %s "
                 "A filled square is a flagged month (the rule is one-sided by design); a hollow square is the "
                 "same in a lane with the rule off, where it opens no episode; a bar is an episode of two or more consecutive filled squares; "
                 "a diamond, raised above the lane, is the firm-initiated date of a Class I recall event in that code, same-month events side "
-                "by side. %d of the %d flagged months fall in the %d lanes with the rule off. Of the %d Class I initiations, %d were preceded "
-                "by an episode start. Association only: the timeline is context, not validation."
-                % (month_short(EVAL_START), month_short(EVAL_END), RULE, n_off_flags, n_fl, n_off, rc_init, rc_prec))
+                "by side. Each code's rule was enabled from its coverage in the %s locked test, the same months it is then applied to, so the "
+                "gate saw the period it filters; %d of the %d flagged months, and %d of the %d episodes the ungated rule would open, fall in the "
+                "%d lanes with the rule off. Of the %d Class I initiations, %d were preceded by an episode start. Association only: the "
+                "timeline is context, not validation."
+                % (month_short(EVAL_START), month_short(EVAL_END), RULE, period_span(d, "locked"), n_off_flags, n_fl,
+                   off_ungated, qd["ungatedEpisodes"], n_off, rc_init, rc_prec))
     # The annotation names the episode the title counts; with none, it says so (Rule 3.4: at the mark the claim depends on).
     ep_note, best = None, None
     for l in lanes:
@@ -490,18 +529,21 @@ def chart4(d):
     else:
         annotation = "no two consecutive flagged months in any lane; the review queue is empty"
     summary = ("Timeline chart with %d lanes, one per product code, over %d months from %s to %s. Flagged months: %d in total (%s). "
-               "Episodes: %d. Class I recall initiations in the span: %d (%s)."
+               "Episodes with the coverage gate: %d. Episodes the same rule opens without the gate: %d (%s). "
+               "Class I recall initiations in the span: %d (%s)."
                % (len(lanes), len(months), month_short(EVAL_START), month_short(EVAL_END), n_fl,
-                  "; ".join("%s %d" % (l["code"], len(l["flagged"])) for l in lanes) or "none", n_ep, n_rec,
+                  "; ".join("%s %d" % (l["code"], len(l["flagged"])) for l in lanes) or "none", n_ep, qd["ungatedEpisodes"],
+                  "; ".join("%s %d" % (c, p["ungated"]) for c, p in sorted(qd["perCode"].items()) if p["ungated"]) or "none", n_rec,
                   "; ".join("%s %s" % (l["code"], ", ".join(r["month"] for r in l["classI"])) for l in lanes if l["classI"]) or "none"))
     table = []
     for l in lanes:
         table.append([l["code"], l["name"], l["modelLabel"] if "modelLabel" in l else model_label(l["model"]),
                       "yes" if l["enabled"] else "no", str(len(l["flagged"])), ", ".join(month_short(m) for m in l["flagged"]) or "none",
                       "; ".join("%s to %s (%d)" % (month_short(e["start"]), month_short(e["end"]), e["months"]) for e in l["episodes"]) or "none",
+                      str(qd["perCode"][l["code"]]["ungated"]),
                       ", ".join("%s (event %s)" % (r["date"], r["event"]) for r in l["classI"]) or "none"])
     return {"months": months, "lanes": lanes, "episodes": n_ep, "flagged": n_fl, "classI": n_rec, "evaluatedMonths": eval_months,
-            "rate": rate, "episodeNote": ep_note, "finding": finding, "subtitle": subtitle, "annotation": annotation, "summary": summary, "ariaLabel": summary,
+            "rate": rate, "diagnostic": qd, "episodeNote": ep_note, "finding": finding, "subtitle": subtitle, "annotation": annotation, "summary": summary, "ariaLabel": summary,
             "provenance": {"source": no_sep(SOURCE, "source"), "asOf": no_sep("receipts through " + AS_OF, "asOf"),
                            "flags": no_sep("counts and dates, not rates or risk; class from the enforcement endpoint; events deduplicated on event number", "flags")},
             "table": table}
@@ -647,8 +689,10 @@ def main() -> int:
                                nf(r["width80"]), ("%.1f" % float(r["wis"]))])
     queue_rows = [[q["product_code"], model_label(q["model_in_use"]), month_short(q["episode_start"]), month_short(q["episode_end"]),
                    q["months_in_episode"], q["max_excess_over_point"], q["status"]] for q in d["queue"]] or [["none", "", "", "", "", "", "the queue is empty"]]
+    qd = c4["diagnostic"]
     work_rows = [[w["product_code"], model_label(w["model_in_use"]), "yes" if w["rule_enabled"] == "true" else "no",
-                  w["locked_coverage80"], w["evaluated_months"], w["flagged_months"], w["episodes"], w["episodes_per_evaluated_month"]]
+                  w["locked_coverage80"], w["evaluated_months"], w["flagged_months"], w["episodes"], w["episodes_per_evaluated_month"],
+                  str(qd["perCode"][w["product_code"]]["ungated"])]
                  for w in d["work"]]
     recall_rows = [[r["event_date_initiated"], r["product_codes"].replace("|", ", "), r["classification"].replace("|", ", ") or "not in enforcement",
                     r["enforcement_classification_date"] or "", r["root_cause"].replace("|", "; "), r["product_records"],
@@ -659,8 +703,11 @@ def main() -> int:
 
     cf, rf = cohort_facts(d), record_facts(d)
 
+    # Figures computed here from the tables and written to no table; src/validate_measures.py
+    # re-derives each one down Path 2 and compares it with this block on every built page.
+    facts = {"queue": {k: c4["diagnostic"][k] for k in ("gatedEpisodes", "ungatedEpisodes", "enabledMonths", "evaluatedMonths", "perCode")}}
     data = {"asOf": AS_OF, "retrieved": RETRIEVED, "lastUpdated": LAST_UPDATED, "source": SOURCE, "headline": code,
-            "c1": c1, "c2": c2, "c3": c3, "c4": c4, "c5": c5}
+            "facts": facts, "c1": c1, "c2": c2, "c3": c3, "c4": c4, "c5": c5}
     f = {
         "headline": code, "headline_name": html.escape(d["names"].get(code, "")),
         "headline_rule": ("among the codes whose review rule is enabled, the largest-volume code for which the candidate earned use"
@@ -684,6 +731,11 @@ def main() -> int:
         "c3_disabled": str(sum(1 for r in c3["rows"] if not r["enabled"])),
         "c4_eps": str(c4["episodes"]), "c4_flagged": str(c4["flagged"]), "c4_months": str(c4["evaluatedMonths"]),
         "c4_rate": "%.3f" % c4["rate"], "c4_classI": str(c4["classI"]),
+        "q_gated": nf(qd["gatedEpisodes"]), "q_ungated": nf(qd["ungatedEpisodes"]), "q_enabled_months": nf(qd["enabledMonths"]),
+        "q_all_months": nf(qd["evaluatedMonths"]), "q_enabled_codes": num_word(qd["enabledCodes"]),
+        "q_ungated_by_code": join_and(["%s %d" % (c, p["ungated"]) for c, p in sorted(qd["perCode"].items()) if p["ungated"]]) or "none",
+        "q_episodes_word": "episode" if qd["gatedEpisodes"] == 1 else "episodes",
+        "locked_span": period_span(d, "locked"), "recent_span": period_span(d, "recent"), "dev_span": period_span(d, "development"),
         "rc_preceded": str(rc["class_i_initiations_preceded_by_an_episode_start"]),
         "rc_initiations": str(rc["class_i_initiations_in_evaluated_span_by_forecast_code"]),
         "rc_episodes_in_window": str(rc["episodes_whose_start_falls_in_the_18_months_before_a_class_i_initiation"]),
@@ -714,7 +766,7 @@ def main() -> int:
         "c4_card": chart_card("c4", "04", "What deserves review", 420, "madrona", c4["annotation"],
                               [("Chart 4 data: flags, episodes and Class I initiations by code",
                                 table("tbl-c4", "Chart 4 data: flagged months, episodes and Class I recall initiations by code, 2024-01 to 2026-08 (M-05, M-06)",
-                                      ["Code", "Device", "Model in use", "Rule enabled", "Flagged months", "Which", "Episodes", "Class I initiations"], c4["table"]))]),
+                                      ["Code", "Device", "Model in use", "Rule enabled", "Flagged months", "Which", "Episodes", "Episodes without the gate", "Class I initiations"], c4["table"]))]),
         "c5_card": chart_card("c5", "05", "How complete is the recent record", 420, "evergreen", c5["annotation"],
                               [("Chart 5 data: %s by event month and receipt lag" % code,
                                 table("tbl-c5", "Chart 5 data: %s reports by event month, received within 3, 6 and 12 months (M-02)" % code,
@@ -726,7 +778,7 @@ def main() -> int:
         "t_queue": table("tbl-queue", "The review queue: every episode under the fixed rule (M-05)",
                          ["Code", "Model in use", "Start", "End", "Months", "Largest excess over point", "Status"], queue_rows),
         "t_work": table("tbl-work", "Workload: evaluated months, flagged months and episodes by code (M-05)",
-                        ["Code", "Model in use", "Rule enabled", "Locked 80% coverage", "Evaluated months", "Flagged months", "Episodes", "Episodes per month"], work_rows),
+                        ["Code", "Model in use", "Rule enabled", "Locked 80% coverage", "Evaluated months", "Flagged months", "Episodes", "Episodes per month", "Episodes without the gate"], work_rows),
         "t_recall": table("tbl-recall", "Recall events in these codes initiated 2016-01-01 to 2026-08-31, deduplicated on event number (M-06)",
                           ["Initiated", "Codes", "Class", "Classified", "Root cause as recorded", "Product records", "Reason cites reports", "Event"], recall_rows),
         "t_gate": table("tbl-gate", "The cohort gate: 36 complete months and 120 eligible training reports (D2)",
