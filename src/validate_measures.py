@@ -9,9 +9,10 @@ states by its own recurrence, the empirical ranges by SQL quantiles over the
 exported errors, the scores and the review episodes, and compares each with
 what the engine published, cell by cell.
 
-It also re-derives the figures the page build computes from these tables and
-writes to no table (the queue with and without its coverage gate, chart 4's
-flagged months), and compares them with each built page's data block.
+It also re-derives the figures the page build computes and writes to no
+table (the distinct report totals across the codes, the queue with and
+without its coverage gate, chart 4's flagged months), and compares them with
+each built page's data block.
 
 What it does NOT cover, stated so the page cannot claim more: M-06 (the
 recall context), the cohort gate, the exclusion receipt as a table, the
@@ -475,9 +476,18 @@ def main() -> int:
     print("M-05: %d codes compared, %d published episodes" % (len(work), len(queue)))
 
     # -- the page's own figures ------------------------------------------------------
-    # Some figures are computed by the page build from the tables and written to no table: the
+    # Some figures are computed by the page build and written to no table: the distinct report
+    # totals across the codes (a report can carry two codes, so M-01 summed counts memberships), the
     # queue with and without its coverage gate, and the flagged months chart 4 draws. The page's
     # data block is what publishes them, so that is what they are compared against.
+    in_codes = ",".join("'%s'" % c for c in sorted({r["product_code"] for r in m01}))
+    d_raw, d_elig, d_mem = con.execute("""
+        SELECT count(DISTINCT k), count(DISTINCT CASE WHEN NOT excluded THEN k END), count(*)
+        FROM cnt WHERE code IN (%s)""" % in_codes).fetchone()
+    d_multi = con.execute("SELECT count(*) FROM (SELECT k FROM cnt WHERE code IN (%s) GROUP BY k HAVING count(*) > 1)" % in_codes).fetchone()[0]
+    reports2 = {"distinctRaw": int(d_raw), "distinctEligible": int(d_elig), "memberships": int(d_mem), "multiCodeReports": int(d_multi)}
+    print("reports: %d distinct, %d distinct eligible, %d report-code memberships, %d reports in more than one code"
+          % (d_raw, d_elig, d_mem, d_multi))
     n_page = 0
     for page in sorted(DOCS.glob("*.html")):
         if "template" in page.name:
@@ -487,6 +497,9 @@ def main() -> int:
             fail("page %s: no cascadia-data block to compare" % page.name)
             continue
         facts = data.get("facts", {})
+        checked += 1
+        if facts.get("reports") != reports2:
+            fail("page %s report totals: published %s, re-derived %s" % (page.name, facts.get("reports"), reports2))
         want = {"gatedEpisodes": sum(v["gated"] for v in q2.values()), "ungatedEpisodes": sum(v["ungated"] for v in q2.values()),
                 "enabledMonths": sum(v["months"] for v in q2.values() if v["enabled"]),
                 "evaluatedMonths": sum(v["months"] for v in q2.values())}
@@ -510,7 +523,7 @@ def main() -> int:
         n_page += 1
     if not n_page:
         fail("no built page under docs/ to compare")
-    print("page: %d page(s) compared (queue with and without the gate, chart 4's flagged months)" % n_page)
+    print("page: %d page(s) compared (distinct report totals, queue with and without the gate, chart 4's flagged months)" % n_page)
 
     return report(checked, failures)
 

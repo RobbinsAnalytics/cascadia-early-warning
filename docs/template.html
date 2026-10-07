@@ -239,8 +239,8 @@
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">@@assurance_title@@</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
           <ul>
-            <li><strong>The freeze.</strong> @@total_raw@@ reports across the @@n_codes_word@@ codes, pulled from openFDA in @@n_staged_pages@@ pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of @@n_code_months@@ code-months, against the source's own daily count series pulled separately.</li>
-            <li><strong>The exclusion.</strong> A private token list, kept outside the repository, removed <strong>@@excluded@@</strong> report(s) whole; its SHA-256 (<code>@@sha_local@@</code>) and the counts removed per field are published, and no firm is named anywhere.</li>
+            <li><strong>The freeze.</strong> @@total_raw@@ distinct reports across the @@n_codes_word@@ codes (@@memberships@@ report-code memberships: @@multi_code@@ @@multi_code_word@@ more than one of the codes), pulled from openFDA in @@n_staged_pages@@ pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of @@n_code_months@@ code-months, against the source's own daily count series pulled separately.</li>
+            <li><strong>The exclusion.</strong> A private token list, kept outside the repository, removed <strong>@@excluded@@</strong> @@excluded_word@@ whole; its SHA-256 (<code>@@sha_local@@</code>) and the counts removed per field are published, and no firm is named anywhere.</li>
             <li><strong>Two paths.</strong> @@assurance_boundary@@ The second path is <a href="@@repo_url@@/blob/main/src/validate_measures.py">validate_measures.py</a>.</li>
             <li><strong>Golden fixtures</strong>, written by hand before any engine code: both baselines on a made series, the ETS recurrence from fixed states, the review rule with a reset, the lag-matched count and the interval scores, passing on both paths.</li>
             <li><strong>Proof the checks can fail.</strong> The <a href="@@repo_url@@/blob/main/governance/validation_report.md">validation report</a> re-runs the @@proof_checks@@ checks of the domain gate against deliberately corrupted copies of their input in @@proof_scenarios@@ scenarios, from a missing partition and a moved hash to a page that states the wrong device class, and records that @@proof_result@@. @@proof_coverage@@ The second path has no such proof mode of its own.</li>
@@ -332,7 +332,7 @@
         <li class="py-1 text-white/65">Source: openFDA device event, recall and enforcement</li>
         <li class="py-1 text-white/65">Receipts through @@as_of@@; loaded as of @@last_updated@@</li>
         <li class="py-1 text-white/65">Retrieved and frozen @@retrieved@@</li>
-        <li class="py-1 text-white/65">@@total_eligible@@ eligible reports across @@n_codes_word@@ codes</li>
+        <li class="py-1 text-white/65">@@total_eligible@@ distinct eligible reports across @@n_codes_word@@ codes</li>
       </ul>
     </div>
     <div>

@@ -215,8 +215,23 @@ def record_facts(d) -> dict:
            WHERE r.countable AND NOT r.excluded AND b.product_code IN (%s) GROUP BY 1""" % ",".join("'%s'" % c for c in codes)
     summary = {c: {"reports": int(n), "summary": int(s), "multi": int(m), "max_events": int(x or 0), "events": int(e or 0)}
                for c, n, s, m, x, e in con.execute(q).fetchall()}
+    # Distinct reports across the codes: a report can carry more than one product code, so a sum of
+    # per-code counts counts it once per code (report-code memberships), not once.
+    raw, eligible, memberships, multi_code = con.execute("""
+        SELECT count(DISTINCT r.mdr_report_key), count(DISTINCT CASE WHEN NOT r.excluded THEN r.mdr_report_key END), count(*),
+               count(*) - count(DISTINCT r.mdr_report_key)
+        FROM report r JOIN report_product_code b USING (mdr_report_key)
+        WHERE r.countable AND b.product_code IN (%s)""" % ",".join("'%s'" % c for c in codes)).fetchone()
+    keys_multi = con.execute("""
+        SELECT count(*) FROM (SELECT b.mdr_report_key FROM report r JOIN report_product_code b USING (mdr_report_key)
+                              WHERE r.countable AND b.product_code IN (%s) GROUP BY 1 HAVING count(*) > 1)"""
+                             % ",".join("'%s'" % c for c in codes)).fetchone()[0]
     con.close()
-    return {"summary": summary}
+    m01_raw = sum(int(r["raw_reports"]) for r in d["m01"])
+    if memberships != m01_raw:
+        raise SystemExit("the record table holds %d report-code memberships; M-01 sums to %d" % (memberships, m01_raw))
+    return {"summary": summary, "reports": {"distinctRaw": int(raw), "distinctEligible": int(eligible),
+                                            "memberships": int(memberships), "multiCodeReports": int(keys_multi)}}
 
 
 def what_is_counted(d, cf: dict, rf: dict) -> str:
@@ -264,8 +279,9 @@ def assurance_boundary(d) -> str:
     own scope. The known-event count is read from the reference table."""
     known = len({k["res_event_number"] for k in d["known"]})
     return ("A separately written path, DuckDB SQL over the staged FDA pages plus its own Python arithmetic, recomputes the "
-            "monthly and lag-matched counts, every forecast point and range, the scores, the review episodes, and the queue "
-            "with and without its coverage gate as this page publishes it, and they must agree before anything is published. "
+            "monthly and lag-matched counts, the distinct report totals, every forecast point and range, the scores, the review "
+            "episodes, and the queue with and without its coverage gate as this page publishes it, and they must agree before "
+            "anything is published. "
             "It does not refit the ETS model: candidate points are recomputed from the model's exported states, and ranges and "
             "scores from the published points. The recall timeline is checked only against %s hand-verified Class I events, and "
             "the cohort gate, the exclusion receipt, the reports without an event date, the promotion decision, the "
@@ -421,8 +437,8 @@ def chart1(d, code):
                 "and before the source loaded it." % (code, d["names"].get(code, ""), month_short(months[0]), month_short(months[-1]),
                                                        model_label(use), month_short(o_target), RETRIEVED))
     annotation = "point %s is the tick; filled dots span the 80%% range, %s to %s" % (nf(o_point), nf(o_lo80), nf(o_hi80))
-    removed = sum(int(r["reports_matched"]) for r in d["receipt"] if r["field"] == "ANY (reports removed)")
-    countable = sum(int(r["reports_matched"]) for r in d["receipt"] if r["field"] == "ALL (countable reports)")
+    rep = d["rf"]["reports"]
+    removed, countable = rep["distinctRaw"] - rep["distinctEligible"], rep["distinctRaw"]
     summary = ("Line chart of eligible reports received per month for product code %s from %s to %s, %d months, "
                "range %s to %s, latest %s in %s. A dashed line carries the %s's one-month-ahead point for each month "
                "from %s, with a shaded band for its 80%% range. At the right, %d dots show the next month, %s: point %s, 50%% range %s to %s, 80%% range %s to %s, "
@@ -731,6 +747,7 @@ def stat(index: str, value: str, label: str) -> str:
 
 def main() -> int:
     d = load()
+    d["rf"] = record_facts(d)
     code = headline_code(d)
     c1, c2, c3, c4, c5 = chart1(d, code), chart2(d, code), chart3(d), chart4(d), chart5(d, code)
     for c in (c1, c2, c3, c4, c5):
@@ -743,9 +760,9 @@ def main() -> int:
     n_cand = sum(1 for c in use.values() if c == "candidate")
     rc = d["recall_count"]
     rm = d["recall_meta"]
-    total_eligible = sum(int(r["eligible_reports"]) for r in d["m01"])
-    total_raw = sum(int(r["raw_reports"]) for r in d["m01"])
-    excluded = sum(int(r["excluded_reports"]) for r in d["m01"])
+    rep = d["rf"]["reports"]
+    total_eligible, total_raw = rep["distinctEligible"], rep["distinctRaw"]
+    excluded = total_raw - total_eligible
     preregistration_commit = git_short("governance/pre-registration.md")
     model_commit = git_short("config/model.json")
     sha_local = ""
@@ -778,11 +795,12 @@ def main() -> int:
                   nf(g["eligible_training_reports"]), "pass" if g["forecast"] == "true" else "fail"] for g in d["gate"]]
     receipt_rows = [[r["product_code"], r["field"], nf(r["reports_matched"])] for r in d["receipt"]]
 
-    cf, rf, pc = cohort_facts(d), record_facts(d), proof_counts()
+    cf, rf, pc = cohort_facts(d), d["rf"], proof_counts()
 
     # Figures computed here from the tables and written to no table; src/validate_measures.py
     # re-derives each one down Path 2 and compares it with this block on every built page.
-    facts = {"queue": {k: c4["diagnostic"][k] for k in ("gatedEpisodes", "ungatedEpisodes", "enabledMonths", "evaluatedMonths", "perCode")}}
+    facts = {"queue": {k: c4["diagnostic"][k] for k in ("gatedEpisodes", "ungatedEpisodes", "enabledMonths", "evaluatedMonths", "perCode")},
+             "reports": rep}
     data = {"asOf": AS_OF, "retrieved": RETRIEVED, "lastUpdated": LAST_UPDATED, "source": SOURCE, "headline": code,
             "facts": facts, "c1": c1, "c2": c2, "c3": c3, "c4": c4, "c5": c5}
     f = {
@@ -833,6 +851,9 @@ def main() -> int:
         "rc_k": nf(rm["records_with_k_numbers"]), "rc_records": nf(rm["in_scope_product_records"]),
         "rc_k_pct": pct(rm["records_with_k_numbers"] / max(1, rm["in_scope_product_records"]), 1),
         "total_eligible": nf(total_eligible), "total_raw": nf(total_raw), "excluded": nf(excluded),
+        "excluded_word": "report" if excluded == 1 else "reports",
+        "memberships": nf(rep["memberships"]), "multi_code": num_word(rep["multiCodeReports"]),
+        "multi_code_word": "report carries" if rep["multiCodeReports"] == 1 else "reports carry",
         "sha_local": sha_local[:16] + "..." if sha_local else "see the receipt",
         "prereg_commit": preregistration_commit, "model_commit": model_commit, "model_first_commit": git_first("config/model.json"),
         "c5_missing": nf(c5["missingEventDate"]),

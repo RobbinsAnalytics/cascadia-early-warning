@@ -14,9 +14,9 @@ the counts, a hand-written recurrence for the candidate's mechanics over its
 exported states (no refit), and its own implementations of the ranges, the
 scores and the review rule, written from this register and the decision
 record and never by reading the engine; it also re-derives the figures the
-page computes from those tables (the queue with and without its coverage
-gate, and chart 4's flagged months) and compares them with each page's data
-block. **Nothing is published unless that script exits zero.** A measure that
+page computes and writes to no table (the distinct report totals across the
+codes, the queue with and without its coverage gate, and chart 4's flagged
+months) and compares them with each page's data block. **Nothing is published unless that script exits zero.** A measure that
 only agrees with itself has not been validated. **What it does not cover**
 *(corrected 2026-10-07, D19; this paragraph said "every certified cell")*:
 M-06 has no second path (the recall set is checked against fourteen
