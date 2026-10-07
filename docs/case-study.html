@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Cascadia Early Warning case study - Robbins Analytics</title>
+<meta name="description" content="How Cascadia Early Warning tests whether forecasts of public FDA device-report volume can support a repeatable review queue: the measured results, the implementation repair and the limits of a retrospective evaluation. Counts of reports, not rates.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cascadia Early Warning: the case study">
+<meta property="og:description" content="How Cascadia Early Warning tests whether forecasts of public FDA device-report volume can support a repeatable review queue: the measured results, the implementation repair and the limits of a retrospective evaluation. Counts of reports, not rates.">
+<meta property="og:image" content="https://www.robbinsanalytics.com/assets/thumb-early-warning.png">
+<meta property="og:url" content="https://www.robbinsanalytics.com/cascadia-early-warning/case-study.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cascadia Early Warning: the case study">
+<meta name="twitter:description" content="How Cascadia Early Warning tests whether forecasts of public FDA device-report volume can support a repeatable review queue: the measured results, the implementation repair and the limits of a retrospective evaluation. Counts of reports, not rates.">
+<meta name="twitter:image" content="https://www.robbinsanalytics.com/assets/thumb-early-warning.png">
+<link rel="canonical" href="https://www.robbinsanalytics.com/cascadia-early-warning/case-study.html">
+<link rel="icon" href="assets/favicon.svg?v=9f2fe5d980" type="image/svg+xml">
+<!-- Felix 1.3 / directive 6b: the four families from Google Fonts, under the variable names felix.src.css bridges. A recorded collision (D14). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=Fraunces:ital,wght@1,400&family=JetBrains+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="assets/felix.css?v=7977ac3846">
+<style>
+  /* Chart cards: module-specific internals that Felix does not describe. The
+     canvas keeps the Cascadia theme (D15); the card around it is Felix's
+     white surface. Visual order inside a card: canvas, note, navigator, strip,
+     summary, tables; the summary stays FIRST in the DOM (Rule 5.1). */
+  .chart-card { display:flex; flex-direction:column; }
+  .chart-card > .chart { order:1; width:100%; }
+  .chart-card > .chart-note { order:2; }
+  .chart-card > .chart-key { order:2; }
+  .chart-card > .cascadia-nav { order:3; }
+  .chart-card > .cascadia-provenance { order:4; }
+  .chart-card > .chart-summary { order:5; }
+  .chart-card > details.data-table { order:6; }
+  .chart-summary { font:13px/1.6 var(--font-sans); color:var(--color-ink-soft); margin:10px 2px 0; max-width:72ch; }
+  .chart-note { font:13px/1.55 "Source Serif 4", Georgia, serif; margin:6px 2px 2px; max-width:72ch; }
+  .chart-note.evergreen { color:#1E7A4C; }
+  .chart-note.madrona { color:#BA572D; }
+  .chart-note.glacier { color:#4279A7; }
+  .chart-key { font:12px/1.5 var(--font-sans); color:var(--color-ink-soft); margin:6px 2px 0; }
+  details.data-table { margin:10px 2px 0; }
+  details.data-table summary { font:12px/1.5 var(--font-mono); color:var(--color-ink-soft); cursor:pointer; min-height:24px; letter-spacing:.04em; }
+  details.data-table .table-wrap { margin-block:.75em 0; }
+  details.data-table table { font-size:.8rem; border-collapse:collapse; }
+  details.data-table caption { display:block; text-align:left; font-weight:600; padding:.5rem .9rem; color:var(--color-ink); }
+  details.data-table th, details.data-table td { text-align:right; white-space:nowrap; min-width:0; }
+  details.data-table th[scope="row"] { text-align:left; font-weight:400; }
+  .answers { }
+  .toc a[data-active="true"] { border-color: var(--color-teal); color: var(--color-teal); font-weight:500; }
+  /* The results table reads as two columns of prose: left-aligned, top-aligned. */
+  #case-results th, #case-results td { text-align:left; vertical-align:top; min-width:0; white-space:normal; }
+  #case-results caption { text-align:left; white-space:normal; padding:.5rem .9rem; font-weight:600; }
+  .cta-grid { background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(ellipse 80% 70% at 70% 60%, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 60%, #000 30%, transparent 75%); }
+</style>
+<script src="assets/echarts.min.js?v=334d8b37c4"></script>
+<script src="assets/cascadia-echarts-theme.js?v=fe48511d43"></script>
+</head>
+<body class="min-h-screen">
+
+<script id="cascadia-data" type="application/json">{"asOf":"2026-08-31","retrieved":"2026-10-06","lastUpdated":"2026-09-29","source":"openFDA device event, recall and enforcement endpoints","headline":"DSQ","facts":{"queue":{"gatedEpisodes":1,"ungatedEpisodes":7,"enabledMonths":128,"evaluatedMonths":224,"perCode":{"DSQ":{"ungated":0,"flagged":2,"months":32,"enabled":true},"OZD":{"ungated":2,"flagged":9,"months":32,"enabled":false},"PYX":{"ungated":4,"flagged":10,"months":32,"enabled":false},"NPT":{"ungated":0,"flagged":3,"months":32,"enabled":false},"NIK":{"ungated":0,"flagged":0,"months":32,"enabled":true},"LWS":{"ungated":0,"flagged":2,"months":32,"enabled":true},"DSP":{"ungated":1,"flagged":4,"months":32,"enabled":true}}},"reports":{"distinctRaw":649080,"distinctEligible":649079,"memberships":649083,"multiCodeReports":3}},"c3":{"rows":[{"code":"NIK","model":"baseline_a","modelLabel":"trailing three-month mean","coverage80":1.0,"n":24,"inside":24,"enabled":true,"name":"Defibrillator, Automatic Implantable Cardioverter, With Cardiac Resynchronization (Crt-D)"},{"code":"LWS","model":"baseline_a","modelLabel":"trailing three-month mean","coverage80":0.958333,"n":24,"inside":23,"enabled":true,"name":"Implantable Cardioverter Defibrillator (Non-Crt)"},{"code":"DSQ","model":"candidate","modelLabel":"ETS candidate","coverage80":0.916667,"n":24,"inside":22,"enabled":true,"name":"Ventricular (Assist) Bypass"},{"code":"DSP","model":"baseline_a","modelLabel":"trailing three-month mean","coverage80":0.708333,"n":24,"inside":17,"enabled":true,"name":"System, Balloon, Intra-Aortic And Control"},{"code":"NPT","model":"candidate","modelLabel":"ETS candidate","coverage80":0.583333,"n":24,"inside":14,"enabled":false,"name":"Aortic Valve, Prosthesis, Percutaneously Delivered"},{"code":"OZD","model":"baseline_a","modelLabel":"trailing three-month mean","coverage80":0.416667,"n":24,"inside":10,"enabled":false,"name":"Temporary Non-Roller Type Left Heart Support Blood Pump"},{"code":"PYX","model":"baseline_a","modelLabel":"trailing three-month mean","coverage80":0.333333,"n":24,"inside":8,"enabled":false,"name":"Temporary Non-Roller Type Right Heart Support Blood Pump"}],"finding":"The 80% ranges covered between 33% and 100% of locked-test months across the seven codes; three codes below 70% have the review rule disabled","subtitle":"Share of the 24 locked-test months (2024-01 to 2025-12) whose actual fell inside the model in use's 80% range, horizon one, by code; nominal 80%. The numbers gate expected 60% to 95% (the shaded band) and disables the rule below 70%; both were written before the test ran. The row label names the model in use: the ETS candidate where it earned use, else the trailing mean.","annotation":"dashed: 80% nominal and 70% disable; shaded: gate band; orange: rule off","summary":"Horizontal bar chart of 80% range coverage in the locked test for 7 product codes, sorted from highest to lowest: NIK 100%; LWS 96%; DSQ 92%; DSP 71%; NPT 58%; OZD 42%; PYX 33%. Nominal coverage is 80%; the disable line is 70%; 3 codes disabled.","ariaLabel":"Horizontal bar chart of 80% range coverage in the locked test for 7 product codes, sorted from highest to lowest: NIK 100%; LWS 96%; DSQ 92%; DSP 71%; NPT 58%; OZD 42%; PYX 33%. Nominal coverage is 80%; the disable line is 70%; 3 codes disabled.","floor":70.0,"band":[60.0,95.0],"nominal":80,"floorLabel":"rule disabled below 70%","provenance":{"source":"openFDA device event, recall and enforcement endpoints","asOf":"receipts through 2026-08-31","flags":"not a safety measure; coverage inclusive at the bound; empirical ranges from 36 errors"},"table":[["NIK","Defibrillator, Automatic Implantable Cardioverter, With Cardiac Resynchronization (Crt-D)","trailing three-month mean","100.0%","24","yes"],["LWS","Implantable Cardioverter Defibrillator (Non-Crt)","trailing three-month mean","95.8%","24","yes"],["DSQ","Ventricular (Assist) Bypass","ETS candidate","91.7%","24","yes"],["DSP","System, Balloon, Intra-Aortic And Control","trailing three-month mean","70.8%","24","yes"],["NPT","Aortic Valve, Prosthesis, Percutaneously Delivered","ETS candidate","58.3%","24","no"],["OZD","Temporary Non-Roller Type Left Heart Support Blood Pump","trailing three-month mean","41.7%","24","no"],["PYX","Temporary Non-Roller Type Right Heart Support Blood Pump","trailing three-month mean","33.3%","24","no"]]}}</script>
+
+<header id="site-header" class="sticky top-0 z-50 border-b border-transparent bg-paper transition-[border-color,background-color] duration-300">
+  <div class="container-x flex h-[4.25rem] items-center justify-between">
+    <a class="group inline-flex items-center gap-2.5" href="https://www.robbinsanalytics.com/" aria-label="Robbins Analytics home">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true" class="shrink-0">
+        <rect x="2" y="12" width="5" height="12" rx="2.5" fill="#12403c" opacity="0.55"/>
+        <rect x="10.5" y="7" width="5" height="17" rx="2.5" fill="#12403c" opacity="0.8"/>
+        <rect x="19" y="2" width="5" height="22" rx="2.5" fill="#12403c"/>
+      </svg>
+      <span class="font-display text-[1.3rem] leading-none tracking-tight whitespace-nowrap text-ink">
+        <span class="font-semibold">Robbins</span>
+        <span class="font-serif font-normal italic text-teal-2">Analytics</span><span class="text-teal-3">.</span>
+      </span>
+    </a>
+    <nav class="hidden items-center gap-3 md:flex" aria-label="Main">
+      <div class="flex items-center gap-0.5 rounded-full bg-white p-1">
+        <a class="rounded-full px-4 py-2 text-sm font-medium transition-colors text-ink-soft hover:bg-paper hover:text-ink" href="https://www.robbinsanalytics.com/">Home</a>
+        <a class="rounded-full px-4 py-2 text-sm font-medium transition-colors bg-ink text-white" href="#top" aria-current="page">Case study</a>
+        <a class="rounded-full px-4 py-2 text-sm font-medium transition-colors text-ink-soft hover:bg-paper hover:text-ink" href="index.html">Module</a>
+      </div>
+      <a class="group btn bg-ink !py-1.5 !pr-1.5 !pl-5 text-sm text-white hover:bg-teal" href="https://github.com/RobbinsAnalytics/cascadia-early-warning">
+        Repository
+        <span class="grid h-7 w-7 place-items-center rounded-full bg-lime text-ink transition-transform group-hover:-rotate-12" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg>
+        </span>
+      </a>
+    </nav>
+    <button id="menu-btn" class="-mr-2 grid h-11 w-11 place-items-center rounded-full text-ink md:hidden" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+      <svg class="menu-bars" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+      <svg class="menu-x hidden" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l12 12M16 4 4 16"/></svg>
+    </button>
+  </div>
+  <div id="mobile-menu" class="border-t border-line bg-paper md:hidden" hidden>
+    <nav class="container-x flex max-h-[calc(100dvh-4.25rem)] flex-col gap-1 overflow-y-auto overscroll-contain py-4" aria-label="Mobile">
+      <a class="rounded-xl px-3 py-3 font-medium" href="https://www.robbinsanalytics.com/">Home</a>
+      <a class="rounded-xl px-3 py-3 font-medium bg-white" href="#top" aria-current="page">Case study</a>
+      <a class="rounded-xl px-3 py-3 font-medium" href="index.html">Module</a>
+      <a class="btn btn-dark mt-4 justify-center !py-3.5" href="https://github.com/RobbinsAnalytics/cascadia-early-warning">Repository
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5"/></svg>
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<header class="container-x pt-6 pb-10 sm:pt-10">
+  <div class="crop-marks relative px-5 py-8 sm:px-10 sm:py-12 lg:px-14">
+    <p class="absolute top-10 left-2 hidden rotate-180 font-mono text-[0.7rem] tracking-[0.22em] whitespace-nowrap text-ink-soft uppercase xl:block" style="writing-mode:vertical-rl">Fig. 14 / Case study / Device reporting</p>
+    <div class="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div class="min-w-0">
+        <a class="pill min-h-10 !px-4 transition-colors hover:border-ink" href="https://www.robbinsanalytics.com/">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6H3M6 3 3 6l3 3"/></svg>
+          All case studies
+        </a>
+        <div class="mt-8 flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.7rem] leading-none font-medium whitespace-nowrap border-ink/12 bg-white text-ink-soft">
+            <span class="relative flex h-1.5 w-1.5"><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink/40"></span></span>
+            Case study
+          </span>
+          <span class="font-mono text-[0.7rem] tracking-[0.16em] text-teal-2 uppercase">Medical device reporting</span>
+        </div>
+        <h1 class="mt-5 font-display text-[clamp(2.6rem,1.4rem+4.6vw,5.4rem)] leading-[0.95] font-bold tracking-[-0.045em] text-ink"><span class="text-muted">Cascadia</span> Early <span class="font-serif font-normal italic text-teal tracking-[-0.03em]">Warning</span><span class="text-teal-3">.</span></h1>
+        <p id="case-opening" data-case="opening" class="mt-7 max-w-2xl text-lg leading-relaxed text-ink-soft sm:text-[1.2rem]">Cascadia Early Warning tests whether forecasts of public FDA device-report volume can support a repeatable review queue. The candidate model earned use for two of seven cardiovascular product codes. Three codes fell below the coverage floor for automated review, and their rules remain disabled. The case study presents the measured results, the implementation repair and the limits of a retrospective evaluation before prospective monitoring begins.</p>
+      </div>
+      <aside class="rounded-3xl bg-lime p-6 text-ink sm:p-7">
+        <div class="flex items-center justify-between border-b border-ink/80 pb-4">
+          <p class="font-display text-lg leading-tight font-bold tracking-tight uppercase">Case study</p>
+          <span class="h-2.5 w-2.5 rounded-full bg-ink" aria-hidden="true"></span>
+        </div>
+        <dl>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Owner</dt><dd class="text-right text-sm font-semibold">Aaron Robbins</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Receipts through</dt><dd class="text-right text-sm font-semibold whitespace-nowrap">2026-08-31</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">7 codes, <span data-cohort-fact="classes">Classes II and III</span></dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Candidate in use</dt><dd class="text-right text-sm font-semibold">2 of 7 codes</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Review rule on</dt><dd class="text-right text-sm font-semibold">4 of 7 codes</dd></div>
+        </dl>
+        <ul class="mt-2">
+          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="index.html"><span>The module</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
+          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="index.html#s5"><span>Method and receipts</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
+          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="https://github.com/RobbinsAnalytics/cascadia-early-warning"><span>Build repository</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+</header>
+
+<section class="container-x">
+  <div class="rounded-[1.75rem] bg-white p-6 sm:p-10">
+    <div class="flex items-center justify-between gap-4">
+      <span class="pill"><span class="h-1.5 w-1.5 rounded-full bg-teal-3" aria-hidden="true"></span>The results</span>
+      <span class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Counts of reports, not rates</span>
+    </div>
+    <div class="rich mt-6 max-w-none"><div class="table-wrap"><table id="case-results"><caption>The measured results, each figure generated from the module&#x27;s frozen tables</caption><thead><tr><th scope="col">Result</th><th scope="col">Meaning</th></tr></thead><tbody><tr><th scope="row">Candidate selected for 2 of 7 codes</th><td>Added model complexity earned use selectively on the development test</td></tr><tr><th scope="row">DSQ average miss about 246 versus 265 reports</th><td>The 2024 to 2025 test showed a modest improvement over the trailing mean</td></tr><tr><th scope="row">Three codes below the 70% coverage floor</th><td>The demonstration disables their review rules rather than presenting all lanes as usable</td></tr><tr><th scope="row">One retained episode after retrospective filtering</th><td>Illustrative queue output, with seven ungated episodes disclosed separately</td></tr><tr><th scope="row">None of 24 Class I recall initiations preceded by an episode start</th><td>No demonstrated recall-prediction result</td></tr><tr><th scope="row">DSQ November 2026 outlook: about 736 reports, 80% range 376 to 906, three months ahead</th><td>At three months ahead, ranges like it held 20 of 22 locked-test months; a forecast, not yet scored</td></tr></tbody></table></div></div>
+  </div>
+  <div class="mt-8"><div class="chart-card rounded-[1.75rem] bg-white p-5 sm:p-7" id="card-c3"><p class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">03 <span class="text-teal-2">Did the ranges hold</span></p><p id="sum-c3" class="chart-summary"></p><div id="c3" class="chart" style="height:330px"></div><p id="note-c3" class="chart-note evergreen" hidden>dashed: 80% nominal and 70% disable; shaded: gate band; orange: rule off</p><details class="data-table rich"><summary>Chart 3 data: coverage by code</summary><div class="table-wrap"><table id="tbl-c3"><caption>Chart 3 data: 80% range coverage in the locked test by code, model in use (M-04)</caption><thead><tr><th scope="col">Code</th><th scope="col">Device</th><th scope="col">Model in use</th><th scope="col">80% coverage</th><th scope="col">Months</th><th scope="col">Rule enabled</th></tr></thead><tbody><tr><th scope="row">NIK</th><td>Defibrillator, Automatic Implantable Cardioverter, With Cardiac Resynchronization (Crt-D)</td><td>trailing three-month mean</td><td>100.0%</td><td>24</td><td>yes</td></tr><tr><th scope="row">LWS</th><td>Implantable Cardioverter Defibrillator (Non-Crt)</td><td>trailing three-month mean</td><td>95.8%</td><td>24</td><td>yes</td></tr><tr><th scope="row">DSQ</th><td>Ventricular (Assist) Bypass</td><td>ETS candidate</td><td>91.7%</td><td>24</td><td>yes</td></tr><tr><th scope="row">DSP</th><td>System, Balloon, Intra-Aortic And Control</td><td>trailing three-month mean</td><td>70.8%</td><td>24</td><td>yes</td></tr><tr><th scope="row">NPT</th><td>Aortic Valve, Prosthesis, Percutaneously Delivered</td><td>ETS candidate</td><td>58.3%</td><td>24</td><td>no</td></tr><tr><th scope="row">OZD</th><td>Temporary Non-Roller Type Left Heart Support Blood Pump</td><td>trailing three-month mean</td><td>41.7%</td><td>24</td><td>no</td></tr><tr><th scope="row">PYX</th><td>Temporary Non-Roller Type Right Heart Support Blood Pump</td><td>trailing three-month mean</td><td>33.3%</td><td>24</td><td>no</td></tr></tbody></table></div></details></div></div>
+</section>
+
+<section class="container-x">
+  <div class="grid gap-12 py-16 lg:grid-cols-[14rem_minmax(0,1fr)]">
+    <aside class="hidden lg:block">
+      <div class="sticky top-24">
+        <nav aria-label="On this page" class="toc">
+          <p class="eyebrow">On this page</p>
+          <ul class="mt-4 space-y-1 border-l border-line">
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs1">01 The review decision</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs2">02 The measured results</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs3">03 What Aaron owned</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs4">04 How the evidence was checked</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs5">05 The next test</a></li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="min-w-0">
+
+      <div id="cs1" class="scroll-mt-24">
+        <p class="eyebrow">01 / The review decision</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Which product codes deserve a closer look this month</h2>
+        <div class="rich prose mt-5 max-w-[46rem]">
+          <p>The decision is a quality team's monthly choice of where to look first: which product codes are reporting as expected and which are not. This build's contribution is testing report-volume forecasts and a repeatable review rule on public data: a forecast of each code's reports with an honest range, a held-out test of whether ranges like it held, and a fixed rule that turns departures into a review queue.</p>
+          <ul>
+            <li><strong>The cohort.</strong> Seven cardiovascular product codes spanning <span data-cohort-fact="classes">Classes II and III</span>, read from openFDA's device-event endpoint: 649,080 distinct reports, 649,079 after a private firm-list exclusion removed 1, counted one report per code per receipt month over 896 code-months.</li>
+            <li><strong>Summary reports.</strong> <span data-cohort-fact="summary" data-eligible="NPT" data-ineligible="DSP DSQ LWS NIK OZD PYX">NPT is on FDA&#x27;s list of product codes eligible for voluntary malfunction summary reporting, and DSP, DSQ, LWS, NIK, OZD and PYX are not.</span> 4,179 of NPT's 72,845 reports are summary reports standing for 149,569 events, so its count can move with reporting practice and is not a count of events.</li>
+            <li><strong>Counts, not rates.</strong> Report counts are not incidence rates, event rates or measures of device safety, as FDA's own documentation says and the module page quotes. No manufacturer or brand is named, by decision.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="cs2" class="mt-16 border-t border-line pt-10 scroll-mt-24">
+        <p class="eyebrow">02 / The measured results</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">What the test found, and the repair it needed</h2>
+        <div class="rich prose mt-5 max-w-[46rem]">
+          <ul>
+            <li><strong>The outlook.</strong> For DSQ (Ventricular (Assist) Bypass), about 736 reports in November 2026, three months ahead, with an 80% range of 376 to 906; at that horizon ranges like it held 20 of 22 locked-test months. September 2026, one month ahead, is an elapsed-period estimate and is not yet in the source.</li>
+            <li><strong>The test.</strong> Rolling forecasts, each fitted only through its origin, evaluated retrospectively using the October 2026 snapshot. Model selection used target months through December 2023 and was registered in October 2026 before generating the retained test results. This is a retrospective test using the October 2026 data snapshot. It does not reconstruct exactly what was publicly available at each historical date.</li>
+            <li><strong>The experiment history.</strong> Model selection stayed fixed. A calibration-history defect was corrected after the first test run; point forecasts were unchanged. The corrected interval results are preserved, with the repair disclosed.</li>
+            <li><strong>What was fixed in advance.</strong> The registered model form, the promotion rule and the review thresholds were committed before the first forecast row existed. The data snapshot was retrieved in the same session, so the rule was registered alongside the data rather than before it.</li>
+            <li><strong>The locked test for DSQ.</strong> The candidate's 80% range held 22 of 24 months, and its average miss was 246 reports a month against the trailing mean's 265.</li>
+            <li><strong>Did the ranges hold?</strong> Across the seven codes they held between 33% and 100% of locked-test months: two inside the band written before the test, two above it, and three below the 70% floor, where the review rule is switched off.</li>
+            <li><strong>The review rule.</strong> A month is flagged when the observed count exceeds the 80% upper bound and is at least five reports above the point forecast. Two consecutive flagged months open an episode. As a retrospective, filtered demonstration it opened one episode where it is on, and would open seven if it ran in every code.</li>
+            <li><strong>Recall context.</strong> Of the 24 Class I recall initiations in the evaluated span, 0 were preceded by the start of a queue episode. Association only: no recall-prediction result is claimed.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="cs3" class="mt-16 border-t border-line pt-10 scroll-mt-24">
+        <p class="eyebrow">03 / What Aaron owned</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Who built it, and who decided</h2>
+        <div class="rich prose mt-5 max-w-[46rem]">
+          <p>Aaron Robbins is the module owner. Claude Code implemented the approved plan, and AI agents supplied the simulated chart reviews. The decisions below are Aaron's, as the <a href="https://github.com/RobbinsAnalytics/cascadia-early-warning/blob/main/governance/decision-record.md">decision record</a> states them; no implementation or validation step on this page is attributed to a human review.</p>
+          <ul>
+            <li><strong>Accepting gate G5 as built</strong>, with its band unchanged, when five of the seven codes landed outside it (D16).</li>
+            <li><strong>Taking the page off the freeze list</strong>, so the weekly live edge can rebuild it while the tables it is computed from stay frozen (D18).</li>
+            <li><strong>Correcting the record</strong>: making every correction from two external reviews, leading with the November 2026 outlook at three months ahead, putting the charts before the text, building this case study as a page beside the module, and registering the weekly live edge at publication (D19).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="cs4" class="mt-16 border-t border-line pt-10 scroll-mt-24">
+        <p class="eyebrow">04 / How the evidence was checked</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">What was checked, and what was not</h2>
+        <div class="rich prose mt-5 max-w-[46rem]">
+          <ul>
+            <li><strong>Two paths.</strong> A separately written path, DuckDB SQL over the staged FDA pages plus its own Python arithmetic, recomputes the monthly and lag-matched counts, the distinct report totals, every forecast point and range, the scores, the review episodes, and the queue with and without its coverage gate as this page publishes it, and they must agree before anything is published. It does not refit the ETS model: candidate points are recomputed from the model&#x27;s exported states, and ranges and scores from the published points. The recall timeline is checked only against fourteen hand-verified Class I events, and the cohort gate, the exclusion receipt, the reports without an event date, the promotion decision, the pre-registered recall count, the summary-report composition and the outlook&#x27;s twenty dots are carried from the build without a second derivation.</li>
+            <li><strong>Checks that can fail.</strong> The domain gate runs 17 checks and re-runs them against deliberately corrupted copies of their input in 27 scenarios; the validation report records that every one tripped. Hand-computed golden fixtures, committed before either engine existed, pass on both paths.</li>
+            <li><strong>The chart review.</strong> Four AI agents reviewed rendered charts using simulated reviewer personas. They were instructed to use only the supplied images; reviewer isolation was not independently verified. Their findings exposed a concrete ambiguity: disabled review lanes still appeared to contain active episodes.</li>
+            <li><strong>The receipts.</strong> How the snapshot was frozen and hashed, how the second path is built, and how the model's states are exported for it are set out in the module's <a href="index.html#s5">method and receipts</a>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="cs5" class="mt-16 border-t border-line pt-10 scroll-mt-24">
+        <p class="eyebrow">05 / The next test</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">What a quality manager does with a flag, and what is tested next</h2>
+        <div class="rich prose mt-5 max-w-[46rem]">
+          <p>The intended workflow, for a quality manager whose code is flagged:</p>
+          <ol>
+            <li>Open the underlying reports for the flagged months and read their reporting context: the report types, the filers, and any batch or summary filing.</li>
+            <li>Record a review disposition, including when nothing is found.</li>
+            <li>Do not read an episode as a device-safety conclusion. It is a departure from expected reporting volume, and nothing more.</li>
+          </ol>
+          <p><strong>The live edge.</strong> A live-edge pipeline is implemented and passed a manual run. Weekly runs begin at publication. It stores source vintages and is designed to score a forecast when the target month first appears in the source. Live months are counted on a different basis from the frozen ones: raw count by receipt date as seen at the vintage, with no exclusion applied.</p>
+          <p><strong>What is tested next.</strong> Each frozen forecast is scored as its month first appears in the source, beginning with September 2026 and November 2026; and the one pre-registered recall count still needs its shuffled-dates reference before it can mean more than association.</p>
+        </div>
+        <div class="mt-16 border-t border-line pt-10">
+          <p class="eyebrow">Tech stack</p>
+          <div class="mt-4 flex flex-wrap gap-2"><span class="pill">Python</span><span class="pill">DuckDB</span><span class="pill">pandas</span><span class="pill">statsmodels</span><span class="pill">openFDA</span><span class="pill">Apache ECharts</span><span class="pill">Tailwind CSS</span><span class="pill">Playwright</span><span class="pill">Static HTML / JS</span><span class="pill">Git</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="container-x py-20 sm:py-24">
+  <div class="relative isolate overflow-hidden rounded-[2.25rem] bg-[#0b2d2a] text-white grain">
+    <div class="absolute inset-0 -z-10" style="background: radial-gradient(60% 70% at 0% 0%, rgba(63,143,133,.45), transparent 60%), radial-gradient(45% 55% at 100% 100%, rgba(212,243,107,.16), transparent 65%), radial-gradient(40% 40% at 70% 10%, rgba(31,107,99,.5), transparent 70%);"></div>
+    <div class="absolute inset-0 -z-10 opacity-40 cta-grid"></div>
+    <div class="relative z-10 px-7 pt-12 pb-12 sm:px-14 sm:pt-16 sm:pb-16">
+      <span class="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-mono text-[0.7rem] tracking-[0.16em] text-white/80 uppercase backdrop-blur">Open build</span>
+      <h2 class="mt-7 font-display text-[clamp(2.4rem,1.6rem+3.2vw,4.1rem)] leading-[1.02] font-semibold tracking-tight">The <span class="relative inline-block font-serif font-normal italic tracking-[-0.03em] text-[#8fd3c8]">evidence<svg class="absolute -bottom-[0.08em] left-0 h-[0.14em] w-full" viewBox="0 0 120 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8 C 30 2, 60 11, 118 4" fill="none" stroke="#d4f36b" stroke-width="2.5" stroke-linecap="round"/></svg></span> is on the module page<span class="text-accent">.</span></h2>
+      <p class="mt-7 max-w-md text-[1.02rem] leading-relaxed text-white/70">Every figure here is generated from the module's frozen tables, and each claim above is set out there with its chart, its table and the check behind it.</p>
+      <div class="mt-9 flex flex-wrap gap-3">
+        <a class="group btn bg-lime !py-1.5 !pr-1.5 !pl-5 text-ink hover:bg-lime-2" href="index.html">The module <span class="grid h-8 w-8 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
+        <a class="btn btn-ghost-light" href="index.html#s5">Method and receipts</a>
+        <a class="btn btn-ghost-light" href="https://github.com/RobbinsAnalytics/cascadia-early-warning">Build repository</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="grain relative isolate overflow-hidden bg-ink text-white/70">
+  <div class="absolute inset-0 -z-10" style="background: radial-gradient(50% 60% at 85% 100%, rgba(63,143,133,.28), transparent 70%), radial-gradient(35% 45% at 5% 0%, rgba(31,107,99,.25), transparent 70%);"></div>
+  <div class="container-x relative z-10 grid gap-12 pt-16 pb-12 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.3fr_1fr]">
+    <div>
+      <a class="group inline-flex items-center gap-2.5" href="https://www.robbinsanalytics.com/" aria-label="Robbins Analytics home">
+        <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true" class="shrink-0"><rect x="2" y="12" width="5" height="12" rx="2.5" fill="#d4f36b" opacity="0.55"/><rect x="10.5" y="7" width="5" height="17" rx="2.5" fill="#d4f36b" opacity="0.8"/><rect x="19" y="2" width="5" height="22" rx="2.5" fill="#d4f36b"/></svg>
+        <span class="font-display text-[1.3rem] leading-none tracking-tight whitespace-nowrap text-white"><span class="font-semibold">Robbins</span> <span class="font-serif font-normal italic text-teal-3">Analytics</span><span class="text-lime">.</span></span>
+      </a>
+      <p class="mt-5 max-w-sm text-sm leading-relaxed text-white/60">An independent portfolio project by Aaron Robbins. Public data, a frozen snapshot, two derivation paths, and a rule registered before the first forecast existed.</p>
+    </div>
+    <div>
+      <p class="font-mono text-[0.7rem] tracking-[0.16em] text-white/60 uppercase">This case study</p>
+      <ul class="mt-4 space-y-0.5 text-sm md:mt-5 md:space-y-2.5">
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs1">The review decision</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs2">The measured results</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs3">What Aaron owned</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs4">How the evidence was checked</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs5">The next test</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-[0.7rem] tracking-[0.16em] text-white/60 uppercase">Provenance</p>
+      <ul class="mt-4 space-y-0.5 text-sm md:mt-5 md:space-y-2.5">
+        <li class="py-1 text-white/65">Source: openFDA device event, recall and enforcement</li>
+        <li class="py-1 text-white/65">Receipts through 2026-08-31; loaded as of 2026-09-29</li>
+        <li class="py-1 text-white/65">Retrieved and frozen 2026-10-06</li>
+        <li class="py-1 text-white/65">649,079 distinct eligible reports across seven codes</li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-[0.7rem] tracking-[0.16em] text-white/60 uppercase">Elsewhere</p>
+      <ul class="mt-4 space-y-0.5 text-sm md:mt-5 md:space-y-2.5">
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="https://github.com/RobbinsAnalytics/cascadia-early-warning">Build repository</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="index.html">The module</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="https://www.robbinsanalytics.com/">Portfolio home</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container-x relative z-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-6 text-xs text-white/60">
+    <span>&copy; 2026 Aaron Robbins. Report counts are not incident rates or measures of device safety. This independent public-data demonstration provides no medical, legal or regulatory advice.</span>
+    <span class="font-mono tracking-wider">counts, not rates</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var h = document.getElementById('site-header');
+  function scrolled() {
+    if (window.scrollY > 0) { h.classList.add('border-ink/10', 'bg-paper/95', 'backdrop-blur-xl'); h.classList.remove('border-transparent'); }
+    else { h.classList.remove('border-ink/10', 'bg-paper/95', 'backdrop-blur-xl'); h.classList.add('border-transparent'); }
+  }
+  window.addEventListener('scroll', scrolled, { passive: true }); scrolled();
+  var mb = document.getElementById('menu-btn'), mm = document.getElementById('mobile-menu');
+  if (mb && mm) {
+    mb.addEventListener('click', function () {
+      var open = mm.hasAttribute('hidden');
+      if (open) { mm.removeAttribute('hidden'); } else { mm.setAttribute('hidden', ''); }
+      mb.setAttribute('aria-expanded', open ? 'true' : 'false');
+      mb.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      mb.querySelector('.menu-bars').classList.toggle('hidden', open);
+      mb.querySelector('.menu-x').classList.toggle('hidden', !open);
+    });
+    mm.addEventListener('click', function (e) { if (e.target.closest('a')) { mb.click(); } });
+  }
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          links.forEach(function (a) { a.removeAttribute('data-active'); a.classList.add('border-transparent', 'text-ink-soft'); a.classList.remove('border-teal', 'font-medium', 'text-teal'); });
+          var a = links[targets.indexOf(e.target)];
+          if (a) { a.setAttribute('data-active', 'true'); a.classList.remove('border-transparent', 'text-ink-soft'); a.classList.add('border-teal', 'font-medium', 'text-teal'); }
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    targets.forEach(function (t) { if (t) io.observe(t); });
+  }
+})();
+</script>
+<script src="assets/page.js?v=e5e1f6da13"></script>
+</body>
+</html>

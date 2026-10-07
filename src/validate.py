@@ -730,9 +730,98 @@ def check_words_before_chart(results):
                     "; ".join(seen) or "no gated section measured", bad))
 
 
+CASE_OPENING_MAX = 120
+CANONICAL_ORIGIN = "https://www.robbinsanalytics.com/"
+
+
+class _CaseOrder(html.parser.HTMLParser):
+    """The order in which the case study's parts open, and its furniture: the opening's words, the
+    position of the results table, of the first H2 and of the first section, the H1 count, and the
+    canonical and social tags."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.n, self.pos, self.h1, self.meta, self.canonical = 0, {}, 0, {}, None
+        self._in_opening, self.opening = 0, []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        self.n += 1
+        if tag == "h1":
+            self.h1 += 1
+        if tag == "meta" and (a.get("property") or a.get("name")):
+            self.meta[a.get("property") or a.get("name")] = a.get("content", "")
+        if tag == "link" and a.get("rel") == "canonical":
+            self.canonical = a.get("href")
+        if a.get("data-case") == "opening":
+            self.pos.setdefault("opening", self.n)
+            self._in_opening = 1
+        elif self._in_opening and tag not in _VOID:
+            self._in_opening += 1
+        if tag == "table" and a.get("id") == "case-results":
+            self.pos.setdefault("results", self.n)
+        if tag == "h2":
+            self.pos.setdefault("h2", self.n)
+        if re.fullmatch(r"cs\d+", a.get("id") or ""):
+            self.pos.setdefault("section", self.n)
+
+    def handle_endtag(self, tag):
+        if self._in_opening:
+            self._in_opening -= 1
+
+    def handle_data(self, data):
+        if self._in_opening:
+            self.opening.append(data)
+
+
+def check_case_study(results):
+    """The case study's shape (Build Brief 2.1 steps 16 to 18): the opening is at most
+    CASE_OPENING_MAX words and comes first, the results table comes before any other section, and the
+    page has exactly one H1, a canonical URL on the canonical domain, and Open Graph and Twitter tags
+    whose URL and image agree with it."""
+    page = DOCS / "case-study.html"
+    label = ("case study: the opening at most %d words, then the results table before any section; one H1; "
+             "canonical, Open Graph and Twitter tags" % CASE_OPENING_MAX)
+    if not page.exists():
+        results.append((label, False, "docs/case-study.html absent", ["docs/case-study.html absent"]))
+        return
+    p = _CaseOrder()
+    p.feed(page.read_text(encoding="utf-8"))
+    p.close()
+    bad = []
+    words = [w for w in "".join(p.opening).split() if re.search(r"[A-Za-z0-9]", w)]
+    pos = p.pos
+    for k in ("opening", "results", "h2", "section"):
+        if k not in pos:
+            bad.append("no %s found" % {"opening": "element marked data-case=\"opening\"", "results": "table#case-results",
+                                         "h2": "H2", "section": "section with an id cs1, cs2 ..."}[k])
+    if len(words) > CASE_OPENING_MAX:
+        bad.append("the opening is %d words (limit %d)" % (len(words), CASE_OPENING_MAX))
+    if not bad:
+        if not pos["opening"] < pos["results"]:
+            bad.append("the results table comes before the opening")
+        if not pos["results"] < min(pos["h2"], pos["section"]):
+            bad.append("a section or H2 comes before the results table")
+    if p.h1 != 1:
+        bad.append("%d H1 elements; the page must have exactly one" % p.h1)
+    c = p.canonical or ""
+    if not (c.startswith(CANONICAL_ORIGIN) and c.endswith("/case-study.html")):
+        bad.append("canonical URL %r is not the case study on the canonical domain" % c)
+    for k in ("og:title", "og:description", "og:image", "og:url", "twitter:card", "twitter:image", "description"):
+        if not p.meta.get(k):
+            bad.append("missing %s" % k)
+    if p.meta.get("og:url") != c:
+        bad.append("og:url %r differs from the canonical URL" % p.meta.get("og:url"))
+    for k in ("og:image", "twitter:image"):
+        if p.meta.get(k) and not p.meta[k].startswith(CANONICAL_ORIGIN):
+            bad.append("%s is not an absolute URL on the canonical domain" % k)
+    results.append((label, not bad, "opening %d words; order opening %s, results %s, first H2 %s, first section %s; H1 %d"
+                    % (len(words), pos.get("opening"), pos.get("results"), pos.get("h2"), pos.get("section"), p.h1), bad))
+
+
 CHECKS = [check_hashes, check_extraction_log, check_m01, check_dates, check_uniqueness, check_exclusion,
           check_chronology, check_locked_once, check_names, check_emdash, check_asof, check_cohort, check_review,
-          check_known_events, check_cohort_facts, check_words_before_chart]
+          check_known_events, check_cohort_facts, check_words_before_chart, check_case_study]
 
 
 # ---------------------------------------------------------------------------
@@ -883,6 +972,15 @@ def _sub_once(pattern: str, repl: str):
     return fn
 
 
+def _move_results_below_first_section(text: str) -> str:
+    m = re.search(r'(?s)<div class="table-wrap"><table id="case-results">.*?</table></div>', text)
+    if not m:
+        raise RuntimeError("no results table; the scenario would prove nothing")
+    rest = text[:m.start()] + text[m.end():]
+    end = rest.index("</div>", rest.index('id="cs1"'))
+    return rest[:end] + m.group(0) + rest[end:]
+
+
 def _first_eligible_token() -> str:
     s = private_sections()
     t = s["firm_tokens"][0]
@@ -942,6 +1040,12 @@ def _scenarios():
     yield (check_words_before_chart, "section 02's chart cards removed: a section that leads with no chart",
            lambda: _docs_tree_copy({"index.html": lambda t: _sub_once(r'(?s)(<div id="s2"[^>]*>.*?)class="chart-card ', r'\1class="was-card ')(
                _sub_once(r'(?s)(<div id="s2"[^>]*>.*?)class="chart-card ', r'\1class="was-card ')(t))}))
+    yield (check_case_study, "the case study's opening padded to more than its word limit",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(data-case="opening"[^>]*>)', r"\1" + "word " * 70)}))
+    yield (check_case_study, "the results table moved below the first section",
+           lambda: _docs_tree_copy({"case-study.html": lambda t: _move_results_below_first_section(t)}))
+    yield (check_case_study, "a second H1 written into the case study",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r"</main>", "<h1>A second title</h1></main>")}))
     yield (check_review, "an episode claimed for a month that does not satisfy the rule",
            lambda: _csv_copy("QUEUE", lambda rows: rows.append(dict(rows[0], episode_start="2024-01", episode_end="2024-02", months_in_episode="2"))
                              if rows and rows[0]["product_code"] else rows.append({"product_code": "DSQ", "model_in_use": "baseline_a", "episode_start": "2024-01", "episode_end": "2024-02", "months_in_episode": "2", "max_excess_over_point": "0", "status": "x"})))

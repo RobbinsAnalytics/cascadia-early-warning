@@ -8,8 +8,11 @@ held-out test of whether ranges like them held, and a fixed review rule that
 turns departures from expectation into a human review queue. Aggregate only; no firm is named;
 report counts are not incident rates or measures of device safety.
 
-Page: `docs/index.html`, published to
-`https://www.robbinsanalytics.com/cascadia-early-warning/` once approved.
+Pages: `docs/index.html` (the module) and `docs/case-study.html` (the case
+study), published to `https://www.robbinsanalytics.com/cascadia-early-warning/`
+once approved. Both are generated from the frozen tables by
+`src/build_page.py`, from `docs/template.html` and
+`docs/case-study-template.html`.
 
 ## Rebuild
 

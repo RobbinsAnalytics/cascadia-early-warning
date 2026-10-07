@@ -48,3 +48,4 @@ node_modules/
 # Full-page renders are 6 MB each at device scale 2 and are re-made by src/render_charts.py;
 # the per-chart renders and the ladder record are committed, the page renders are not.
 docs/renders/page-*.png
+docs/renders/case-study/page-*.png

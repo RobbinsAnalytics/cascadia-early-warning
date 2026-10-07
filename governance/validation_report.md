@@ -16,20 +16,21 @@
 | 6 | exclusion receipt agrees with the private audit, and every audit token is in the list | PASS | 1 audit rows, 15 receipt rows |
 | 7 | chronology: origin precedes target, locked origins at or after 2023-12, promotion committed before locked rows | PASS | 3906 rows, 966 locked |
 | 8 | one locked result: the locked rows have one content hash across committed history and the working tree | PASS | 1 distinct locked-row hashes |
-| 9 | names gate: no private token in docs/ or any tracked file (verbatim kit files exempt) | PASS | 119 files scanned |
-| 10 | em-dash gate: no em dash in docs/ or any authored file | PASS | 119 files scanned, verbatim kit files exempt |
+| 9 | names gate: no private token in docs/ or any tracked file (verbatim kit files exempt) | PASS | 122 files scanned |
+| 10 | em-dash gate: no em dash in docs/ or any authored file | PASS | 122 files scanned, verbatim kit files exempt |
 | 11 | as-of agrees: freeze.toml, the count series' newest receipt day, and this gate | PASS | freeze 2026-08-31, newest receipt 20260831, gate 20260831 |
 | 12 | cohort gate: forecast rows exist only for codes that passed both stages | PASS | 7 of 7 codes forecast |
 | 13 | review queue: every episode satisfies the rule on the scored rows | PASS | 1 episodes checked |
 | 14 | known-answer recovery: every verified Class I event is in the derived recall set with its date | PASS | 15 known rows checked against 175 derived events |
-| 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 2 pages, 4 marked statements; cohort Classes II and III, summary-eligible NPT |
+| 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 4 pages, 7 marked statements; cohort Classes II and III, summary-eligible NPT |
 | 16 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | PASS | s1 0; s2 0; s3 0; s4 0 |
+| 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 65 words; order opening 79, results 128, first H2 243, first section 241; H1 1 |
 
 ## Proof the checks can fail
 
 *Each check above is re-run against a deliberately corrupted copy of its input and must reject it. A check that passes corrupted input is not testing anything, and reads identically in this report to one that works. The frozen data is never modified: the corruption is applied to a temporary copy and the path is restored after every scenario.*
 
-**24 of 24 scenarios tripped.**
+**27 of 27 scenarios tripped.**
 
 | Check | Corruption fed to it | Tripped? |
 |---|---|---|
@@ -56,6 +57,9 @@
 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | an unmarked sentence calling every code ineligible for summary reporting | tripped |
 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | a forty-five-word paragraph written between section 01's H2 and its chart | tripped |
 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | section 02's chart cards removed: a section that leads with no chart | tripped |
+| case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | the case study's opening padded to more than its word limit | tripped |
+| case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | the results table moved below the first section | tripped |
+| case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | a second H1 written into the case study | tripped |
 | review queue: every episode satisfies the rule on the scored rows | an episode claimed for a month that does not satisfy the rule | tripped |
 
 ---

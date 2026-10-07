@@ -20,6 +20,9 @@ any width overflows horizontally or a chart fails to draw.
 
     python src/render_charts.py            # the K6 ladder
     python src/render_charts.py 390 768    # explicit widths
+    python src/render_charts.py --page case-study.html --charts c3
+                                           # a second page: its own K6 ladder, its own
+                                           # chart list, renders under docs/renders/case-study/
 """
 import json
 import pathlib
@@ -34,9 +37,9 @@ SEARCH_MAX = 1600
 CHARTS = ["c1", "c2", "c3", "c4", "c5"]
 
 
-def k6_ladder(browser):
+def k6_ladder(browser, url, charts):
     page = browser.new_page(viewport={"width": DESIGN_WIDTH, "height": 900})
-    page.goto(URL, wait_until="networkidle")
+    page.goto(url, wait_until="networkidle")
     page.wait_for_timeout(600)
     bps = page.evaluate("() => window.CASCADIA_BREAKPOINTS || null")
     if not bps:
@@ -50,7 +53,7 @@ def k6_ladder(browser):
 
     widths = {NARROW_WIDTH, DESIGN_WIDTH}
     crossings = []
-    for cid in CHARTS:
+    for cid in charts:
         for b in bps:
             lo, hi = NARROW_WIDTH, SEARCH_MAX
             if host_width(hi, cid) < b:
@@ -73,6 +76,17 @@ def k6_ladder(browser):
 def main():
     argv = sys.argv[1:]
     out_dir = OUT
+    page_name, charts = "", CHARTS
+    if "--page" in argv:
+        i = argv.index("--page")
+        page_name = argv[i + 1]
+        out_dir = OUT / pathlib.Path(page_name).stem
+        argv = argv[:i] + argv[i + 2:]
+    if "--charts" in argv:
+        i = argv.index("--charts")
+        charts = argv[i + 1].split(",")
+        argv = argv[:i] + argv[i + 2:]
+    url = URL + page_name
     if "--out" in argv:
         i = argv.index("--out")
         out_dir = pathlib.Path(argv[i + 1])
@@ -84,7 +98,7 @@ def main():
         sys.exit("playwright is required")
     out_dir.mkdir(parents=True, exist_ok=True)
     overflow_failures, draw_failures = [], []
-    record = {"url": URL, "widths": [], "breakpoints": [], "crossings": [], "per_width": {}}
+    record = {"url": url, "widths": [], "breakpoints": [], "crossings": [], "per_width": {}}
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -92,7 +106,7 @@ def main():
             print("explicit widths: %s" % ", ".join(str(w) for w in widths))
             bps, crossings = [], []
         else:
-            widths, bps, crossings = k6_ladder(browser)
+            widths, bps, crossings = k6_ladder(browser, url, charts)
             print("K6 ladder derived from declared breakpoints %s" % ", ".join(str(b) for b in bps))
             for cid, b, v in crossings:
                 print("  %s crosses host %d px between viewport %d and %d" % (cid, b, v - 1, v))
@@ -104,14 +118,14 @@ def main():
             errors = []
             page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
             page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(URL, wait_until="networkidle")
+            page.goto(url, wait_until="networkidle")
             page.wait_for_timeout(1500)
             if errors:
                 print("  CONSOLE ERRORS at %dpx:" % width)
                 for e in errors[:8]:
                     print("    " + e)
             page.screenshot(path=str(out_dir / ("page-%d.png" % width)), full_page=True)
-            for cid in CHARTS:
+            for cid in charts:
                 card = page.locator("#card-" + cid)
                 target = card if card.count() else page.locator("#" + cid)
                 # A card taller than the viewport is scrolled to its centre for the capture, which slid it
@@ -123,18 +137,18 @@ def main():
                 """() => Array.from(document.querySelectorAll('.cascadia-provenance'))
                         .map(n => n.textContent.split(' \\u00b7 ').length)""")
             dims = page.evaluate(
-                """() => Object.fromEntries(['c1','c2','c3','c4','c5'].map(id => {
+                """(ids) => Object.fromEntries(ids.map(id => {
                      const cv = document.getElementById(id).querySelector('canvas');
                      return [id, cv ? cv.width + 'x' + cv.height : 'none'];
-                   }))""")
+                   }))""", charts)
             grid = page.evaluate(
-                """() => Object.fromEntries(['c1','c2','c3','c4','c5'].map(id => {
+                """(ids) => Object.fromEntries(ids.map(id => {
                      try {
                        const ch = echarts.getInstanceByDom(document.getElementById(id));
                        const g = ch.getModel().getComponent('grid').coordinateSystem.getRect();
                        return [id, Math.round(g.width)];
                      } catch (e) { return [id, 'n/a']; }
-                   }))""")
+                   }))""", charts)
             over = page.evaluate(
                 """() => ({scroll: document.documentElement.scrollWidth,
                           client: document.documentElement.clientWidth})""")

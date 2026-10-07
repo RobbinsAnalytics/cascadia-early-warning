@@ -1,0 +1,85 @@
+{
+ "url": "http://localhost:8731/case-study.html",
+ "widths": [
+  320,
+  655,
+  656,
+  1040
+ ],
+ "breakpoints": [
+  560
+ ],
+ "crossings": [
+  {
+   "chart": "c3",
+   "breakpoint": 560,
+   "viewport": 656
+  }
+ ],
+ "per_width": {
+  "320": {
+   "strip_segments": [
+    3
+   ],
+   "canvas": {
+    "c3": "480x1344"
+   },
+   "grid_px": {
+    "c3": 84
+   },
+   "overflow": {
+    "scroll": 320,
+    "client": 320
+   },
+   "console_errors": []
+  },
+  "655": {
+   "strip_segments": [
+    3
+   ],
+   "canvas": {
+    "c3": "1118x972"
+   },
+   "grid_px": {
+    "c3": 403
+   },
+   "overflow": {
+    "scroll": 655,
+    "client": 655
+   },
+   "console_errors": []
+  },
+  "656": {
+   "strip_segments": [
+    3
+   ],
+   "canvas": {
+    "c3": "1120x1104"
+   },
+   "grid_px": {
+    "c3": 188
+   },
+   "overflow": {
+    "scroll": 656,
+    "client": 656
+   },
+   "console_errors": []
+  },
+  "1040": {
+   "strip_segments": [
+    3
+   ],
+   "canvas": {
+    "c3": "1840x1016"
+   },
+   "grid_px": {
+    "c3": 548
+   },
+   "overflow": {
+    "scroll": 1040,
+    "client": 1040
+   },
+   "console_errors": []
+  }
+ }
+}

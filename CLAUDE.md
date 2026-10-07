@@ -162,9 +162,12 @@ no other module page does; that is a recorded collision, not an oversight.
 
 **Generated, not authored:** `data/raw/manifest.json`, everything under
 `data/raw/counts/` and `data/conformed/`, `governance/validation_report.md`,
-`governance/reconciliation.md`, `governance/health.json`, `docs/index.html`
-and `docs/renders/`. Regenerate with the scripts in `src/`; hand-editing any of
-them is a recurring failure mode elsewhere in this estate.
+`governance/reconciliation.md`, `governance/health.json`, `docs/index.html`,
+`docs/case-study.html` and `docs/renders/`. Regenerate with the scripts in
+`src/`; hand-editing any of them is a recurring failure mode elsewhere in this
+estate. The two templates, `docs/template.html` and
+`docs/case-study-template.html`, are authored; `src/build_page.py` writes both
+pages in one run, so the live edge's weekly rebuild rewrites both.
 
 **No em dashes in anything rendered under `docs/`.** The names gate and the
 em-dash gate in `src/validate.py` run over `docs/` and the committed files

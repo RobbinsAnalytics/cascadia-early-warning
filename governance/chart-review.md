@@ -1039,3 +1039,33 @@ corrected in their text or their data source, not their marks:
 None of these changes what a chart claims or draws, so no panel was re-run.
 The K6 ladder was re-run at 320, 655, 656 and 1040: no overflow, every chart
 drawn, three strip segments everywhere.
+
+---
+
+## 7 · The case study's chart 3 (Build Brief 2.1 Part B) - 2026-10-07
+
+`docs/case-study.html` carries one chart, chart 3 (did the ranges hold),
+drawn by the same `docs/assets/page.js` from the same data as the module's
+chart 3: `src/build_page.py` puts the identical `c3` object in the case
+study's data block. **Chart 3 is unchanged in content, so it gets no new
+panel**; its verdict in section 2 and the K2 correction in 6.4 stand.
+
+What differs is where it sits. On the case study the card spans the full
+container rather than the module's text column, so its host is wider at the
+design width (grid 548 px against 276 px at 1040). **K6 was derived again for
+this page** (`python src/render_charts.py --page case-study.html --charts
+c3`): the host crosses the 560 px breakpoint between viewports 655 and 656,
+as on the module, so the ladder is 320, 655, 656 and 1040, recorded in
+`docs/renders/case-study/k6-ladder.json`. At every width: no horizontal
+overflow, the chart drawn, three strip segments, no console error. Renders
+are in `docs/renders/case-study/` (the full-page shots are gitignored).
+
+**K7:** the case study loads the same assets with the same content-hashed
+URLs as the module. **K8:** its own Open Graph and Twitter tags, a canonical
+URL on the canonical domain, the shared card image, and the favicon; the
+same open item as the module (the card image exists once the site
+publishes). `src/validate.py`'s `check_case_study` asserts the canonical,
+`og:url`, the images' domain and exactly one H1 on every run.
+
+`page.js` mounts each chart only where its host exists (B8); with that guard
+the module's twenty renders and its ladder record were re-made byte for byte.

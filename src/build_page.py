@@ -875,6 +875,94 @@ def stat(index: str, value: str, label: str) -> str:
             '<p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">%s</p></div>' % (index, html.escape(value), html.escape(label)))
 
 
+# ---------------------------------------------------------------------------
+# the case study (Build Brief 2.1 Part B): a second page from the same tables
+# ---------------------------------------------------------------------------
+
+MODULE_URL = "index.html"
+CASE_CANONICAL = PAGE_URL + "case-study.html"
+# The case-study review's sentences, verbatim (Build Brief 2.1 step 16).
+CASE_PANEL = ("Four AI agents reviewed rendered charts using simulated reviewer personas. They were instructed to use only the "
+              "supplied images; reviewer isolation was not independently verified. Their findings exposed a concrete ambiguity: "
+              "disabled review lanes still appeared to contain active episodes.")
+CASE_EXPERIMENT_HISTORY = ("Model selection stayed fixed. A calibration-history defect was corrected after the first test run; point "
+                           "forecasts were unchanged. The corrected interval results are preserved, with the repair disclosed.")
+# Drafted for Aaron's review: the pre-registration claim narrowed to what the git log supports.
+CASE_PREREG_NARROWED = ("The registered model form, the promotion rule and the review thresholds were committed before the first "
+                        "forecast row existed. The data snapshot was retrieved in the same session, so the rule was registered "
+                        "alongside the data rather than before it.")
+
+
+def case_test_phrase() -> str:
+    return ("Rolling forecasts, each fitted only through its origin, evaluated retrospectively using the %s snapshot."
+            % month_name(RETRIEVED[:7]))
+
+
+def case_opening(d, n_cand: int, n_dis: int) -> str:
+    """The case-study review's opening, verbatim, with its figures generated."""
+    n = len(d["forecast_codes"])
+    dis = ("%s codes fell below the coverage floor for automated review, and their rules remain disabled"
+           % num_word(n_dis).capitalize() if n_dis != 1 else
+           "One code fell below the coverage floor for automated review, and its rule remains disabled")
+    return ("Cascadia Early Warning tests whether forecasts of public FDA device-report volume can support a repeatable review "
+            "queue. The candidate model earned use for %s of %s cardiovascular product codes. %s. The case study presents the "
+            "measured results, the implementation repair and the limits of a retrospective evaluation before prospective "
+            "monitoring begins." % (num_word(n_cand), num_word(n), dis))
+
+
+def case_results(d, code, c1, c2, n_cand, n_dis, qd, rc) -> list[list[str]]:
+    """The case-study review's results table, rows verbatim, figures generated; the last row is the
+    November outlook, drafted."""
+    ly = d["cfg"]["periods"]["locked"]["targets"]
+    n = len(d["forecast_codes"])
+    pre = int(rc["class_i_initiations_preceded_by_an_episode_start"])
+    init = int(rc["class_i_initiations_in_evaluated_span_by_forecast_code"])
+    o = c1["outlook"]
+    return [
+        ["Candidate selected for %d of %d codes" % (n_cand, n), "Added model complexity earned use selectively on the development test"],
+        ["%s average miss about %s versus %s reports" % (code, nf(c2["scores"]["use"]["mae"]), nf(c2["scores"]["baselineA"]["mae"])),
+         "The %s to %s test showed a modest improvement over the trailing mean" % (ly[0][:4], ly[1][:4])],
+        ["%s code%s below the %s coverage floor" % (num_word(n_dis).capitalize(), "" if n_dis == 1 else "s", pct(COVERAGE_FLOOR)),
+         "The demonstration disables their review rules rather than presenting all lanes as usable"],
+        ["%s retained episode%s after retrospective filtering" % (num_word(qd["gatedEpisodes"]).capitalize(), "" if qd["gatedEpisodes"] == 1 else "s"),
+         "Illustrative queue output, with %s ungated episodes disclosed separately" % num_word(qd["ungatedEpisodes"])],
+        ["%s of %d Class I recall initiations preceded by an episode start" % ("None" if pre == 0 else str(pre), init),
+         "No demonstrated recall-prediction result"],
+        ["%s %s outlook: about %s reports, 80%% range %s to %s, %s months ahead"
+         % (code, month_name(o["target"]), nf(o["point"]), nf(o["lo80"]), nf(o["hi80"]), num_word(o["horizon"])),
+         "At %s months ahead, ranges like it held %d of %d locked-test months; a forecast, not yet scored"
+         % (num_word(o["horizon"]), o["coverageIn"], o["coverageN"])],
+    ]
+
+
+
+
+def case_live_edge() -> str:
+    """The live edge, from governance/run_history.jsonl and governance/health.json. Until a run
+    recorded as scheduled exists, the case-study review's sentences adapted to Aaron's
+    register-at-publication decision; after, the last run's date and status. A run record carries
+    no trigger field yet (pull_live_edge.py does not write one), so a scheduled run is one whose
+    record says "trigger": "scheduled"."""
+    hist = GOV / "run_history.jsonl"
+    runs = [json.loads(l) for l in hist.read_text(encoding="utf-8").splitlines() if l.strip()] if hist.exists() else []
+    h = json.loads((GOV / "health.json").read_text(encoding="utf-8")) if (GOV / "health.json").exists() else {}
+    basis = (h.get("live_edge") or {}).get("basis") or "raw count by receipt date as seen at the vintage; no exclusion applied"
+    sched = [r for r in runs if r.get("trigger") == "scheduled"]
+    if sched:
+        last = sched[-1]
+        s = ("The live edge last ran on a schedule on %s, with status %s. It stores source vintages and scores a forecast when "
+             "the target month first appears in the source." % (last["started_utc"][:10], last["status"]))
+    elif runs and runs[-1].get("status") == "ok" and runs[-1].get("passed"):
+        s = ("A live-edge pipeline is implemented and passed a manual run. Weekly runs begin at publication. It stores source "
+             "vintages and is designed to score a forecast when the target month first appears in the source.")
+    elif runs:
+        s = ("A live-edge pipeline is implemented; its manual run on %s reported status %s. Weekly runs begin at publication."
+             % (runs[-1]["started_utc"][:10], runs[-1]["status"]))
+    else:
+        s = "A live-edge pipeline is implemented and has not yet run. Weekly runs begin at publication."
+    return s + " Live months are counted on a different basis from the frozen ones: %s." % basis.replace("; ", ", with ")
+
+
 def main() -> int:
     d = load()
     d["rf"] = record_facts(d)
@@ -1068,14 +1156,46 @@ def main() -> int:
         "page_url": PAGE_URL, "site_url": SITE_URL, "case_url": CASE_URL, "repo_url": REPO_URL, "thumb_url": THUMB_URL,
         "as_of": AS_OF, "retrieved": RETRIEVED, "last_updated": LAST_UPDATED,
     }
-    out = (DOCS / "template.html").read_text(encoding="utf-8")
-    for k, v in f.items():
-        out = out.replace("@@%s@@" % k, str(v))
-    left = sorted(set(re.findall(r"@@(\w+)@@", out)))
-    if left:
-        raise SystemExit("unsubstituted tokens in template: %s" % left)
-    (DOCS / "index.html").write_text(out, encoding="utf-8", newline="\n")
-    print("wrote docs/index.html; headline code %s (%s)" % (code, f["headline_rule"]))
+    # The case study (Part B): the same tables and the same tokens, plus its own. Its data block carries
+    # chart 3 and the facts Path 2 compares; page.js draws only the charts a page has hosts for.
+    g5_in = sum(1 for r in c3["rows"] if G5_BAND[0] <= r["coverage80"] <= G5_BAND[1])
+    g5_above = sum(1 for r in c3["rows"] if r["coverage80"] > G5_BAND[1])
+    data_case = {"asOf": AS_OF, "retrieved": RETRIEVED, "lastUpdated": LAST_UPDATED, "source": SOURCE, "headline": code,
+                 "facts": facts, "c3": c3}
+    f.update({
+        "module_url": MODULE_URL, "case_canonical": CASE_CANONICAL,
+        "case_opening": html.escape(case_opening(d, n_cand, n_dis)),
+        "case_description": html.escape("How Cascadia Early Warning tests whether forecasts of public FDA device-report volume can "
+                                        "support a repeatable review queue: the measured results, the implementation repair and the "
+                                        "limits of a retrospective evaluation. Counts of reports, not rates."),
+        "t_results": table("case-results", "The measured results, each figure generated from the module's frozen tables",
+                           ["Result", "Meaning"], case_results(d, code, c1, c2, n_cand, n_dis, qd, rc)),
+        "c2_in": str(c2["inside"]),
+        "g5_inside": num_word(g5_in), "g5_above": num_word(g5_above), "g5_below_floor": num_word(n_dis),
+        "g5_outside": num_word(len(c3["rows"]) - g5_in),
+        "q_gated_word": ("%s episode" if qd["gatedEpisodes"] == 1 else "%s episodes") % num_word(qd["gatedEpisodes"]),
+        "q_ungated_word": num_word(qd["ungatedEpisodes"]),
+        "n_rule_on": str(qd["enabledCodes"]),
+        "case_test_phrase": html.escape(case_test_phrase()),
+        "case_experiment_history": html.escape(CASE_EXPERIMENT_HISTORY),
+        "case_prereg_narrowed": html.escape(CASE_PREREG_NARROWED),
+        "case_panel": html.escape(CASE_PANEL),
+        "case_live_edge": html.escape(case_live_edge()),
+        "data_case": json.dumps(data_case, separators=(",", ":")),
+    })
+    # Both templates are substituted in memory and checked before either page is written.
+    pages = []
+    for tpl, outname in (("template.html", "index.html"), ("case-study-template.html", "case-study.html")):
+        out = (DOCS / tpl).read_text(encoding="utf-8")
+        for k, v in f.items():
+            out = out.replace("@@%s@@" % k, str(v))
+        left = sorted(set(re.findall(r"@@(\w+)@@", out)))
+        if left:
+            raise SystemExit("unsubstituted tokens in %s: %s" % (tpl, left))
+        pages.append((outname, out))
+    for outname, out in pages:
+        (DOCS / outname).write_text(out, encoding="utf-8", newline="\n")
+    print("wrote docs/index.html and docs/case-study.html; headline code %s (%s)" % (code, f["headline_rule"]))
     for c, name in ((c1, "c1"), (c2, "c2"), (c3, "c3"), (c4, "c4"), (c5, "c5")):
         print("  %s: %s" % (name, c["finding"]))
     return 0

@@ -135,6 +135,7 @@
   }
   function mount(id, build) {
     var host = el(id), state = { mode: null, chart: null };
+    if (!host) return;   // a page may carry a subset of the charts (docs/case-study.html carries chart 3 only)
     function run() {
       var L = layout(host), mode = (L.narrow ? 'n' : 'w') + (L.noTip ? 't' : '');
       if (state.chart && state.mode === mode) return;

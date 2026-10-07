@@ -480,3 +480,20 @@ be a new result, not a correction.
 `docs/template.html`; `docs/assets/page.js`; `governance/metric_register.md`;
 `governance/numbers-gate.md` (G6); `governance/chart-review.md` and
 `governance/pre-panel-notes.md` (the revision panel of 2026-10-07).
+
+**Part B, the case study.** The site's Quarto case study becomes
+`docs/case-study.html`, a Felix detail page beside the module, built by
+`src/build_page.py` from `docs/case-study-template.html` with the same tokens,
+stylesheet, theme and chart code, so both pages share one design system, one
+data source and one set of gates. It takes the case-study review's five
+sections (the review decision, the measured results, what Aaron owned, how
+the evidence was checked, the next test), its opening and results table
+verbatim with the figures generated, its panel and experiment-history
+sentences verbatim, and chart 3 live. Every figure on it is generated; the
+drafted sentences are listed in the build receipt for Aaron's review.
+`src/validate.py`'s `check_case_study` holds the opening to 120 words, the
+results table ahead of every section, one H1 and the canonical and social
+tags; the cohort-facts, names and em-dash gates read it as they read the
+module; Path 2 compares its data block. The site's old URL becomes a redirect
+stub in a later brief, written in the site repository, not here.
+
