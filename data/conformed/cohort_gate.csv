@@ -1,0 +1,8 @@
+product_code,complete_months_training,raw_training_reports,raw_window_reports,stage_a_pass,eligible_training_reports,stage_b_pass,forecast
+DSQ,96,108175,138034,true,108175,true,true
+OZD,87,5875,45326,true,5875,true,true
+PYX,46,138,2190,true,138,true,true
+NPT,96,40110,72845,true,40110,true,true
+NIK,96,87420,117383,true,87420,true,true
+LWS,96,157218,222604,true,157218,true,true
+DSP,96,29297,50701,true,29297,true,true

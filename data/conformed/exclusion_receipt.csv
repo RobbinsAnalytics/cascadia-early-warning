@@ -1,0 +1,16 @@
+product_code,field,reports_matched
+DSP,ALL (countable reports),50701
+DSP,ANY (reports removed),1
+DSP,device.manufacturer_d_name,1
+DSQ,ALL (countable reports),138034
+DSQ,ANY (reports removed),0
+LWS,ALL (countable reports),222604
+LWS,ANY (reports removed),0
+NIK,ALL (countable reports),117383
+NIK,ANY (reports removed),0
+NPT,ALL (countable reports),72845
+NPT,ANY (reports removed),0
+OZD,ALL (countable reports),45326
+OZD,ANY (reports removed),0
+PYX,ALL (countable reports),2190
+PYX,ANY (reports removed),0

@@ -1,0 +1,9 @@
+product_code,device_name,device_class,medical_specialty,medical_specialty_description,review_panel,regulation_number,implant_flag,life_sustain_support_flag,summary_malfunction_reporting,submission_type_id,in_cohort,reference_only,in_excluded_set,forecast
+DSQ,Ventricular (Assist) Bypass,3,,Unknown,CV,,Y,N,Ineligible,2,true,false,false,true
+OZD,Temporary Non-Roller Type Left Heart Support Blood Pump,3,,Unknown,CV,,N,Y,Ineligible,2,true,false,false,true
+PYX,Temporary Non-Roller Type Right Heart Support Blood Pump,3,CV,Cardiovascular,CV,870.4360,N,Y,Ineligible,2,true,false,false,true
+NPT,"Aortic Valve, Prosthesis, Percutaneously Delivered",3,,Unknown,CV,,Y,Y,Eligible,2,true,false,false,true
+NIK,"Defibrillator, Automatic Implantable Cardioverter, With Cardiac Resynchronization (Crt-D)",3,,Unknown,CV,,Y,Y,Ineligible,2,true,false,false,true
+LWS,Implantable Cardioverter Defibrillator (Non-Crt),3,,Unknown,CV,,Y,Y,Ineligible,2,true,false,false,true
+DSP,"System, Balloon, Intra-Aortic And Control",2,CV,Cardiovascular,CV,870.3535,N,N,Ineligible,1,true,false,false,true
+DXY,Implantable Pacemaker Pulse-Generator,3,CV,Cardiovascular,CV,870.3610,Y,N,Ineligible,2,false,true,false,false
