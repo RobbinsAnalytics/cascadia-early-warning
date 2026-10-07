@@ -47,6 +47,19 @@ and a SHA-256 per response. `src/acquire.py` re-pulls the source and
 else rebuilds from the committed snapshot, offline; `run.ps1 build` makes no
 network request.
 
+**`run.ps1 build` rebuilds the pages and nothing else.** The engine stages
+(`build_model.py`, `forecast.py`, `score.py`, `review.py`,
+`recall_context.py`) each write frozen tables and are deliberately not in it;
+the build session ran them directly and the git log records what they wrote.
+`run.ps1 validate` runs the four gates; `run.ps1 all` runs validate, build,
+validate and stops at the first failing stage with that stage's exit code.
+The execution policy here is Restricted, so invoke it as
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 <task>`.
+Until 2026-10-07 the wrapper passed no arguments to any stage (its parameter
+was named `$args`, which inside the body is PowerShell's empty automatic
+variable), so no stage had ever run through it; never name a parameter after
+an automatic variable.
+
 **This module departs from PRINCIPLES rule 1's mechanism, deliberately and on
 the record.** Rule 1 says commit the raw response. The record-level payloads
 carry narratives, patient arrays and addresses and run to hundreds of

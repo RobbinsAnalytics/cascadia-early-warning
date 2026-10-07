@@ -1,13 +1,27 @@
 # run.ps1 -- the one entry point. Names the interpreter by path on every line.
 #
-#   .\run.ps1 acquire    re-pull the source: counts, extract, bulk, vmsr, register.
-#                        A DELIBERATE REFRESH. Overwrites the freeze. Never a
-#                        side effect of anything else here.
-#   .\run.ps1 validate   every gate, offline: golden, measures, validate
-#                        (with the proof the checks can fail), freeze.
-#   .\run.ps1 build      conform, forecast, score, review, recall context,
-#                        page. Offline. No network request is made.
-#   .\run.ps1 all        validate, then build, then validate again.
+#   run.ps1 acquire    re-pull the source: counts, extract, bulk, vmsr, register.
+#                      A DELIBERATE REFRESH. Overwrites the freeze. Never a
+#                      side effect of anything else here.
+#   run.ps1 validate   every gate, offline: golden, measures, validate
+#                      (with the proof the checks can fail), freeze.
+#   run.ps1 build      the pages, from the retained frozen outputs. Offline.
+#                      Writes docs/ only; no stage that writes a frozen path.
+#   run.ps1 all        validate, then build, then validate again; stops at the
+#                      first failure with that stage's exit code.
+#
+# The execution policy on this machine is Restricted, so `.\run.ps1` is refused
+# in a fresh shell. The working form, process-scoped and persisting nothing:
+#
+#   powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 <task>
+#
+# WHAT `build` DOES NOT RUN, AND WHY. build_model.py, forecast.py, score.py,
+# review.py and recall_context.py each write tables on governance/freeze.toml's
+# protected list; forecast.py's locked stage refuses to run twice. Re-running
+# them would rewrite the freeze, so `build` rebuilds only what is computed FROM
+# the freeze: the page(s). The build session ran each of them directly, and
+# the git log records what each one wrote. A reproduction task that re-runs
+# them into a temporary copy and compares is a build-forward candidate.
 #
 # Bare `python` on this machine is an empty 3.14.7 (CLAUDE.md). This file never
 # says `python`.
@@ -22,10 +36,16 @@ if (-not (Test-Path $Py)) {
 }
 Set-Location $Root
 
-function Step($label, $args) {
-    Write-Host "== $label"
-    & $Py @args
-    if ($LASTEXITCODE -ne 0) { Write-Error "$label exited $LASTEXITCODE"; exit $LASTEXITCODE }
+# Never name a parameter $args: inside the body that name is PowerShell's
+# automatic variable, which is empty, and python would start with no script
+# at all and open its REPL (the defect this signature repairs).
+function Step([string]$Label, [string[]]$StepArgs) {
+    Write-Host "== $Label :: python $($StepArgs -join ' ')"
+    & $Py @StepArgs
+    $code = $LASTEXITCODE
+    # Write-Error would throw under Stop before the exit ran, and the wrapper
+    # would always exit 1; the stage's own code is what the caller gets.
+    if ($code -ne 0) { [Console]::Error.WriteLine("$Label exited $code"); exit $code }
 }
 
 switch ($Task) {
@@ -43,17 +63,13 @@ switch ($Task) {
         Step "validate_freeze"   @("src/validate_freeze.py")
     }
     "build" {
-        Step "build_model"     @("src/build_model.py")
-        Step "forecast"        @("src/forecast.py")
-        Step "score"           @("src/score.py")
-        Step "review"          @("src/review.py")
-        Step "recall_context"  @("src/recall_context.py")
         Step "build_page"      @("src/build_page.py")
     }
     "all" {
-        & $PSCommandPath validate
-        & $PSCommandPath build
-        & $PSCommandPath validate
+        foreach ($t in @("validate", "build", "validate")) {
+            & $PSCommandPath $t
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        }
     }
     default { Write-Error "unknown task '$Task'; one of acquire, validate, build, all" }
 }

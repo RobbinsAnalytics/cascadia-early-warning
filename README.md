@@ -13,19 +13,26 @@ Page: `docs/index.html`, published to
 
 ## Rebuild
 
-The build order is, from the committed freeze and offline:
+From the committed freeze and offline. The execution policy on the build
+machine is Restricted, so name the policy for the one process:
 
 ```
-.\run.ps1 build       # build_model, forecast, score, review, recall_context, build_page
-.\run.ps1 validate    # test_golden, validate_measures, validate --prove-failable, validate_freeze
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 build      # build_page: the pages, from the frozen tables
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 validate   # test_golden, validate_measures, validate --prove-failable, validate_freeze
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 all        # validate, build, validate; stops at the first failure
 ```
+
+`build` does not re-run the engine stages (`build_model`, `forecast`,
+`score`, `review`, `recall_context`): each writes tables the freeze gate
+protects, and the locked forecast stage refuses to run twice. The build
+session ran them directly, and the git log is their record.
 
 `run.ps1` names the venv interpreter by path (`.venv\Scripts\python.exe`,
 created from `C:\Users\Ajayr\AppData\Local\Python\pythoncore-3.14-64\python.exe`
 with `--system-site-packages`; `requirements.txt` adds statsmodels). Bare
 `python` on the build machine is an empty interpreter and is never used.
 
-`.\run.ps1 acquire` re-pulls the source. It is a deliberate refresh and
+`run.ps1 acquire` re-pulls the source. It is a deliberate refresh and
 overwrites the freeze; nothing else here makes a network request.
 
 The forecast harness runs in two stages whose order the git log enforces:
