@@ -37,10 +37,11 @@ module = "cascadia-early-warning"
 # page. Advancing it is a deliberate act; see CLAUDE.md.
 as_of_date = "2026-08-31"
 
-# The freeze commit: the raw receipts, the count series, the register and the
-# Phase 2 conformed tables all landed here. Strictly stronger than "HEAD": a
+# The Phase 3 commit, which added the forecast, score, review and recall
+# tables below; the Phase 1 and 2 artifacts were frozen at 777ab234d7de and
+# are unchanged since (the gate at that baseline passed before this move). Strictly stronger than "HEAD": a
 # committed change to any path below is caught, not only an uncommitted one.
-baseline = "777ab234d7de6a6fca51fa38f417d84c6cfc6dc2"
+baseline = "12dcaf1a7abf5779528c0c9dcd6dd337de1e6150"
 
 # EVERY PATH HERE MUST BE GIT-TRACKED. A gitignored path FAILS OPEN: Path.glob
 # matches the filesystem, `git diff --quiet` reports no change on an untracked
@@ -65,6 +66,15 @@ protected_paths = [
   "data/conformed/monthly_remedial_recall.csv",
   "data/conformed/product_code.csv",
   "data/conformed/cohort_gate.csv",
+  "data/conformed/forecast.csv",
+  "data/conformed/forecast_states.csv",
+  "data/conformed/forecast_scored.csv",
+  "data/conformed/forecast_score.csv",
+  "data/conformed/review_queue.csv",
+  "data/conformed/review_workload.csv",
+  "data/conformed/recall_context.csv",
+  "data/conformed/recall_count.json",
+  "data/conformed/recall_context_meta.json",
   "governance/source-register.md",
   "governance/exclusion-receipt-records.md",
 ]
