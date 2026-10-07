@@ -236,6 +236,9 @@
       });
       kids.push({ type: 'text', style: { x: cx, y: base[1] + 8, text: monthTick(O.target, L.narrow), fill: C.slateMoss, font: '12px ' + SANS,
                                          align: 'center', textAlign: 'center', verticalAlign: 'top', textVerticalAlign: 'top' } });
+      // The column's horizon, under its month: the history's band is one month ahead, the column is not.
+      kids.push({ type: 'text', style: { x: cx, y: base[1] + 24, text: O.tickNote, fill: C.slateMoss, font: '12px ' + SANS,
+                                         align: 'center', textAlign: 'center', verticalAlign: 'top', textVerticalAlign: 'top' } });
       return { type: 'group', children: kids };
     }
     var option = {
@@ -297,7 +300,7 @@
           points: d.months.map(function (m, i) { return { label: monthShort(m), value: nf(d.actual[i]), seriesIndex: 3, dataIndex: i }; }) },
         { name: d.modelLabel + ' one-month-ahead point', summary: 'where issued',
           points: d.months.map(function (m, i) { return d.points[i] == null ? null : { label: monthShort(m), value: nf(d.points[i]), seriesIndex: 2, dataIndex: i }; }).filter(Boolean) },
-        { name: 'Next month, ' + monthShort(O.target), summary: 'point ' + nf(O.point) + ', 80% range ' + nf(O.lo80) + ' to ' + nf(O.hi80),
+        { name: O.navName, summary: O.navSummary,
           points: [{ label: monthShort(O.target), value: nf(O.point), seriesIndex: 4, dataIndex: 0 }] }
       ] }
     }, L);

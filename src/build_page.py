@@ -78,6 +78,9 @@ RULE_CHANCE = ("An illustration, not a measured false-alarm rate: if a model's 8
                "chance before the five-report floor. Neither condition is guaranteed here, and no false-alarm rate was measured.")
 SERIES_START = "2022-01"
 DOT_N = 20
+# The page leads with the longest horizon the harness forecasts (config/model.json "horizons");
+# promotion was decided at horizon one, and the page says so once.
+LEAD_H = max(json.loads(CONFIG.read_text(encoding="utf-8"))["horizons"])
 
 
 def read_csv(name: str, folder: pathlib.Path = CONF) -> list[dict]:
@@ -387,6 +390,14 @@ def fc_rows(d, code, model, h, period=None):
     return sorted(rows, key=lambda r: r["target"])
 
 
+def outlook_row(d, code, model, h, origin):
+    rows = [r for r in d["fc"] if r["product_code"] == code and r["model"] == model and r["horizon"] == str(h)
+            and r["period"] == "outlook" and r["origin"] == origin]
+    if len(rows) != 1:
+        raise SystemExit("%d outlook rows for %s %s horizon %s origin %s" % (len(rows), code, model, h, origin))
+    return rows[0]
+
+
 def score_cell(d, code, model, h, period):
     for r in d["scores"]:
         if (r["product_code"], r["model"], r["horizon"], r["period"]) == (code, model, str(h), period):
@@ -422,42 +433,66 @@ def chart1(d, code):
     points = [None if m not in pts else float(pts[m]["point"]) for m in months]
     lo80 = [None if m not in pts or pts[m]["lower80"] == "" else float(pts[m]["lower80"]) for m in months]
     hi80 = [None if m not in pts or pts[m]["upper80"] == "" else float(pts[m]["upper80"]) for m in months]
-    outlook = fc_rows(d, code, use, 1, "outlook")[0]
-    o_target = outlook["target"]
-    o_point = float(outlook["point"])
-    o_lo80, o_hi80 = float(outlook["lower80"]), float(outlook["upper80"])
-    o_lo50, o_hi50 = float(outlook["lower50"]), float(outlook["upper50"])
-    qerr, n_err = error_quantiles(d, code, use, 1, outlook["origin"])
+    # The headline outlook is November at horizon three, from the outlook origin; September at horizon one
+    # is the elapsed-period estimate. Rows are selected BY ORIGIN: at horizon three the outlook period also
+    # holds rows from the two earlier origins, whose targets are September and October.
+    origin = d["cfg"]["periods"]["outlook"]["origin"]
+    nov = outlook_row(d, code, use, LEAD_H, origin)
+    sep = outlook_row(d, code, use, 1, origin)
+    o_target, o_point = nov["target"], float(nov["point"])
+    o_lo80, o_hi80 = float(nov["lower80"]), float(nov["upper80"])
+    o_lo50, o_hi50 = float(nov["lower50"]), float(nov["upper50"])
+    qerr, n_err = error_quantiles(d, code, use, LEAD_H, origin)
+    if n_err != int(nov["calibration_n"]):
+        raise SystemExit("the %s dots rest on %d errors; the published range on %s" % (o_target, n_err, nov["calibration_n"]))
     dots = [max(0.0, o_point + e) for e in qerr]
+    cov = score_cell(d, code, use, LEAD_H, "locked")
+    cov80, cov_n = float(cov["coverage80"]), int(cov["n"])
+    cov_in = int(round(cov80 * cov_n))
+    s_point, s_lo80, s_hi80 = float(sep["point"]), float(sep["lower80"]), float(sep["upper80"])
+    h_word = num_word(LEAD_H)
     last_actual = actual[-1]
-    finding = ("%s: expect about %s reports in %s, with an 80%% range of %s to %s"
-               % (code, nf(o_point), month_name(o_target), nf(o_lo80), nf(o_hi80)))
+    finding = ("%s: expect about %s reports in %s, 80%% range %s to %s; %s-month-ahead ranges held %d of %d locked-test months"
+               % (code, nf(o_point), month_name(o_target), nf(o_lo80), nf(o_hi80), h_word, cov_in, cov_n))
     subtitle = ("Eligible reports received per month for %s (%s), %s to %s, with the %s's one-month-ahead points and 80%% range over the "
-                "evaluated months. The %s figure is an elapsed-period estimate: issued %s, after the month ended "
-                "and before the source loaded it." % (code, d["names"].get(code, ""), month_short(months[0]), month_short(months[-1]),
-                                                       model_label(use), month_short(o_target), RETRIEVED))
+                "evaluated months. The column is %s, forecast %s months ahead from %s by the same model: %d outcomes from its own %d latest "
+                "%s-month-ahead errors, filled inside the 80%% range. %s, one month ahead (point %s, 80%% range %s to %s), is an "
+                "elapsed-period estimate: the month had ended when it was issued on %s, and it is not yet in the source."
+                % (code, d["names"].get(code, ""), month_short(months[0]), month_short(months[-1]), model_label(use),
+                   month_name(o_target), h_word, month_name(origin), DOT_N, n_err, h_word,
+                   month_name(sep["target"]), nf(s_point), nf(s_lo80), nf(s_hi80), sep["issue_date"]))
     annotation = "point %s is the tick; filled dots span the 80%% range, %s to %s" % (nf(o_point), nf(o_lo80), nf(o_hi80))
     rep = d["rf"]["reports"]
     removed, countable = rep["distinctRaw"] - rep["distinctEligible"], rep["distinctRaw"]
     summary = ("Line chart of eligible reports received per month for product code %s from %s to %s, %d months, "
                "range %s to %s, latest %s in %s. A dashed line carries the %s's one-month-ahead point for each month "
-               "from %s, with a shaded band for its 80%% range. At the right, %d dots show the next month, %s: point %s, 50%% range %s to %s, 80%% range %s to %s, "
-               "from %d past errors."
+               "from %s, with a shaded band for its 80%% range. %s dots show %s, forecast %s months ahead: point %s, 50%% range %s to %s, "
+               "80%% range %s to %s, from %d past %s-month-ahead errors; ranges at that horizon held %d of %d locked-test months. "
+               "%s, one month ahead and not yet in the source: point %s, 80%% range %s to %s."
                % (code, month_short(months[0]), month_short(months[-1]), len(months), nf(min(actual)), nf(max(actual)),
                   nf(last_actual), month_short(months[-1]), model_label(use), month_short(min(pts)) if pts else "n/a",
-                  DOT_N, month_short(o_target), nf(o_point), nf(o_lo50), nf(o_hi50), nf(o_lo80), nf(o_hi80), n_err))
+                  num_word(DOT_N).capitalize(), month_name(o_target), h_word, nf(o_point), nf(o_lo50), nf(o_hi50), nf(o_lo80), nf(o_hi80),
+                  n_err, h_word, cov_in, cov_n, month_name(sep["target"]), nf(s_point), nf(s_lo80), nf(s_hi80)))
     table = [[month_short(m), nf(a), "" if p is None else nf(p), "" if lo is None else nf(lo), "" if hi is None else nf(hi)]
              for m, a, p, lo, hi in zip(months, actual, points, lo80, hi80)]
-    table.append([month_short(o_target), "not yet in the source", nf(o_point), nf(o_lo80), nf(o_hi80)])
+    table.append(["%s, one month ahead" % month_short(sep["target"]), "not yet in the source", nf(s_point), nf(s_lo80), nf(s_hi80)])
+    table.append(["%s, %s months ahead" % (month_short(o_target), h_word), "a forecast", nf(o_point), nf(o_lo80), nf(o_hi80)])
     return {
         "code": code, "model": use, "modelLabel": model_label(use),
         "months": months, "actual": actual, "points": points, "lo80": lo80, "hi80": hi80,
-        "outlook": {"target": o_target, "point": o_point, "lo50": o_lo50, "hi50": o_hi50,
-                    "lo80": o_lo80, "hi80": o_hi80, "dots": dots, "nErrors": n_err},
+        "outlook": {"target": o_target, "origin": origin, "horizon": LEAD_H, "point": o_point, "lo50": o_lo50, "hi50": o_hi50,
+                    "lo80": o_lo80, "hi80": o_hi80, "dots": dots, "nErrors": n_err,
+                    "coverage80": cov80, "coverageN": cov_n, "coverageIn": cov_in,
+                    "tickNote": "%d months ahead" % LEAD_H,
+                    "navName": "%s, %s months ahead" % (month_short(o_target), h_word),
+                    "navSummary": "point %s, 80%% range %s to %s" % (nf(o_point), nf(o_lo80), nf(o_hi80))},
+        "elapsed": {"target": sep["target"], "point": s_point, "lo80": s_lo80, "hi80": s_hi80, "lo50": float(sep["lower50"]),
+                    "hi50": float(sep["upper50"]), "issued": sep["issue_date"]},
         "finding": finding, "subtitle": subtitle, "annotation": annotation, "summary": summary,
         "ariaLabel": summary,
         "provenance": {"source": no_sep(SOURCE, "source"), "asOf": no_sep("receipts through " + AS_OF, "asOf"),
-                       "flags": no_sep("counts, not rates; the firm-list exclusion removed %s of %s reports; next month is an elapsed-period estimate" % (nf(removed), nf(countable)), "flags")},
+                       "flags": no_sep("counts, not rates; the firm-list exclusion removed %s of %s reports; %s is %s months ahead; %s is an elapsed-period estimate"
+                                       % (nf(removed), nf(countable), month_short(o_target), h_word, month_short(sep["target"])), "flags")},
         "table": table,
     }
 
@@ -771,10 +806,15 @@ def main() -> int:
     if m:
         sha_local = m.group(1)
     outlook_rows = []
+    o_origin = cfg["periods"]["outlook"]["origin"]
     for c in d["forecast_codes"]:
-        r = fc_rows(d, c, use[c], 1, "outlook")[0]
-        outlook_rows.append([c, d["names"].get(c, ""), model_label(use[c]), month_short(r["target"]), nf(r["point"]),
-                             nf(r["lower50"]), nf(r["upper50"]), nf(r["lower80"]), nf(r["upper80"]), r["calibration_n"]])
+        for h in sorted(cfg["horizons"]):
+            r = outlook_row(d, c, use[c], h, o_origin)
+            sc = score_cell(d, c, use[c], h, "locked")
+            outlook_rows.append([c, d["names"].get(c, ""), model_label(use[c]), month_short(r["target"]),
+                                 "%d, elapsed-period estimate" % h if r["target"] <= add_months(RETRIEVED[:7], -1) else str(h),
+                                 nf(r["point"]), nf(r["lower50"]), nf(r["upper50"]), nf(r["lower80"]), nf(r["upper80"]),
+                                 "%s of %s" % (pct(sc["coverage80"], 1), sc["n"]), r["calibration_n"]])
     score_rows = []
     for r in d["scores"]:
         if r["period"] in ("development", "locked", "recent") and r["horizon"] == "1":
@@ -816,6 +856,10 @@ def main() -> int:
         "cand_codes": ", ".join(c for c in d["forecast_codes"] if use[c] == "candidate") or "none",
         "base_codes": ", ".join(c for c in d["forecast_codes"] if use[c] != "candidate") or "none",
         "o_target": month_name(c1["outlook"]["target"]), "o_point": nf(c1["outlook"]["point"]),
+        "o_h_word": num_word(c1["outlook"]["horizon"]), "o_origin": month_name(c1["outlook"]["origin"]),
+        "o_cov": pct(c1["outlook"]["coverage80"], 1), "o_cov_in": str(c1["outlook"]["coverageIn"]), "o_cov_n": str(c1["outlook"]["coverageN"]),
+        "s_target": month_name(c1["elapsed"]["target"]), "s_point": nf(c1["elapsed"]["point"]),
+        "s_lo80": nf(c1["elapsed"]["lo80"]), "s_hi80": nf(c1["elapsed"]["hi80"]), "s_issued": c1["elapsed"]["issued"],
         "o_lo80": nf(c1["outlook"]["lo80"]), "o_hi80": nf(c1["outlook"]["hi80"]),
         "o_lo50": nf(c1["outlook"]["lo50"]), "o_hi50": nf(c1["outlook"]["hi50"]),
         "last_month": month_name(c1["months"][-1]), "last_actual": nf(c1["actual"][-1]),
@@ -862,8 +906,8 @@ def main() -> int:
         "disclaimer": html.escape(DISCLAIMER),
         "live_edge": html.escape(live_edge_line()),
         "c1_card": chart_card("c1", "01", "The outlook", 480, "glacier", c1["annotation"],
-                              [("Chart 1 data: %s by month, with the one-month-ahead point and 80%% range" % code,
-                                table("tbl-c1", "Chart 1 data: eligible reports per month for %s, the model in use's point and 80%% range (M-01, M-03)" % code,
+                              [("Chart 1 data: %s by month with the one-month-ahead point and 80%% range, then %s and %s" % (code, month_short(c1["elapsed"]["target"]), month_short(c1["outlook"]["target"])),
+                                table("tbl-c1", "Chart 1 data: eligible reports per month for %s, the model in use's one-month-ahead point and 80%% range, then the outlook at one and %s months ahead (M-01, M-03)" % (code, num_word(c1["outlook"]["horizon"])),
                                       ["Month", "Reports received", "Point", "80% low", "80% high"], c1["table"]))]),
         "c2_card": chart_card("c2", "02", "The locked test", 460, "madrona", c2["annotation"],
                               [("Chart 2 data: the locked test for %s" % code,
@@ -881,8 +925,8 @@ def main() -> int:
                               [("Chart 5 data: %s by event month and receipt lag" % code,
                                 table("tbl-c5", "Chart 5 data: %s reports by event month, received within 3, 6 and 12 months (M-02)" % code,
                                       ["Event month", "Reports with this event month", "Within 3 months", "Within 6", "Within 12", "Incomplete at 12"], c5["table"]))]),
-        "t_outlook": table("tbl-outlook", "Next-month outlook for every forecast code, model in use, horizon one (M-03)",
-                           ["Code", "Device", "Model in use", "Target", "Point", "50% low", "50% high", "80% low", "80% high", "Errors behind the range"], outlook_rows),
+        "t_outlook": table("tbl-outlook", "Outlook for every forecast code from origin %s, model in use, at each horizon, with that horizon's locked-test 80%% coverage (M-03, M-04)" % cfg["periods"]["outlook"]["origin"],
+                           ["Code", "Device", "Model in use", "Target", "Horizon (months ahead)", "Point", "50% low", "50% high", "80% low", "80% high", "Locked 80% coverage, of months", "Errors behind the range"], outlook_rows),
         "t_scores": table("tbl-scores", "Scores by code, model and period, horizon one (M-04)",
                           ["Code", "Model", "Period", "Months", "MAE", "MAE / trailing mean", "50% coverage", "80% coverage", "80% width", "WIS"], score_rows),
         "t_queue": table("tbl-queue", "The review queue: every episode under the fixed rule (M-05)",
