@@ -17,7 +17,7 @@ each built page's data block.
 What it does NOT cover, stated so the page cannot claim more: M-06 (the
 recall context), the cohort gate, the exclusion receipt as a table, the
 reports without an event date, the promotion decision, the summary-report
-composition and the outlook's twenty dots. It is DuckDB SQL plus its own Python arithmetic, not SQL alone,
+composition, the remedial-recall counts and the outlook's twenty dots. It is DuckDB SQL plus its own Python arithmetic, not SQL alone,
 and it consumes the engine's published points and states as inputs to the
 ranges and scores: a chain of verified links, not an end-to-end rebuild. A
 measure that only agrees with itself has not been validated. Written from

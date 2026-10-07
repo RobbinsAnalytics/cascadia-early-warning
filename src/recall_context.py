@@ -13,7 +13,7 @@ root-cause vocabulary, the dates, the counts.
 Both bulk zips must hash as the manifest records them; the JSON is unzipped
 beside them (gitignored) so a second path could read it with DuckDB. None
 does yet: M-06 has no Path 2, and src/validate.py checks the derived set
-only against the hand-verified known events (D19).
+only against the independently verified known events (D19).
 """
 from __future__ import annotations
 

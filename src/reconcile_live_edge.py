@@ -252,11 +252,11 @@ def main() -> int:
     # the page, last, so the health surface is level with the record
     res = subprocess.run([sys.executable, str(REPO / "src" / "build_page.py")], cwd=str(REPO), capture_output=True, text=True)
     if res.returncode != 0:
-        print("PAGE REBUILD FAILED; docs/index.html is stale against governance/health.json")
+        print("PAGE REBUILD FAILED; docs/index.html and docs/case-study.html are stale against governance/health.json")
         print(res.stdout[-2000:])
         print(res.stderr[-2000:])
         return 2
-    print("rebuilt docs/index.html")
+    print("rebuilt docs/index.html and docs/case-study.html")
     return 0
 
 

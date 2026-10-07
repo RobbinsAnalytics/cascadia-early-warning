@@ -526,6 +526,7 @@ _ROMAN = {"1": "I", "2": "II", "3": "III"}
 # Case-insensitive, and "Class-II" as well as "Class II": a class claim in any spelling is a claim.
 _CLASS_RX = re.compile(r"(?i)\bclass(?:es)?[\s-]+(?:II|III|2|3)\b(?:\s*(?:,|and|&)\s*(?:II|III|2|3)\b)*")
 _ELIG_RX = re.compile(r"(?i)\b(?:in)?eligible\b|\bqualif")
+_LIST_RX = re.compile(r"(?i)\bon FDA's list\b")
 _SENTENCE_RX = re.compile(r"(?<=[.;!?])\s+")
 
 
@@ -534,14 +535,18 @@ def _asserted_eligibility(text: str, codes: list[str]):
     codes, or None when the sentence is not in a form this check can read (which fails the check). The
     first sentence must place codes on FDA's list ("X is on FDA's list ...") and may add "and Y are
     not"; "every code" / "all N codes" and "no code" / "none of the N codes" are the whole cohort."""
-    first = re.split(r"(?<=\.)\s+", text.strip())[0]
+    first, *rest = re.split(r"(?<=\.)\s+", text.strip())
+    # Only one eligibility claim is read; a second inside the marked statement is not, and fails.
+    if any(_ELIG_RX.search(s) or _LIST_RX.search(s) for s in rest):
+        return None
     named = lambda s: {c for c in codes if re.search(r"\b%s\b" % c, s)}  # noqa: E731
     head, _, tail = first.partition(", and ")
-    if not re.search(r"(?i)\bon FDA's list\b", head):
+    if not _LIST_RX.search(head):
         return None
     if re.search(r"(?i)^\s*(?:no code|none of)\b", head):
         return set(), set(codes)
-    if re.search(r"(?i)\bnot on\b", head):
+    # Any other negation is a form this check does not read ("no longer on", "isn't on", "never on").
+    if re.search(r"(?i)\b(?:not|no|never|neither|nor|without|except|longer)\b|n't\b", head):
         return None
     yes = set(codes) if re.search(r"(?i)^\s*(?:every code|all \w+ codes)\b", head) else named(head)
     if tail:
@@ -549,6 +554,10 @@ def _asserted_eligibility(text: str, codes: list[str]):
             return None
         return yes, named(tail)
     return yes, set(codes) - yes
+
+
+def _eligibility_claim(s: str) -> bool:
+    return bool(re.search(r"(?i)\bsummary\b", s) and (_ELIG_RX.search(s) or _LIST_RX.search(s)))
 
 
 def check_cohort_facts(results):
@@ -573,7 +582,7 @@ def check_cohort_facts(results):
             if m.group(0) != want:
                 bad.append("%s: device class stated as %r; product_code.csv gives %r" % (where, m.group(0), want))
         for s in _SENTENCE_RX.split(text):
-            if re.search(r"(?i)\bsummary\b", s) and _ELIG_RX.search(s):
+            if _eligibility_claim(s):
                 bad.append("%s: a summary-reporting eligibility statement %s: %r"
                            % (where, "outside a marked data-cohort-fact element" if markable else "in chart text, where it cannot be checked", s[:90]))
 
@@ -583,6 +592,11 @@ def check_cohort_facts(results):
         pt = page_text(path)
         for seg in pt.segments:
             scan(rel, seg, True)
+        # A claim split across two adjacent blocks (a term and its definition, two list items) is still a claim.
+        for a_seg, b_seg in zip(pt.segments, pt.segments[1:]):
+            if _eligibility_claim(a_seg + " " + b_seg) and not (_eligibility_claim(a_seg) or _eligibility_claim(b_seg)):
+                bad.append("%s: a summary-reporting eligibility statement split across two blocks, outside a marked element: %r"
+                           % (rel, (a_seg + " / " + b_seg)[:90]))
         for m in pt.meta:
             scan(rel + " (meta)", m, False)
         if pt.data_json and not pt.data_json.strip().startswith("@@"):
@@ -633,19 +647,21 @@ class _SectionWords(html.parser.HTMLParser):
     a whitespace-separated token holding a letter or digit, joined across inline elements and
     split at blocks. Not counted: script, style, svg, anything under the hidden attribute,
     aria-hidden or sr-only, and a closed <details> outside its <summary> (the reader sees only
-    the summary line). The count stops at the chart card, not at the canvas inside it: the card
-    is what the reader meets."""
+    the summary line). The count runs into the chart card up to the canvas itself (an element
+    with class "chart"), because what a card holds before its canvas renders above it; the
+    card's summary paragraph renders below the canvas and is skipped. A card with no canvas is
+    not a chart, and counting goes on past it."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.stack, self.sections = [], {}
-        self._cur, self._counting, self._buf = None, False, []
+        self._cur, self._counting, self._buf, self._card = None, False, [], None
 
     def _hidden(self):
         for t, a in self.stack:
             cls = a.get("class") or ""
             if t in ("script", "style", "svg", "template", "noscript") or "hidden" in a \
-                    or "sr-only" in cls.split():
+                    or "sr-only" in cls.split() or "chart-summary" in cls.split():
                 return True
         for i, (t, a) in enumerate(self.stack):
             if t == "details" and "open" not in a and not any(tt == "summary" for tt, _ in self.stack[i + 1:]):
@@ -662,13 +678,16 @@ class _SectionWords(html.parser.HTMLParser):
         a = dict(attrs)
         if tag in _BLOCKS:
             self._flush()
-        if self._cur and self._counting and "chart-card" in (a.get("class") or "").split():
+        cls = (a.get("class") or "").split()
+        if self._cur and self._counting and self._card is not None and "chart" in cls:
             self._flush()
             self._counting = False
             self.sections[self._cur]["chart"] = True
         if tag in _VOID:
             return
         self.stack.append((tag, a))
+        if self._cur and self._counting and "chart-card" in cls and re.fullmatch(r"card-c\d+", a.get("id") or ""):
+            self._card = len(self.stack)
         sid = a.get("id") or ""
         if tag == "div" and re.fullmatch(r"s\d+", sid) and self._cur is None:
             self._cur = sid
@@ -683,6 +702,8 @@ class _SectionWords(html.parser.HTMLParser):
             t, _ = self.stack.pop()
             if t == tag:
                 break
+        if self._card is not None and len(self.stack) < self._card:
+            self._card = None
         if self._cur:
             s = self.sections[self._cur]
             if tag == "h2" and not s["h2"]:
@@ -731,7 +752,12 @@ def check_words_before_chart(results):
 
 
 CASE_OPENING_MAX = 120
+CASE_RESULT_ROWS = 6          # the review's five rows and the November row
+CASE_PRE_TABLE_WORDS = 12     # the results card's label line, and nothing more, before the table
 CANONICAL_ORIGIN = "https://www.robbinsanalytics.com/"
+# Build Brief 2.1 step 17, verbatim: the canonical URL and the social image.
+CASE_CANONICAL_URL = CANONICAL_ORIGIN + "cascadia-early-warning/case-study.html"
+CASE_IMAGE_URL = CANONICAL_ORIGIN + "assets/thumb-early-warning.png"
 
 
 class _CaseOrder(html.parser.HTMLParser):
@@ -743,6 +769,7 @@ class _CaseOrder(html.parser.HTMLParser):
         super().__init__(convert_charrefs=True)
         self.n, self.pos, self.h1, self.meta, self.canonical = 0, {}, 0, {}, None
         self._in_opening, self.opening = 0, []
+        self.main_sections, self.text_at, self.rows, self._in_results, self._in_main = [], [], 0, 0, False
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -753,6 +780,14 @@ class _CaseOrder(html.parser.HTMLParser):
             self.meta[a.get("property") or a.get("name")] = a.get("content", "")
         if tag == "link" and a.get("rel") == "canonical":
             self.canonical = a.get("href")
+        if tag == "main":
+            self._in_main = True
+        if tag == "section" and self._in_main:
+            self.main_sections.append(self.n)
+        if self._in_results and tag == "tr" and self._in_results == 2:
+            self.rows += 1
+        if self._in_results and tag == "tbody":
+            self._in_results = 2
         if a.get("data-case") == "opening":
             self.pos.setdefault("opening", self.n)
             self._in_opening = 1
@@ -760,18 +795,26 @@ class _CaseOrder(html.parser.HTMLParser):
             self._in_opening += 1
         if tag == "table" and a.get("id") == "case-results":
             self.pos.setdefault("results", self.n)
+            self._in_results = 1
         if tag == "h2":
             self.pos.setdefault("h2", self.n)
         if re.fullmatch(r"cs\d+", a.get("id") or ""):
             self.pos.setdefault("section", self.n)
 
+    def handle_startendtag(self, tag, attrs):
+        # A self-closing tag opens and closes nothing: count it as a start only.
+        self.handle_starttag(tag, attrs)
+
     def handle_endtag(self, tag):
-        if self._in_opening:
+        if self._in_opening and tag not in _VOID:
             self._in_opening -= 1
+        if self._in_results and tag == "table":
+            self._in_results = 0
 
     def handle_data(self, data):
         if self._in_opening:
             self.opening.append(data)
+        self.text_at.append((self.n, data))
 
 
 def check_case_study(results):
@@ -802,21 +845,31 @@ def check_case_study(results):
             bad.append("the results table comes before the opening")
         if not pos["results"] < min(pos["h2"], pos["section"]):
             bad.append("a section or H2 comes before the results table")
+        # The results table opens the first section of the page's body, with nothing but its label before it.
+        secs = p.main_sections
+        if not secs or not (secs[0] < pos["results"] < (secs[1] if len(secs) > 1 else float("inf"))):
+            bad.append("the results table is not in the first section after the opening")
+        else:
+            pre = [w for n, s in p.text_at if secs[0] <= n < pos["results"] for w in s.split() if re.search(r"[A-Za-z0-9]", w)]
+            if len(pre) > CASE_PRE_TABLE_WORDS:
+                bad.append("%d words between the start of the results section and the table (limit %d)" % (len(pre), CASE_PRE_TABLE_WORDS))
+        if p.rows < CASE_RESULT_ROWS:
+            bad.append("the results table has %d rows (at least %d)" % (p.rows, CASE_RESULT_ROWS))
     if p.h1 != 1:
         bad.append("%d H1 elements; the page must have exactly one" % p.h1)
     c = p.canonical or ""
-    if not (c.startswith(CANONICAL_ORIGIN) and c.endswith("/case-study.html")):
-        bad.append("canonical URL %r is not the case study on the canonical domain" % c)
+    if c != CASE_CANONICAL_URL:
+        bad.append("canonical URL %r, not %r" % (c, CASE_CANONICAL_URL))
     for k in ("og:title", "og:description", "og:image", "og:url", "twitter:card", "twitter:image", "description"):
         if not p.meta.get(k):
             bad.append("missing %s" % k)
     if p.meta.get("og:url") != c:
         bad.append("og:url %r differs from the canonical URL" % p.meta.get("og:url"))
     for k in ("og:image", "twitter:image"):
-        if p.meta.get(k) and not p.meta[k].startswith(CANONICAL_ORIGIN):
-            bad.append("%s is not an absolute URL on the canonical domain" % k)
-    results.append((label, not bad, "opening %d words; order opening %s, results %s, first H2 %s, first section %s; H1 %d"
-                    % (len(words), pos.get("opening"), pos.get("results"), pos.get("h2"), pos.get("section"), p.h1), bad))
+        if p.meta.get(k) != CASE_IMAGE_URL:
+            bad.append("%s %r, not %r" % (k, p.meta.get(k), CASE_IMAGE_URL))
+    results.append((label, not bad, "opening %d words; order opening %s, results %s, first H2 %s, first section %s; %d result rows; H1 %d"
+                    % (len(words), pos.get("opening"), pos.get("results"), pos.get("h2"), pos.get("section"), p.rows, p.h1), bad))
 
 
 CHECKS = [check_hashes, check_extraction_log, check_m01, check_dates, check_uniqueness, check_exclusion,
@@ -1033,6 +1086,8 @@ def _scenarios():
     yield (check_cohort_facts, "the eligibility statement's words swapped to name a code the source lists as ineligible, its attributes left right",
            lambda: _docs_tree_copy({"index.html": _sub_once(r'(data-cohort-fact="summary"[^>]*>)([A-Z]{3})( (?:is|are) on FDA)',
                                                             r"\1DSQ\3")}))
+    yield (check_cohort_facts, "the eligibility statement negated in words the old check read as a yes (no longer on FDA's list)",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r"(data-cohort-fact=\"summary\"[^>]*>[A-Z]{3}) is on FDA", r"\1 is no longer on FDA")}))
     yield (check_cohort_facts, "an unmarked sentence calling every code ineligible for summary reporting",
            lambda: _docs_tree_copy({"index.html": _sub_once(r"</main>", "<p>All of these codes are ineligible for malfunction summary reporting.</p></main>")}))
     yield (check_words_before_chart, "a forty-five-word paragraph written between section 01's H2 and its chart",
@@ -1044,6 +1099,10 @@ def _scenarios():
            lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(data-case="opening"[^>]*>)', r"\1" + "word " * 70)}))
     yield (check_case_study, "the results table moved below the first section",
            lambda: _docs_tree_copy({"case-study.html": lambda t: _move_results_below_first_section(t)}))
+    yield (check_case_study, "a section of prose written between the opening and the results table",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(<div class="rich mt-6 max-w-none">)', r"\1<h3>Background</h3><p>" + "word " * 60 + "</p>")}))
+    yield (check_case_study, "the canonical URL and og:url pointed at the site's old case-study address",
+           lambda: _docs_tree_copy({"case-study.html": lambda x: x.replace(CASE_CANONICAL_URL, CANONICAL_ORIGIN + "projects/cascadia-early-warning.html")}))
     yield (check_case_study, "a second H1 written into the case study",
            lambda: _docs_tree_copy({"case-study.html": _sub_once(r"</main>", "<h1>A second title</h1></main>")}))
     yield (check_review, "an episode claimed for a month that does not satisfy the rule",

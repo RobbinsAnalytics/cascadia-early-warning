@@ -161,7 +161,7 @@
     <div class="bg-white px-6 py-7"><p class="font-mono text-[0.7rem] text-ink-soft">02</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@o_lo80@@ to @@o_hi80@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">the 80% range, from the model's own past @@o_h_word@@-month-ahead errors</p></div>
     <div class="bg-white px-6 py-7"><p class="font-mono text-[0.7rem] text-ink-soft">03</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@o_cov@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">of locked-test months inside @@headline@@'s @@o_h_word@@-month-ahead 80% range, @@o_cov_in@@ of @@o_cov_n@@</p></div>
     <div class="bg-white px-6 py-7"><p class="font-mono text-[0.7rem] text-ink-soft">04</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@q_gated@@ / @@q_ungated@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">review episodes where the rule is on, and if it ran in every code; a retrospective, filtered demonstration</p></div>
-    <div class="col-span-2 bg-white px-6 py-7 sm:col-span-1"><p class="font-mono text-[0.7rem] text-ink-soft">05</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@rc_preceded@@ of @@rc_initiations@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">Class I recall initiations preceded by a queue episode; @@rc_rule_off@@ fall in codes with the rule off; association only</p></div>
+    <div class="col-span-2 bg-white px-6 py-7 sm:col-span-1"><p class="font-mono text-[0.7rem] text-ink-soft">05</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@rc_preceded@@ of @@rc_initiations@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">Class I recall initiations in the span preceded by a queue episode within @@rc_lookback@@ months; @@rc_rule_off@@ fall in codes with the rule off; association only</p></div>
   </div>
   <p class="mt-3 font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Counts of reports, not rates</p>
 </section>
@@ -233,7 +233,7 @@
         <div class="rich prose mt-6 max-w-[46rem]">
           <blockquote><p>@@disclaimer@@</p></blockquote>
           <ul>
-            <li><strong>Counts, not rates.</strong> In FDA's own words, from the openFDA documentation: MDR data alone cannot be used to establish rates of events; a causal relationship cannot be established between product and the reactions listed in a report; and every API response says to assume all results are unvalidated. A quiet code is not a safe code.</li>
+            <li><strong>Counts, not rates.</strong> In FDA's own words, from the openFDA documentation: MDR data alone cannot be used to establish rates of events; a causal relationship cannot be established between product and the reactions listed in a report; and every API response says to assume all results are unvalidated. Reporting is passive and batched, and a count carries no denominator. A quiet code is not a safe code.</li>
             <li><strong>Summary reports.</strong> @@summary_short@@</li>
             <li><strong>The snapshot.</strong> Receipts run through @@as_of@@, as the source had loaded them on @@last_updated@@. @@chronology_snapshot@@</li>
             <li><strong>Reports without an event date.</strong> @@c5_missing@@ of the headline code's eligible reports carry none; they are counted in charts 1 to 4 and left out of chart 5 only.</li>
@@ -267,7 +267,10 @@
             <li id="live-edge"><strong>Live edge.</strong> @@live_edge@@</li>
           </ul>
           <h3>What is counted</h3>
-          <p>One report is one record the source holds, in the month FDA received it. @@what_counted@@</p>
+          <ul>
+            <li>One report is one record the source holds, in the month FDA received it.</li>
+@@what_counted@@
+          </ul>
           <h3>The models and the headline code</h3>
           <ul>
             <li><strong>The headline code</strong> is @@headline_rule@@: @@headline@@, @@headline_name@@.</li>
@@ -280,7 +283,7 @@
           <ul>
             <li><strong>Selection period:</strong> targets @@dev_span@@; the harness was committed to <code>config/model.json</code> at <code>@@model_first_commit@@</code> and the promotion decision at <code>@@model_commit@@</code>, before any locked-period forecast existed.</li>
             <li><strong>Locked test:</strong> @@locked_n@@ months, @@locked_span@@, from origins at or after @@locked_min_origin@@. @@locked_history@@</li>
-            <li><strong>Recent check:</strong> @@recent_span@@, scored beside the locked test. It was not used for model selection or for the coverage gate; the review rule runs over it, and its errors join the history behind later ranges, November's among them.</li>
+            <li><strong>Recent check:</strong> @@recent_span@@, scored beside the locked test. It was not used for model selection or for the coverage gate; the review rule runs over it, and its errors join the history behind later ranges, @@o_target@@'s among them.</li>
             <li><strong>Issue dates:</strong> @@issue_dates@@</li>
           </ul>
           <h3>The review rule</h3>
@@ -295,6 +298,7 @@
             <li><strong>The gate.</strong> Each code's rule was enabled from its 80% coverage in the @@locked_span@@ locked test: the first @@locked_n@@ of the @@eval_n@@ months, @@eval_span@@, that the rule then runs over.</li>
             <li><strong>With the gate</strong> the rule ran on @@q_enabled_codes@@ codes, @@q_enabled_months@@ code-months, and opened <strong>@@q_gated@@ @@q_episodes_word@@</strong>.</li>
             <li><strong>Without it</strong> the same rule, over all @@q_all_months@@ code-months, opens <strong>@@q_ungated@@</strong> (@@q_ungated_by_code@@) and flags @@c4_flagged@@ months.</li>
+            <li><strong>Against chance</strong>, as the pre-registration says the workload is read: @@q_chance@@</li>
           </ul>
           <h3>Recall events, as retrospective context</h3>
           <p>FDA's recall record for these codes is shown beside the queue, not as its validation. Association only: no shuffled-dates null was run, and the page claims no prediction.</p>
@@ -313,10 +317,10 @@
             <li><strong>The freeze.</strong> @@total_raw@@ distinct reports across the @@n_codes_word@@ codes (@@memberships@@ report-code memberships: @@multi_code@@ @@multi_code_word@@ more than one of the codes), pulled from openFDA in @@n_staged_pages@@ pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile @@variance_phrase@@, on every one of @@n_code_months@@ code-months, against the source's own daily count series pulled separately.</li>
             <li><strong>The exclusion.</strong> A private token list, kept outside the repository, removed <strong>@@excluded@@</strong> @@excluded_word@@ whole; its SHA-256 (<code>@@sha_local@@</code>) and the counts removed per field are published, and no firm is named anywhere.</li>
             <li><strong>Two paths.</strong> @@assurance_boundary@@ The second path is <a href="@@repo_url@@/blob/main/src/validate_measures.py">validate_measures.py</a>.</li>
-            <li><strong>Golden fixtures</strong>, written by hand before any engine code: both baselines on a made series, the ETS recurrence from fixed states, the review rule with a reset, the lag-matched count and the interval scores, passing on both paths.</li>
+            <li><strong>Golden fixtures</strong>, computed outside both engines and committed before any engine code: both baselines on a made series, the ETS recurrence from fixed states, the review rule with a reset, the lag-matched count and the interval scores, passing on both paths.</li>
             <li><strong>Proof the checks can fail.</strong> The <a href="@@repo_url@@/blob/main/governance/validation_report.md">validation report</a> re-runs the @@proof_checks@@ checks of the domain gate against deliberately corrupted copies of their input in @@proof_scenarios@@ scenarios, from a missing partition and a moved hash to a page that states the wrong device class, and records that @@proof_result@@. @@proof_coverage@@ The second path has no such proof mode of its own.</li>
             <li><strong>Chronology.</strong> The git log shows the pre-registration and the frozen harness before the first forecast row and the promotion decision before the first locked row. @@locked_history@@</li>
-            <li><strong>The chart review and the reading panel</strong> under VIZ-PRINCIPLES v2.8 and CHART-REVIEW v2.8, recorded in <a href="@@repo_url@@/blob/main/governance/chart-review.md">the chart review</a>.</li>
+            <li><strong>The chart review and two reading panels of simulated AI reviewer seats</strong>, under VIZ-PRINCIPLES v2.8 and CHART-REVIEW v2.8, recorded in <a href="@@repo_url@@/blob/main/governance/chart-review.md">the chart review</a>.</li>
           </ul>
         </div>
         <details class="data-table rich mt-6"><summary>The cohort gate</summary>@@t_gate@@</details>
@@ -385,7 +389,7 @@
     <div>
       <p class="font-mono text-[0.7rem] tracking-[0.16em] text-white/60 uppercase">Provenance</p>
       <ul class="mt-4 space-y-0.5 text-sm md:mt-5 md:space-y-2.5">
-        <li class="py-1 text-white/65">Source: openFDA device event, recall and enforcement</li>
+        <li class="py-1 text-white/65">Source: openFDA device event, recall, enforcement and classification</li>
         <li class="py-1 text-white/65">Receipts through @@as_of@@; loaded as of @@last_updated@@</li>
         <li class="py-1 text-white/65">Retrieved and frozen @@retrieved@@</li>
         <li class="py-1 text-white/65">@@total_eligible@@ distinct eligible reports across @@n_codes_word@@ codes</li>

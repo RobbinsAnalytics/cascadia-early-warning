@@ -298,7 +298,7 @@ def remedial_table(d) -> list[list[str]]:
 
 
 def what_is_counted(d, cf: dict, rf: dict) -> str:
-    """The cohort sentences of 'What is counted', as HTML. The eligibility statement sits in a
+    """The cohort facts of 'What is counted', as HTML list items. The eligibility statement sits in a
     marked span that the cohort-facts check reads; nothing outside it may state eligibility."""
     sm, n_word = rf["summary"], num_word(len(d["forecast_codes"]))
     lst = "on FDA's list of product codes eligible for voluntary malfunction summary reporting"
@@ -309,21 +309,23 @@ def what_is_counted(d, cf: dict, rf: dict) -> str:
         elig_txt = "all %s codes are %s" % (n_word, lst)
     else:
         elig_txt = "none of the %s codes is %s" % (n_word, lst)
-    s = ('<span data-cohort-fact="summary" data-eligible="%s" data-ineligible="%s">%s.</span>'
-         % (" ".join(cf["eligible"]), " ".join(cf["ineligible"]), html.escape(elig_txt[0].upper() + elig_txt[1:])))
+    items = ['<span data-cohort-fact="summary" data-eligible="%s" data-ineligible="%s">%s.</span>'
+             % (" ".join(cf["eligible"]), " ".join(cf["ineligible"]), html.escape(elig_txt[0].upper() + elig_txt[1:]))]
     for c in cf["eligible"]:
         x = sm[c]
-        s += (" Of %s's %s reports, %s carry the source's summary-report flag and together stand for %s events; %s of them "
-              "summarize more than one event, up to %s in a single report. A change in how summary reporting is used can "
-              "move %s's count with no change in events, and the target stays the count of reports."
-              % (c, nf(x["reports"]), nf(x["summary"]), nf(x["events"]), nf(x["multi"]), nf(x["max_events"]), c))
+        items.append(html.escape(
+            "Of %s's %s reports, %s carry the source's summary-report flag and together stand for %s events; %s of them "
+            "summarize more than one event, up to %s in a single report." % (c, nf(x["reports"]), nf(x["summary"]), nf(x["events"]),
+                                                                           nf(x["multi"]), nf(x["max_events"]))))
+        items.append(html.escape("A change in how summary reporting is used can move %s's count with no change in events; the "
+                                 "target stays the count of reports." % c))
     others = [c for c in cf["ineligible"] if sm.get(c, {}).get("summary")]
     if others:
         n_o, multi_o = sum(sm[c]["summary"] for c in others), sum(sm[c]["multi"] for c in others)
-        s += (" The other codes carry %s summary-flagged report%s between them, %s."
-              % (num_word(n_o), "" if n_o == 1 else "s",
-                 "each for a single event" if multi_o == 0 else "%s of them for more than one event" % num_word(multi_o)))
-    return s
+        items.append(html.escape("The other codes carry %s summary-flagged report%s between them, %s."
+                                 % (num_word(n_o), "" if n_o == 1 else "s",
+                                    "each for a single event" if multi_o == 0 else "%s of them for more than one event" % num_word(multi_o))))
+    return "\n".join("            <li>%s</li>" % i for i in items)
 
 
 def period_span(d, name: str) -> str:
@@ -346,10 +348,10 @@ def assurance_boundary(d) -> str:
             "episodes, and the queue with and without its coverage gate as this page publishes it, and they must agree before "
             "anything is published. "
             "It does not refit the ETS model: candidate points are recomputed from the model's exported states, and ranges and "
-            "scores from the published points. The recall timeline is checked only against %s hand-verified Class I events, and "
+            "scores from the published points. The recall timeline is checked only against %s independently verified Class I events, and "
             "the cohort gate, the exclusion receipt, the reports without an event date, the promotion decision, the "
-            "pre-registered recall count, the summary-report composition and the outlook's %s dots are carried from the build "
-            "without a second derivation."
+            "pre-registered recall count, the summary-report composition, the remedial-recall counts and the outlook's %s dots are "
+            "carried from the build without a second derivation."
             % (num_word(known), num_word(DOT_N)))
 
 
@@ -794,10 +796,12 @@ def chart5(d, code):
                 % (month_short(months[0]), month_short(months[-1]), len(incomplete12), len(incomplete6), nf(ls["missing_event_date"])))
     annotation = "darker: every window filling; lighter: 12-month filling, and 6-month in the last %d" % len(incomplete6)
     summary = ("Line chart with three series over event months %s to %s for product code %s: reports received within 3 months (range %s to %s), "
-               "within 6 months (%s to %s) and within 12 months (%s to %s). Reports with an event month in the span: %s. Across all of this "
-               "code's eligible reports, not only the span: no event date %s; received before the event month %s."
+               "within 6 months (%s to %s) and within 12 months (%s to %s). Still filling: every window in the last %d months, the 6- and "
+               "12-month windows in the last %d, the 12-month window in the last %d. Reports with an event month in the span: %s. Across "
+               "all of this code's eligible reports, not only the span: no event date %s; received before the event month %s."
                % (month_short(months[0]), month_short(months[-1]), code, nf(min(w3)), nf(max(w3)), nf(min(w6)), nf(max(w6)),
-                  nf(min(w12)), nf(max(w12)), nf(sum(tot)), nf(ls["missing_event_date"]), nf(ls["negative_lag"])))
+                  nf(min(w12)), nf(max(w12)), len(incomplete3), len(incomplete6), len(incomplete12), nf(sum(tot)),
+                  nf(ls["missing_event_date"]), nf(ls["negative_lag"])))
 
     def filling(m):
         return ", ".join(w for w, s in (("3", incomplete3), ("6", incomplete6), ("12", incomplete12)) if m in s)
@@ -940,24 +944,26 @@ def case_results(d, code, c1, c2, n_cand, n_dis, qd, rc) -> list[list[str]]:
 def case_live_edge() -> str:
     """The live edge, from governance/run_history.jsonl and governance/health.json. Until a run
     recorded as scheduled exists, the case-study review's sentences adapted to Aaron's
-    register-at-publication decision; after, the last run's date and status. A run record carries
-    no trigger field yet (pull_live_edge.py does not write one), so a scheduled run is one whose
-    record says "trigger": "scheduled"."""
+    register-at-publication decision; after, the last run's date and status. A run record does not
+    say what started it, so the sentence never calls a later run manual or scheduled."""
     hist = GOV / "run_history.jsonl"
     runs = [json.loads(l) for l in hist.read_text(encoding="utf-8").splitlines() if l.strip()] if hist.exists() else []
     h = json.loads((GOV / "health.json").read_text(encoding="utf-8")) if (GOV / "health.json").exists() else {}
     basis = (h.get("live_edge") or {}).get("basis") or "raw count by receipt date as seen at the vintage; no exclusion applied"
-    sched = [r for r in runs if r.get("trigger") == "scheduled"]
-    if sched:
-        last = sched[-1]
-        s = ("The live edge last ran on a schedule on %s, with status %s. It stores source vintages and scores a forecast when "
-             "the target month first appears in the source." % (last["started_utc"][:10], last["status"]))
-    elif runs and runs[-1].get("status") == "ok" and runs[-1].get("passed"):
+    # A run record says nothing about what started it, so the sentence does not guess. One recorded run is the
+    # manual run of 2026-10-06 (D18): the case-study review's wording, adapted to Aaron's register-at-publication
+    # decision. Once a second run exists, the sentence states the last run's date and status instead, true
+    # whether it was scheduled or not.
+    if len(runs) == 1 and runs[0].get("status") == "ok" and runs[0].get("passed"):
         s = ("A live-edge pipeline is implemented and passed a manual run. Weekly runs begin at publication. It stores source "
              "vintages and is designed to score a forecast when the target month first appears in the source.")
+    elif len(runs) == 1:
+        s = ("A live-edge pipeline is implemented; its one run, at %s UTC, reported status %s. Weekly runs begin at publication."
+             % (runs[0]["started_utc"][:16].replace("T", " "), runs[0]["status"]))
     elif runs:
-        s = ("A live-edge pipeline is implemented; its manual run on %s reported status %s. Weekly runs begin at publication."
-             % (runs[-1]["started_utc"][:10], runs[-1]["status"]))
+        s = ("The live edge has run %d times; the last run, at %s UTC, reported status %s. It stores source vintages and scores "
+             "a forecast when the target month first appears in the source."
+             % (len(runs), runs[-1]["started_utc"][:16].replace("T", " "), runs[-1]["status"]))
     else:
         s = "A live-edge pipeline is implemented and has not yet run. Weekly runs begin at publication."
     return s + " Live months are counted on a different basis from the frozen ones: %s." % basis.replace("; ", ", with ")
@@ -1005,7 +1011,7 @@ def main() -> int:
                                "%.3f" % float(r["mae_scaled_vs_a"]) if r["mae_scaled_vs_a"] else "", pct(r["coverage50"]), pct(r["coverage80"]),
                                nf(r["width80"]), ("%.1f" % float(r["wis"]))])
     queue_rows = [[q["product_code"], model_label(q["model_in_use"]), month_short(q["episode_start"]), month_short(q["episode_end"]),
-                   q["months_in_episode"], q["max_excess_over_point"], q["status"]] for q in d["queue"]] or [["none", "", "", "", "", "", "the queue is empty"]]
+                   q["months_in_episode"], nf(q["max_excess_over_point"]), q["status"]] for q in d["queue"]] or [["none", "", "", "", "", "", "the queue is empty"]]
     qd = c4["diagnostic"]
     n_dis = sum(1 for r in c3["rows"] if not r["enabled"])
     work_rows = [[w["product_code"], model_label(w["model_in_use"]), "yes" if w["rule_enabled"] == "true" else "no",
@@ -1040,6 +1046,13 @@ def main() -> int:
         "rule_floor": html.escape(RULE_FLOOR), "summary_short": summary_short(cf, rf),
         "eval_n": str(months_between(EVAL_START, EVAL_END) + 1), "eval_span": "%s to %s" % (EVAL_START, EVAL_END),
         "rc_rule_off": num_word(c4["classIRuleOff"]),
+        "q_chance": html.escape(
+            "at about one episode per %s evaluated months, chance alone would open about %s in the %s code-months with the rule on "
+            "and about %s in all %s; the rule opened %s and %s. The illustration's conditions do not hold for the codes whose "
+            "ranges failed the gate." % ("hundred" if _ONE_IN ** MIN_RUN == 100 else format(_ONE_IN ** MIN_RUN, ","),
+                                         "%.1f" % (qd["enabledMonths"] / _ONE_IN ** MIN_RUN), nf(qd["enabledMonths"]),
+                                         "%.1f" % (qd["evaluatedMonths"] / _ONE_IN ** MIN_RUN), nf(qd["evaluatedMonths"]),
+                                         num_word(qd["gatedEpisodes"]), num_word(qd["ungatedEpisodes"]))),
         "variance_phrase": ("with zero variance" if not any(int(r["variance_raw_vs_series"]) for r in d["m01"])
                             else "with a variance on %d" % sum(1 for r in d["m01"] if int(r["variance_raw_vs_series"]))),
         "t_remedial": table("tbl-remedial", "Eligible reports whose remedial action names a recall, by code and receipt month, %s to %s "

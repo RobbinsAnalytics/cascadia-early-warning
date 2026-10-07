@@ -1069,3 +1069,15 @@ publishes). `src/validate.py`'s `check_case_study` asserts the canonical,
 
 `page.js` mounts each chart only where its host exists (B8); with that guard
 the module's twenty renders and its ladder record were re-made byte for byte.
+
+### 7.1 · After an adversarial review of Part B: text corrections, re-rendered
+
+A second read-only review (workflow wf_ac259ebc-dcc; 31 findings, all
+confirmed by their refuters) covered the case study and re-checked the module
+page. On the charts it changed only text: chart 5's visible summary and
+aria-label now say which windows are still filling, and chart 4's queue table
+prints the excess formatted. Nothing a chart draws changed and no panel was
+re-run. The K6 ladders of both pages were re-run (no overflow, every chart
+drawn, three strip segments); re-rendering also moves every card's pixels
+slightly between runs without any visible change, which is why all twenty
+module renders are new files.

@@ -22,8 +22,8 @@ only agrees with itself has not been validated. **What it does not cover**
 M-06 has no second path (the recall set is checked against fourteen
 hand-verified events by `src/validate.py`), and the cohort gate, the
 exclusion receipt, the reports without an event date, the promotion decision,
-the summary-report composition and the outlook's twenty dots are carried from
-the build without one.
+the summary-report composition, the remedial-recall counts and the outlook's
+twenty dots are carried from the build without one.
 
 **Three words that do the work.** *Report* means one `mdr_report_key`, which
 openFDA holds as the most recent version of a submission; a follow-up to the
