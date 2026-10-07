@@ -25,6 +25,26 @@
 (function () {
   'use strict';
 
+  /**
+   * TABLE SCROLL CUES (Build Brief 2.2 step 7). Each table's cue, written into the page by build_page.py,
+   * is shown only while its wrapper scrolls sideways: on load, on resize, and when a details element
+   * opens (a closed one has no width). Geometry only; the words are the page's. Run before any chart,
+   * so a chart that fails to draw cannot leave the cues unset.
+   */
+  function scrollCues() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-scroll-cue]'), function (cue) {
+      var wrap = document.querySelector('[data-scroll-for="' + cue.getAttribute('data-scroll-cue') + '"]');
+      cue.hidden = !(wrap && wrap.scrollWidth > wrap.clientWidth + 1);
+    });
+  }
+  scrollCues();
+  document.addEventListener('toggle', scrollCues, true);
+  window.addEventListener('load', scrollCues);
+  (function () {
+    var t = null;
+    window.addEventListener('resize', function () { if (t) clearTimeout(t); t = setTimeout(scrollCues, 120); });
+  })();
+
   var D = JSON.parse(document.getElementById('cascadia-data').textContent);
   var C = CASCADIA.colors, INK = CASCADIA.textInk;
   var SANS = CASCADIA.sans, SERIF = CASCADIA.serif;

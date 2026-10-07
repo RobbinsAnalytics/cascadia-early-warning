@@ -40,9 +40,13 @@
   .chart-key { font:12px/1.5 var(--font-sans); color:var(--color-ink-soft); margin:6px 2px 0; }
   details.data-table { margin:10px 2px 0; }
   details.data-table summary { font:12px/1.5 var(--font-mono); color:var(--color-ink-soft); cursor:pointer; min-height:24px; letter-spacing:.04em; }
-  details.data-table .table-wrap { margin-block:.75em 0; }
   details.data-table table { font-size:.8rem; border-collapse:collapse; }
-  details.data-table caption { display:block; text-align:left; font-weight:600; padding:.5rem .9rem; color:var(--color-ink); }
+  details.data-table .table-block { margin-top:.75em; }
+  /* Table titles (Build Brief 2.2 step 7): a block ABOVE the scrolling wrapper, never a caption inside it; the
+     table takes its name from it by aria-labelledby. The scroll cue shows only where the wrapper scrolls (page.js). */
+  .table-title { font-weight:600; font-size:.85rem; line-height:1.45; color:var(--color-ink); }
+  .scroll-cue { font:12px/1.5 var(--font-mono); letter-spacing:.04em; color:var(--color-ink-soft); margin:.3rem 0 0; }
+  .table-block .table-wrap { margin-block:.5rem 0; }
   details.data-table th, details.data-table td { text-align:right; white-space:nowrap; min-width:0; }
   details.data-table th[scope="row"] { text-align:left; font-weight:400; }
   .answers { }

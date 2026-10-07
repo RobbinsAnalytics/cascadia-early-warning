@@ -820,13 +820,24 @@ def chart5(d, code):
 # html helpers
 # ---------------------------------------------------------------------------
 
-def table(tid: str, caption: str, headers: list[str], rows: list[list[str]], roles: bool = False) -> str:
-    """A data table. With roles=True every element carries its explicit ARIA table role, so a stylesheet
-    that stacks the table at narrow widths (display:block on its parts) does not strip its structure from
-    assistive technology (the case study's results table, Build Brief 2.2 step 5)."""
+# The cue shown above a table only where it scrolls sideways; page.js decides where, the words are here (K2).
+SCROLL_CUE = "Scroll sideways for more columns →"
+
+
+def table(tid: str, title: str, headers: list[str], rows: list[list[str]], roles: bool = False) -> str:
+    """A data table under its title. The title is a block ABOVE the scrolling wrapper, so it never scrolls
+    away and never lays out as a cell: a <caption> set to display:block, as both templates had it, stops
+    being a caption and is wrapped in an anonymous first-column cell under the header row, which was the
+    blank block (Build Brief 2.2 step 7). The table keeps its name by aria-labelledby, and a scroll cue,
+    hidden until page.js finds the wrapper scrolling, sits between the title and the wrapper.
+    With roles=True every element carries its explicit ARIA table role, so a stylesheet that stacks the
+    table at narrow widths (display:block on its parts) does not strip its structure from assistive
+    technology (the case study's results table, Build Brief 2.2 step 5)."""
     r_ = (lambda role: ' role="%s"' % role) if roles else (lambda role: "")
-    h = ['<div class="table-wrap"><table id="%s"%s><caption>%s</caption><thead%s><tr%s>'
-         % (tid, r_("table"), html.escape(caption), r_("rowgroup"), r_("row"))]
+    h = ['<div class="table-block" data-table-block="%s"><div class="table-title" id="%s-title">%s</div>'
+         '<p class="scroll-cue" data-scroll-cue="%s" aria-hidden="true" hidden>%s</p>'
+         '<div class="table-wrap" data-scroll-for="%s"><table id="%s"%s aria-labelledby="%s-title"><thead%s><tr%s>'
+         % (tid, tid, html.escape(title), tid, html.escape(SCROLL_CUE), tid, tid, r_("table"), tid, r_("rowgroup"), r_("row"))]
     h += ['<th scope="col"%s>%s</th>' % (r_("columnheader"), html.escape(c)) for c in headers]
     h.append("</tr></thead><tbody%s>" % r_("rowgroup"))
     for r in rows:
@@ -834,7 +845,7 @@ def table(tid: str, caption: str, headers: list[str], rows: list[list[str]], rol
             '<th scope="row"%s>%s</th>' % (r_("rowheader"), html.escape(str(c))) if i == 0
             else "<td%s>%s</td>" % (r_("cell"), html.escape(str(c)))
             for i, c in enumerate(r)) + "</tr>")
-    h.append("</tbody></table></div>")
+    h.append("</tbody></table></div></div>")
     return "".join(h)
 
 

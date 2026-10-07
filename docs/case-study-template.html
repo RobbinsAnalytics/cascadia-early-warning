@@ -43,16 +43,19 @@
   .chart-key { font:12px/1.5 var(--font-sans); color:var(--color-ink-soft); margin:6px 2px 0; }
   details.data-table { margin:10px 2px 0; }
   details.data-table summary { font:12px/1.5 var(--font-mono); color:var(--color-ink-soft); cursor:pointer; min-height:24px; letter-spacing:.04em; }
-  details.data-table .table-wrap { margin-block:.75em 0; }
   details.data-table table { font-size:.8rem; border-collapse:collapse; }
-  details.data-table caption { display:block; text-align:left; font-weight:600; padding:.5rem .9rem; color:var(--color-ink); }
+  details.data-table .table-block { margin-top:.75em; }
+  /* Table titles (Build Brief 2.2 step 7): a block ABOVE the scrolling wrapper, never a caption inside it; the
+     table takes its name from it by aria-labelledby. The scroll cue shows only where the wrapper scrolls (page.js). */
+  .table-title { font-weight:600; font-size:.85rem; line-height:1.45; color:var(--color-ink); }
+  .scroll-cue { font:12px/1.5 var(--font-mono); letter-spacing:.04em; color:var(--color-ink-soft); margin:.3rem 0 0; }
+  .table-block .table-wrap { margin-block:.5rem 0; }
   details.data-table th, details.data-table td { text-align:right; white-space:nowrap; min-width:0; }
   details.data-table th[scope="row"] { text-align:left; font-weight:400; }
   .answers { }
   .toc a[data-active="true"] { border-color: var(--color-teal); color: var(--color-teal); font-weight:500; }
   /* The results table reads as two columns of prose: left-aligned, top-aligned. */
   #case-results th, #case-results td { text-align:left; vertical-align:top; min-width:0; white-space:normal; }
-  #case-results caption { text-align:left; white-space:normal; padding:.5rem .9rem; font-weight:600; }
   /* Below 640 px the results table stacks: each result above its meaning, the same values, and the column
      headers kept for assistive technology but not drawn. The table carries explicit ARIA roles (build_page.py
      table(roles=True)) so display:block does not strip its structure. Build Brief 2.2 step 5. */
@@ -60,7 +63,7 @@
      outranks an unlayered one. */
   @layer components {
     @media (max-width: 639.98px) {
-      #case-results, #case-results caption, #case-results tbody, #case-results tr, #case-results th, #case-results td { display:block; width:auto; }
+      #case-results, #case-results tbody, #case-results tr, #case-results th, #case-results td { display:block; width:auto; }
       #case-results thead { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
       #case-results tbody tr { padding:.75rem .9rem; }
       #case-results tbody tr + tr { border-top:1px solid var(--color-line); }

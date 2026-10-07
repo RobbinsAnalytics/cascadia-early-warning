@@ -793,6 +793,10 @@ class _CaseOrder(html.parser.HTMLParser):
             self._in_opening = 1
         elif self._in_opening and tag not in _VOID:
             self._in_opening += 1
+        # The results table starts where its block does: the title above the scrolling wrapper is the table's
+        # own name (Build Brief 2.2 step 7), not words before it.
+        if a.get("data-table-block") == "case-results":
+            self.pos.setdefault("results", self.n)
         if tag == "table" and a.get("id") == "case-results":
             self.pos.setdefault("results", self.n)
             self._in_results = 1
@@ -1026,7 +1030,7 @@ def _sub_once(pattern: str, repl: str):
 
 
 def _move_results_below_first_section(text: str) -> str:
-    m = re.search(r'(?s)<div class="table-wrap"><table id="case-results"[^>]*>.*?</table></div>', text)
+    m = re.search(r'(?s)<div class="table-block" data-table-block="case-results">.*?</table></div></div>', text)
     if not m:
         raise RuntimeError("no results table; the scenario would prove nothing")
     rest = text[:m.start()] + text[m.end():]
