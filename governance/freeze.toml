@@ -37,12 +37,14 @@ module = "cascadia-early-warning"
 # page. Advancing it is a deliberate act; see CLAUDE.md.
 as_of_date = "2026-08-31"
 
-# The Phase 4 commit, which added the rendered page below; the Phase 1 to 3
-# artifacts were frozen at 777ab234d7de and 12dcaf1a7abf and are unchanged
-# since (the gate at the previous baseline passed before this move).
+# The Phase 5 commit, whose only change to a protected path is the one
+# live-edge line src/reconcile_live_edge.py writes into the page; the Phase 1
+# to 4 artifacts were frozen at 777ab234d7de, 12dcaf1a7abf and 3434e0f2d6ef
+# and are unchanged since (the gate at the previous baseline failed on that
+# one line and on nothing else, which is the interaction D18 records).
 # Strictly stronger than "HEAD": a committed change to any path below is
 # caught, not only an uncommitted one.
-baseline = "3434e0f2d6efe3abaaf88c67f428f91e68ba72c9"
+baseline = "6b519ffe8d744e1e409ca98f8f3e24e5ee82a51a"
 
 # EVERY PATH HERE MUST BE GIT-TRACKED. A gitignored path FAILS OPEN: Path.glob
 # matches the filesystem, `git diff --quiet` reports no change on an untracked
