@@ -3,18 +3,58 @@
   "frozen_on": "2026-10-06",
   "what_this_is": "The forecast harness, fixed before the first forecast row exists. The git log of this file is the proof: 'promoted' is filled from development scores only, in its own commit, before any locked-period row is written, and the locked test runs once.",
   "target": "M-01, eligible reports per product code per receipt month",
-  "horizons": [1, 3],
+  "horizons": [
+    1,
+    3
+  ],
   "history_start": "2016-01",
   "periods": {
-    "warmup": {"targets": ["2019-01", "2021-12"], "scored": false, "purpose": "errors that calibrate the first development ranges"},
-    "development": {"targets": ["2022-01", "2023-12"], "scored": true, "purpose": "model selection; promotion is decided here and nowhere else"},
-    "locked": {"targets": ["2024-01", "2025-12"], "min_origin": "2023-12", "scored": true, "purpose": "the held-out test, run once"},
-    "recent": {"targets": ["2026-01", "2026-08"], "min_origin": "2025-12", "scored": true, "purpose": "the recent check"},
-    "outlook": {"origin": "2026-08", "purpose": "the next-month figure; 2026-09 issued in 2026-10 is an elapsed-period estimate"}
+    "warmup": {
+      "targets": [
+        "2019-01",
+        "2021-12"
+      ],
+      "scored": false,
+      "purpose": "errors that calibrate the first development ranges"
+    },
+    "development": {
+      "targets": [
+        "2022-01",
+        "2023-12"
+      ],
+      "scored": true,
+      "purpose": "model selection; promotion is decided here and nowhere else"
+    },
+    "locked": {
+      "targets": [
+        "2024-01",
+        "2025-12"
+      ],
+      "min_origin": "2023-12",
+      "scored": true,
+      "purpose": "the held-out test, run once"
+    },
+    "recent": {
+      "targets": [
+        "2026-01",
+        "2026-08"
+      ],
+      "min_origin": "2025-12",
+      "scored": true,
+      "purpose": "the recent check"
+    },
+    "outlook": {
+      "origin": "2026-08",
+      "purpose": "the next-month figure; 2026-09 issued in 2026-10 is an elapsed-period estimate"
+    }
   },
   "models": {
-    "baseline_a": {"form": "trailing three-month mean of the series at the origin, same point at every horizon"},
-    "baseline_b": {"form": "the series value twelve months before the target"},
+    "baseline_a": {
+      "form": "trailing three-month mean of the series at the origin, same point at every horizon"
+    },
+    "baseline_b": {
+      "form": "the series value twelve months before the target"
+    },
     "candidate": {
       "form": "ETS with additive error, damped additive trend and additive seasonality of period 12, fitted by maximum likelihood on log1p(count) over the history through the origin, back-transformed with expm1 and floored at zero",
       "library": "statsmodels 0.15.0 ETSModel(error='add', trend='add', damped_trend=true, seasonal='add', seasonal_periods=12)",
@@ -23,7 +63,16 @@
   },
   "intervals": {
     "method": "empirical quantiles of the signed errors (actual minus point) of the same model and horizon over the 36 most recent targets elapsed at the origin",
-    "levels": {"50": [0.25, 0.75], "80": [0.10, 0.90]},
+    "levels": {
+      "50": [
+        0.25,
+        0.75
+      ],
+      "80": [
+        0.1,
+        0.9
+      ]
+    },
     "quantile": "numpy default, linear interpolation",
     "min_calibration_n": 12,
     "fewer_than_min": "no range is drawn and the row says so"
@@ -41,5 +90,182 @@
     "evaluated": "locked and recent targets",
     "disabled_when": "80% coverage of the model in use in the locked test, horizon 1, is below 0.70 (numbers gate G5)"
   },
-  "promoted": null
+  "promoted": {
+    "DSP": {
+      "model_in_use": "baseline_a",
+      "candidate_promoted": false,
+      "development_h1": {
+        "baseline_a": {
+          "n": 24,
+          "mae": 75.111111,
+          "wis": 62.161389,
+          "coverage80": 0.666667
+        },
+        "baseline_b": {
+          "n": 24,
+          "mae": 116.208333,
+          "wis": 73.596042,
+          "coverage80": 0.666667
+        },
+        "candidate": {
+          "n": 24,
+          "mae": 103.853197,
+          "wis": 82.904363,
+          "coverage80": 0.666667
+        }
+      },
+      "reason": "candidate MAE 103.85 vs best baseline (baseline_a) 75.11: not 10% better; WIS 82.90 vs 62.16: worse"
+    },
+    "DSQ": {
+      "model_in_use": "candidate",
+      "candidate_promoted": true,
+      "development_h1": {
+        "baseline_a": {
+          "n": 24,
+          "mae": 439.402778,
+          "wis": 324.959167,
+          "coverage80": 0.833333
+        },
+        "baseline_b": {
+          "n": 24,
+          "mae": 443.625,
+          "wis": 343.052708,
+          "coverage80": 0.791667
+        },
+        "candidate": {
+          "n": 24,
+          "mae": 386.953372,
+          "wis": 276.802078,
+          "coverage80": 0.833333
+        }
+      },
+      "reason": "candidate MAE 386.95 vs best baseline (baseline_a) 439.40: at least 10% better; WIS 276.80 vs 324.96: not worse"
+    },
+    "LWS": {
+      "model_in_use": "baseline_a",
+      "candidate_promoted": false,
+      "development_h1": {
+        "baseline_a": {
+          "n": 24,
+          "mae": 532.75,
+          "wis": 455.169792,
+          "coverage80": 0.708333
+        },
+        "baseline_b": {
+          "n": 24,
+          "mae": 650.791667,
+          "wis": 470.683125,
+          "coverage80": 0.583333
+        },
+        "candidate": {
+          "n": 24,
+          "mae": 647.385833,
+          "wis": 491.317677,
+          "coverage80": 0.625
+        }
+      },
+      "reason": "candidate MAE 647.39 vs best baseline (baseline_a) 532.75: not 10% better; WIS 491.32 vs 455.17: worse"
+    },
+    "NIK": {
+      "model_in_use": "baseline_a",
+      "candidate_promoted": false,
+      "development_h1": {
+        "baseline_a": {
+          "n": 24,
+          "mae": 153.444444,
+          "wis": 126.039722,
+          "coverage80": 0.583333
+        },
+        "baseline_b": {
+          "n": 24,
+          "mae": 155.875,
+          "wis": 113.947083,
+          "coverage80": 0.875
+        },
+        "candidate": {
+          "n": 24,
+          "mae": 159.578558,
+          "wis": 130.851309,
+          "coverage80": 0.833333
+        }
+      },
+      "reason": "candidate MAE 159.58 vs best baseline (baseline_a) 153.44: not 10% better; WIS 130.85 vs 126.04: worse"
+    },
+    "NPT": {
+      "model_in_use": "candidate",
+      "candidate_promoted": true,
+      "development_h1": {
+        "baseline_a": {
+          "n": 24,
+          "mae": 83.652778,
+          "wis": 63.417083,
+          "coverage80": 0.75
+        },
+        "baseline_b": {
+          "n": 24,
+          "mae": 141.458333,
+          "wis": 87.846042,
+          "coverage80": 0.666667
+        },
+        "candidate": {
+          "n": 24,
+          "mae": 63.270943,
+          "wis": 42.444583,
+          "coverage80": 0.833333
+        }
+      },
+      "reason": "candidate MAE 63.27 vs best baseline (baseline_a) 83.65: at least 10% better; WIS 42.44 vs 63.42: not worse"
+    },
+    "OZD": {
+      "model_in_use": "baseline_a",
+      "candidate_promoted": false,
+      "development_h1": {
+        "baseline_a": {
+          "n": 24,
+          "mae": 91.486111,
+          "wis": 85.19632,
+          "coverage80": 0.333333
+        },
+        "baseline_b": {
+          "n": 24,
+          "mae": 144.0,
+          "wis": 127.055833,
+          "coverage80": 0.333333
+        },
+        "candidate": {
+          "n": 24,
+          "mae": 100.485101,
+          "wis": 94.201811,
+          "coverage80": 0.5
+        }
+      },
+      "reason": "candidate MAE 100.49 vs best baseline (baseline_a) 91.49: not 10% better; WIS 94.20 vs 85.20: worse"
+    },
+    "PYX": {
+      "model_in_use": "baseline_a",
+      "candidate_promoted": false,
+      "development_h1": {
+        "baseline_a": {
+          "n": 24,
+          "mae": 2.027778,
+          "wis": 1.592986,
+          "coverage80": 0.625
+        },
+        "baseline_b": {
+          "n": 24,
+          "mae": 3.958333,
+          "wis": 3.247292,
+          "coverage80": 0.541667
+        },
+        "candidate": {
+          "n": 24,
+          "mae": 2.122755,
+          "wis": 1.650879,
+          "coverage80": 0.625
+        }
+      },
+      "reason": "candidate MAE 2.12 vs best baseline (baseline_a) 2.03: not 10% better; WIS 1.65 vs 1.59: worse"
+    }
+  },
+  "promotion_decided_utc": "2026-10-07T01:19:51+00:00"
 }
