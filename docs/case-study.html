@@ -170,7 +170,7 @@
           <ul class="mt-4 space-y-1 border-l border-line">
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs1">01 The review decision</a></li>
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs2">02 The measured results</a></li>
-            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs3">03 What Aaron owned</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs3">03 Decisions and trade-offs</a></li>
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs4">04 How the evidence was checked</a></li>
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs5">05 The next test</a></li>
           </ul>
@@ -211,14 +211,18 @@
       </div>
 
       <div id="cs3" class="mt-16 border-t border-line pt-10 scroll-mt-24">
-        <p class="eyebrow">03 / What Aaron owned</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Who built it, and who decided</h2>
+        <p class="eyebrow">03 / Decisions and trade-offs</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">The choices that shaped the result, and what each one cost</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
-          <p>Aaron Robbins is the module owner. Claude Code implemented the approved plan, and AI agents supplied the simulated chart reviews. The decisions below are Aaron's, as the <a href="https://github.com/RobbinsAnalytics/cascadia-early-warning/blob/main/governance/decision-record.md">decision record</a> states them; no implementation or validation step on this page is attributed to a human review.</p>
+          <p>Claude Code implemented the approved plan, and AI agents ran the simulated chart reviews. Each choice below is recorded with its counterfactual in the <a href="https://github.com/RobbinsAnalytics/cascadia-early-warning/blob/main/governance/decision-record.md">decision record</a>.</p>
           <ul>
-            <li><strong>Accepting gate G5 as built</strong>, with its band unchanged, when five of the seven codes landed outside it (D16).</li>
-            <li><strong>Taking the page off the freeze list</strong>, so the weekly live edge can rebuild it while the tables it is computed from stay frozen (D18).</li>
-            <li><strong>Correcting the record</strong>: making every correction from two external reviews, leading with the November 2026 outlook at three months ahead, putting the charts before the text, building this case study as a page beside the module, and registering the weekly live edge at publication (D19).</li>
+            <li><strong>Counting reports, not events or rates.</strong> The target is distinct reports per code per receipt month, the one figure the source can certify; it says nothing about events, which summary reports and missing event dates blur, or about rates, which need a denominator the source does not carry (D1).</li>
+            <li><strong>A fixed candidate and a promotion bar.</strong> One ETS form was fixed before any test and replaced the better of two simple baselines only where its development-period error was at least 10% lower without a worse interval score; it earned use on two of seven codes, and the trailing three-month mean runs the rest (D6, D8).</li>
+            <li><strong>Ranges from the model&#x27;s own errors.</strong> Each 80% range comes from the 36 latest errors of the same model and horizon, not from the model&#x27;s assumptions; it is honest about past misses and slow to follow a series that changes level, which is how three codes&#x27; ranges fell short (D7, D16).</li>
+            <li><strong>Keeping the band where it was registered.</strong> When five of seven codes landed outside the 60% to 95% band written before the test, neither the band nor the ranges were moved; the three codes below 70% stay on the page with their review rule off (D16).</li>
+            <li><strong>A two-month trigger with a five-report floor.</strong> A month is flagged only above its 80% range and at least five reports over the point, and an episode needs two flagged months in a row, so a single receipt pile-up does not open one; the cost is a flag that arrives a month later (D9).</li>
+            <li><strong>Leading with three months ahead.</strong> The page leads with November 2026 at three months ahead because September 2026, one month ahead, had already ended when the forecast was issued; promotion was judged at one month ahead, and at three months ranges like November&#x27;s held 20 of 22 locked-test months (D10, D19).</li>
+            <li><strong>A private exclusion with a public receipt.</strong> Reports whose manufacturer or brand fields match a private list are removed whole, 1 of 649,080 here, and the count and the list&#x27;s hash are published; a reader can check the receipt but not the list (D3).</li>
           </ul>
         </div>
       </div>
@@ -299,7 +303,7 @@
       <ul class="mt-4 space-y-0.5 text-sm md:mt-5 md:space-y-2.5">
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs1">The review decision</a></li>
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs2">The measured results</a></li>
-        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs3">What Aaron owned</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs3">Decisions and trade-offs</a></li>
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs4">How the evidence was checked</a></li>
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs5">The next test</a></li>
       </ul>

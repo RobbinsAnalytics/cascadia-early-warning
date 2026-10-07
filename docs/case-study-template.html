@@ -170,7 +170,7 @@
           <ul class="mt-4 space-y-1 border-l border-line">
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs1">01 The review decision</a></li>
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs2">02 The measured results</a></li>
-            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs3">03 What Aaron owned</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs3">03 Decisions and trade-offs</a></li>
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs4">04 How the evidence was checked</a></li>
             <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#cs5">05 The next test</a></li>
           </ul>
@@ -211,14 +211,12 @@
       </div>
 
       <div id="cs3" class="mt-16 border-t border-line pt-10 scroll-mt-24">
-        <p class="eyebrow">03 / What Aaron owned</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Who built it, and who decided</h2>
+        <p class="eyebrow">03 / Decisions and trade-offs</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">The choices that shaped the result, and what each one cost</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
-          <p>Aaron Robbins is the module owner. Claude Code implemented the approved plan, and AI agents supplied the simulated chart reviews. The decisions below are Aaron's, as the <a href="@@repo_url@@/blob/main/governance/decision-record.md">decision record</a> states them; no implementation or validation step on this page is attributed to a human review.</p>
+          <p>Claude Code implemented the approved plan, and AI agents ran the simulated chart reviews. Each choice below is recorded with its counterfactual in the <a href="@@repo_url@@/blob/main/governance/decision-record.md">decision record</a>.</p>
           <ul>
-            <li><strong>Accepting gate G5 as built</strong>, with its band unchanged, when @@g5_outside@@ of the @@n_codes_word@@ codes landed outside it (D16).</li>
-            <li><strong>Taking the page off the freeze list</strong>, so the weekly live edge can rebuild it while the tables it is computed from stay frozen (D18).</li>
-            <li><strong>Correcting the record</strong>: making every correction from two external reviews, leading with the @@o_target@@ outlook at @@o_h_word@@ months ahead, putting the charts before the text, building this case study as a page beside the module, and registering the weekly live edge at publication (D19).</li>
+@@case_decisions@@
           </ul>
         </div>
       </div>
@@ -299,7 +297,7 @@
       <ul class="mt-4 space-y-0.5 text-sm md:mt-5 md:space-y-2.5">
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs1">The review decision</a></li>
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs2">The measured results</a></li>
-        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs3">What Aaron owned</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs3">Decisions and trade-offs</a></li>
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs4">How the evidence was checked</a></li>
         <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#cs5">The next test</a></li>
       </ul>

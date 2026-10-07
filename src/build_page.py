@@ -929,6 +929,57 @@ def case_description(d) -> str:
             "reports, not rates." % num_word(len(d["forecast_codes"])))
 
 
+def promotion_ratio(cfg) -> float:
+    """The promotion bar, read from config/model.json's own criterion ("at most 0.90 times the better
+    baseline's MAE"); the build fails rather than type it."""
+    m = re.search(r"at most ([0-9.]+) times the better baseline's MAE", cfg["promotion_rule"]["criterion"])
+    if not m:
+        raise SystemExit("config/model.json promotion_rule.criterion no longer states the MAE ratio in the form this page reads")
+    return float(m.group(1))
+
+
+def case_decisions(d, c1, n_cand: int, n_dis: int, g5_outside: int, excluded: int, total_raw: int) -> str:
+    """Section 03 of the case study (Build Brief 2.2 step 4): the substantive choices in the decision record,
+    each with what it cost, drafted for Aaron's review. Every figure is generated."""
+    n = len(d["forecast_codes"])
+    cal = sorted({r["calibration_n"] for r in d["fc"] if r["period"] == "locked" and r["horizon"] == "1"
+                  and r["model"] == d["in_use"][r["product_code"]] and r["lower80"] != ""})
+    o = c1["outlook"]
+    items = [
+        ("Counting reports, not events or rates.",
+         "The target is distinct reports per code per receipt month, the one figure the source can certify; it says nothing "
+         "about events, which summary reports and missing event dates blur, or about rates, which need a denominator the "
+         "source does not carry (D1)."),
+        ("A fixed candidate and a promotion bar.",
+         "One ETS form was fixed before any test and replaced the better of two simple baselines only where its "
+         "development-period error was at least %s lower without a worse interval score; it earned use on %s of %s codes, "
+         "and the %s runs the rest (D6, D8)."
+         % (pct(1 - promotion_ratio(d["cfg"])), num_word(n_cand), num_word(n),
+            join_and(sorted({model_label(m) for m in d["in_use"].values() if m != "candidate"})) or "candidate")),
+        ("Ranges from the model's own errors.",
+         "Each 80%% range comes from the %s latest errors of the same model and horizon, not from the model's assumptions; it "
+         "is honest about past misses and slow to follow a series that changes level, which is how %s codes' ranges fell "
+         "short (D7, D16)." % (join_and(cal), num_word(n_dis))),
+        ("Keeping the band where it was registered.",
+         "When %s of %s codes landed outside the %s to %s band written before the test, neither the band nor the ranges were "
+         "moved; the %s codes below %s stay on the page with their review rule off (D16)."
+         % (num_word(g5_outside), num_word(n), pct(G5_BAND[0]), pct(G5_BAND[1]), num_word(n_dis), pct(COVERAGE_FLOOR))),
+        ("A %s-month trigger with a %s-report floor." % (num_word(MIN_RUN), num_word(int(MIN_EXCESS))),
+         "A month is flagged only above its 80%% range and at least %s reports over the point, and an episode needs %s flagged "
+         "months in a row, so a single receipt pile-up does not open one; the cost is a flag that arrives a month later (D9)."
+         % (num_word(int(MIN_EXCESS)), num_word(MIN_RUN))),
+        ("Leading with %s months ahead." % num_word(o["horizon"]),
+         "The page leads with %s at %s months ahead because %s, one month ahead, had already ended when the forecast was "
+         "issued; promotion was judged at one month ahead, and at %s months ranges like %s's held %d of %d locked-test "
+         "months (D10, D19)." % (month_name(o["target"]), num_word(o["horizon"]), month_name(c1["elapsed"]["target"]),
+                                 num_word(o["horizon"]), month_name(o["target"]).split()[0], o["coverageIn"], o["coverageN"])),
+        ("A private exclusion with a public receipt.",
+         "Reports whose manufacturer or brand fields match a private list are removed whole, %s of %s here, and the count and "
+         "the list's hash are published; a reader can check the receipt but not the list (D3)." % (nf(excluded), nf(total_raw))),
+    ]
+    return "\n".join("            <li><strong>%s</strong> %s</li>" % (html.escape(h), html.escape(t)) for h, t in items)
+
+
 def case_results(d, code, c1, c2, n_cand, n_dis, qd, rc) -> list[list[str]]:
     """The case-study review's results table, rows verbatim, figures generated. The first row is the
     November outlook, drafted, so the outlook leads the evidence (Build Brief 2.2 step 1)."""
@@ -1205,6 +1256,7 @@ def main() -> int:
         # The card's horizons row, from config/model.json "horizons".
         "horizons_phrase": "%s months ahead" % join_and([num_word(h) for h in sorted(cfg["horizons"])]),
         "case_test": html.escape(case_test(d)),
+        "case_decisions": case_decisions(d, c1, n_cand, n_dis, len(c3["rows"]) - g5_in, excluded, total_raw),
         "case_experiment_history": html.escape(CASE_EXPERIMENT_HISTORY),
         "case_prereg_narrowed": html.escape(CASE_PREREG_NARROWED),
         "case_panel": html.escape(CASE_PANEL),
