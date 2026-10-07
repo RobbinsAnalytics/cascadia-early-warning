@@ -102,3 +102,65 @@ what the module does not do (no rates, no risk, no firm) rather than
 misreadings of what it draws, and that the visualization seat will produce
 most of the defects, which is the pattern the skill records from earlier
 panels.
+
+---
+
+# Pre-panel notes, revision panel of 2026-10-07: charts 1 and 4
+
+*Written 2026-10-07, BEFORE the revision panel's seats were spawned, and
+committed before them so the order is in the git log. Charts 1 and 4 changed
+in content under Build Brief 2.1 (decision record D19): chart 1 now leads with
+November 2026 at three months ahead, and stacks at narrow widths; chart 4's
+title and subtitle now carry the queue with and without its coverage gate.
+Charts 2, 3 and 5 changed in title spacing only and are not panelled.*
+
+**Authorship, stated plainly.** Both charts were revised by a Claude Code
+session working Build Brief 2.1; Aaron Robbins is the module owner and reviews
+the wording after this run. The session read the renders at 320 and 1040 px
+before writing this list. Anything below that the panel also finds is **not**
+novel.
+
+## Suspected, chart by chart
+
+**Chart 1 - the outlook, now November at three months ahead**
+1. The title carries two claims (the November forecast and the three-month
+   coverage, "20 of 22"), runs to two lines at 1040 and six at 320, and the
+   coverage half cannot be read off the canvas.
+2. The subtitle is six lines at 1040 and about sixteen at 320.
+3. The history ends at Aug 2026 and the column is Nov 2026; September and
+   October are not drawn, and a reader may take the column for the next month.
+4. The band over the history is one month ahead and the column is three months
+   ahead; a reader may compare the column's spread with the band's width as if
+   they were the same kind of range.
+5. September's elapsed-period estimate (672) is in the subtitle and the lines
+   under the card, and nowhere on the canvas.
+6. The value axis still runs to 3.5K because of the 2022 spike; the band and
+   the column sit in the bottom third of the plot.
+7. At 1040 the annotation wraps to four lines and leaves "906" alone on the
+   last.
+8. One hollow dot sits well above the column (about 1.3K) and may read as a
+   separate mark rather than one of the twenty.
+9. At 320 the strip's axis runs 0 to 3K, so the twenty dots occupy about a
+   quarter of its width and stack; a reader counting may not reach twenty.
+10. At 320 the end labels are still "exp." and "rec.".
+
+**Chart 4 - the review timeline, with and without the gate**
+11. The title is a two-figure sentence (one episode in 128 code-months, seven
+    in 224), and "code-months" is jargon.
+12. The seven ungated episodes are not drawn as episodes: the rule-off lanes
+    show hollow squares and no bars, so the title's "seven" cannot be counted
+    from the canvas.
+13. Neither 128 nor 224 is visible on the canvas.
+14. The subtitle is about twenty lines at 320.
+15. The diamonds (Class I recall initiations) share the flags' hue; a reader
+    may connect a diamond to a nearby flag as cause or effect.
+16. NIK's empty lane may read as "no data" rather than "no flags".
+17. At 320 adjacent hollow squares in the OZD and PYX lanes merge into runs
+    that resemble episode bars.
+
+## What I expect the panel to find that I have not listed
+
+The specific worry for this round is the pairing of horizons on chart 1: the
+title pairs November with its own three-month coverage, but the history's band
+is one month ahead, and a reader who does not read the subtitle may carry the
+one-month band's look into the November figure.
