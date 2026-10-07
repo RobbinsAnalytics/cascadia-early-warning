@@ -65,6 +65,16 @@ LAST_UPDATED = "2026-09-29"
 DISCLAIMER = ("Report counts are not incident rates or measures of device safety. This independent "
               "public-data demonstration provides no medical, legal or regulatory advice.")
 EVAL_START, EVAL_END = "2024-01", "2026-08"
+# The review rule, in the module review's words, wherever either page states it. The rule itself is
+# src/review.py's flagged() and MIN_EXCESS, as registered in governance/pre-registration.md section 1.
+RULE = ("A month is flagged when the observed count exceeds the 80% upper bound and is at least five reports "
+        "above the point forecast.")
+RULE_EPISODE = "Two consecutive flagged months open an episode."
+# What the rule would do by chance, as an illustration under stated conditions (pre-registration section 2).
+RULE_CHANCE = ("An illustration, not a measured false-alarm rate: if a model's 80% ranges were correctly calibrated and its "
+               "errors independent from month to month, a month would land above the upper bound about one time in ten and two "
+               "consecutive months about one time in a hundred, so about one episode per hundred evaluated months would open by "
+               "chance before the five-report floor. Neither condition is guaranteed here, and no false-alarm rate was measured.")
 SERIES_START = "2022-01"
 DOT_N = 20
 
@@ -358,9 +368,8 @@ def chart2(d, code):
         finding = ("On the locked test the trailing mean's 80%% range held %d of %d %s months; its average miss was %s reports a month; the candidate missed by %s and was not promoted"
                    % (n_in, len(months), code, nf(sc_a["mae"]), nf(sc_c["mae"])))
     subtitle = ("One-month-ahead points from both models against what arrived, %s to %s, %d locked months; the band is the %s's 80%% range, "
-                "which covered %s of these months; rings mark the %d months it did not. The review rule flags a month above the band by "
-                "five or more reports. Selection was frozen at 2023-12 and this test ran once."
-                % (month_short(months[0]), month_short(months[-1]), len(months), model_label(use), pct(sc_use["coverage80"]), len(outside)))
+                "which covered %s of these months; rings mark the %d months it did not. %s Selection was frozen at 2023-12 and this test ran once."
+                % (month_short(months[0]), month_short(months[-1]), len(months), model_label(use), pct(sc_use["coverage80"]), len(outside), RULE))
     annotation = "largest miss: %s, %s arrived against %s expected" % (month_short(miss_m), nf(actual[i_miss]), nf(miss_pt))
     summary = ("Line chart over the %d locked-test months %s to %s for product code %s. Actual reports range %s to %s. The %s's "
                "points carry a mean absolute error of %s and its 80%% range covered %s of months (mean width %s); the %s's mean "
@@ -457,13 +466,13 @@ def chart4(d):
     else:
         finding = ("The review rule opened %d episode%s in %d evaluated months across %s codes, %.3f per month; %d Class I recall%s began in the span"
                    % (n_ep, "" if n_ep == 1 else "s", eval_months, num_word(len(lanes)), rate, n_rec, "" if n_rec == 1 else "s"))
-    subtitle = ("One lane per code, %s to %s; lanes with the rule on come first, each group ordered by flagged months. A filled square is a "
-                "month whose actual exceeded the 80%% range by five or more reports (the rule is one-sided by design); a hollow square is the "
+    subtitle = ("One lane per code, %s to %s; lanes with the rule on come first, each group ordered by flagged months. %s "
+                "A filled square is a flagged month (the rule is one-sided by design); a hollow square is the "
                 "same in a lane with the rule off, where it opens no episode; a bar is an episode of two or more consecutive filled squares; "
                 "a diamond, raised above the lane, is the firm-initiated date of a Class I recall event in that code, same-month events side "
                 "by side. %d of the %d flagged months fall in the %d lanes with the rule off. Of the %d Class I initiations, %d were preceded "
                 "by an episode start. Association only: the timeline is context, not validation."
-                % (month_short(EVAL_START), month_short(EVAL_END), n_off_flags, n_fl, n_off, rc_init, rc_prec))
+                % (month_short(EVAL_START), month_short(EVAL_END), RULE, n_off_flags, n_fl, n_off, rc_init, rc_prec))
     # The annotation names the episode the title counts; with none, it says so (Rule 3.4: at the mark the claim depends on).
     ep_note, best = None, None
     for l in lanes:
@@ -661,6 +670,7 @@ def main() -> int:
         "n_codes_word": num_word(len(d["forecast_codes"])), "N_codes_word": num_word(len(d["forecast_codes"])).capitalize(),
         "cohort_classes": '<span data-cohort-fact="classes">%s</span>' % cf["classes"], "cohort_classes_plain": cf["classes"],
         "what_counted": what_is_counted(d, cf, rf),
+        "rule": html.escape(RULE), "rule_episode": html.escape(RULE_EPISODE), "rule_chance": html.escape(RULE_CHANCE),
         "cand_codes": ", ".join(c for c in d["forecast_codes"] if use[c] == "candidate") or "none",
         "base_codes": ", ".join(c for c in d["forecast_codes"] if use[c] != "candidate") or "none",
         "o_target": month_name(c1["outlook"]["target"]), "o_point": nf(c1["outlook"]["point"]),

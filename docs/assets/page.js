@@ -480,7 +480,7 @@
         var v = q.data;
         if (v.r) return v.code + ': Class I recall event ' + v.r.event + ' initiated ' + v.r.date + '<br>root cause as recorded: ' + (v.r.rootCause || 'not recorded');
         if (v.e) return v.code + ': episode ' + monthShort(v.e.start) + ' to ' + monthShort(v.e.end) + ' (' + v.e.months + ' months), largest excess ' + nf(v.e.excess) + ' reports';
-        return v.code + ': ' + monthShort(v.month) + ' above the 80% range by five or more reports';
+        return v.code + ': ' + monthShort(v.month) + ' flagged: above the 80% upper bound and at least five reports above the point forecast';
       } }),
       series: [
         // Episodes as bars drawn with the custom renderer across their months, under the marks.
