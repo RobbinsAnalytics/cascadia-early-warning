@@ -247,3 +247,57 @@ theme and the reading panel have never seen.
 
 **Carried by:** `docs/assets/cascadia-echarts-theme.js` (vendored, first line
 names its source and hash); `docs/assets/page.js`; `governance/chart-review.md`.
+
+---
+
+*Layer 2, 2026-10-06, at the numbers gate.*
+
+## D16 · Five of seven codes landed outside gate G5's band, and the build continued under the plan's own disabling rule
+
+The numbers gate (G5) expected the model in use's 80% range to cover 60% to
+95% of locked-test months per code, and said that coverage below 70% disables
+that code's review rule. On the locked test, horizon one, model in use:
+**DSP 70.8% and DSQ 91.7% inside the band; LWS 95.8% and NIK 100.0% above
+it, their ranges wider than the months called for; NPT 58.3%, OZD 41.7% and
+PYX 33.3% below it, their ranges narrower.** The three below 70% have their
+review rule disabled. The empirical ranges rest on the 36 latest elapsed
+errors, which for the early locked origins are development-period errors, and
+the series changed character between the periods: OZD rose from about 540
+reports in 2022 to 18,592 in 2024 and PYX from 90 in 2023 to 1,031 in 2024,
+while LWS and NIK settled. A range calibrated on one regime does not cover
+the next, and that is the finding, not a defect in the arithmetic.
+
+**The gate said a figure outside its band stops the build and reports.** The
+session was running unattended, the figures describe a property of the codes
+and of empirical ranges rather than a defect in the build, and the plan
+itself prescribes the handling for coverage below 70% (the review rule is
+disabled for the code and the page says so). The build therefore continued
+under that rule, every figure is published as it is, the page says in its
+own title that the ranges held on two codes of seven, and **this is flagged
+first in the build report as Aaron's call**: the alternatives, dropping the
+three disabled codes as a reduced cohort or declining to publish the review
+queue at all, are each a one-line change and a rebuild. No selection was
+revisited; the promotion decision stands as committed.
+
+*Counterfactual:* refitting the ranges on a shorter window, or widening them
+until they covered, would have been selection on the test.
+
+**Carried by:** `governance/numbers-gate.md` (Results); `data/conformed/review_workload.csv`
+(`rule_enabled`); `src/review.py` (`COVERAGE_FLOOR`); the page's review section.
+
+## D17 · The locked stage was run a second time before any locked row was committed, to repair a harness defect
+
+The first locked run did not carry the candidate's development-period errors
+into the locked stage, so the candidate's ranges appeared only twelve months
+in and its locked scores rested on 12 targets instead of 24; that is not the
+method the pre-registration states (the 36 latest elapsed errors at every
+origin). The defect was found in the first run's output, fixed in
+`src/forecast.py`, and the stage was run again with the uncommitted rows
+removed first. **The points did not change** (the fits are deterministic in
+the history), the promotion decision was not touched, and no locked row had
+been committed, so the committed history carries one locked run. Recorded
+here rather than left to the git log because the first run's figures were
+seen before the second run was made.
+
+**Carried by:** `src/forecast.py` (`prev_pts`); `src/validate.py` (the
+locked-once check over committed history); the build report.

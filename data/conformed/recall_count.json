@@ -1,0 +1,149 @@
+{
+ "definition": "governance/pre-registration.md, section 'The one pre-registered count'",
+ "evaluated_span": [
+  "2024-01",
+  "2026-08"
+ ],
+ "lookback_months": 18,
+ "class_i_initiations_in_evaluated_span_by_forecast_code": 24,
+ "class_i_initiations": [
+  {
+   "product_code": "DSQ",
+   "initiated": "2024-01",
+   "res_event_number": "93697"
+  },
+  {
+   "product_code": "DSQ",
+   "initiated": "2024-02",
+   "res_event_number": "93963"
+  },
+  {
+   "product_code": "DSQ",
+   "initiated": "2024-03",
+   "res_event_number": "94232"
+  },
+  {
+   "product_code": "DSP",
+   "initiated": "2024-04",
+   "res_event_number": "94526"
+  },
+  {
+   "product_code": "DSQ",
+   "initiated": "2024-05",
+   "res_event_number": "94478"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2024-05",
+   "res_event_number": "94833"
+  },
+  {
+   "product_code": "DSP",
+   "initiated": "2024-08",
+   "res_event_number": "95150"
+  },
+  {
+   "product_code": "DSP",
+   "initiated": "2024-08",
+   "res_event_number": "95168"
+  },
+  {
+   "product_code": "PYX",
+   "initiated": "2024-12",
+   "res_event_number": "95780"
+  },
+  {
+   "product_code": "DSQ",
+   "initiated": "2025-03",
+   "res_event_number": "96471"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2025-06",
+   "res_event_number": "97078"
+  },
+  {
+   "product_code": "DSQ",
+   "initiated": "2025-06",
+   "res_event_number": "97256"
+  },
+  {
+   "product_code": "LWS",
+   "initiated": "2025-07",
+   "res_event_number": "97318"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2025-08",
+   "res_event_number": "97440"
+  },
+  {
+   "product_code": "LWS",
+   "initiated": "2025-08",
+   "res_event_number": "97467"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2025-09",
+   "res_event_number": "97513"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2025-10",
+   "res_event_number": "97617"
+  },
+  {
+   "product_code": "PYX",
+   "initiated": "2026-01",
+   "res_event_number": "98276"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2026-02",
+   "res_event_number": "98393"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2026-02",
+   "res_event_number": "98395"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2026-04",
+   "res_event_number": "98770"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2026-05",
+   "res_event_number": "98853"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2026-05",
+   "res_event_number": "98946"
+  },
+  {
+   "product_code": "OZD",
+   "initiated": "2026-08",
+   "res_event_number": "99671"
+  }
+ ],
+ "episodes_total": 1,
+ "episodes_whose_start_falls_in_the_18_months_before_a_class_i_initiation": 0,
+ "class_i_initiations_preceded_by_an_episode_start": 0,
+ "always_flag_rule": {
+  "class_i_initiations_preceded": 23,
+  "flagged_months_per_evaluated_month": 1.0,
+  "note": "flags every month, so it precedes every initiation with an evaluated month in its window, at a workload of one flag per month"
+ },
+ "fixed_rule_workload_episodes_per_evaluated_month": {
+  "DSP": "0.0312",
+  "DSQ": "0.0000",
+  "LWS": "0.0000",
+  "NIK": "0.0000",
+  "NPT": "0.0000",
+  "OZD": "0.0000",
+  "PYX": "0.0000"
+ },
+ "reading": "association only; the shuffled-dates null that would make this a test is a build-forward candidate"
+}

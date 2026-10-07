@@ -133,7 +133,7 @@ def main(argv: list[str]) -> int:
                                    for m in ("baseline_a", "baseline_b", "candidate")},
                 "reason": ("candidate MAE %.2f vs best baseline (%s) %.2f: %s; WIS %.2f vs %.2f: %s"
                            % (float(c["mae"]), best_base["model"], float(best_base["mae"]),
-                              "at least 10%% better" if improve else "not 10%% better",
+                              "at least 10% better" if improve else "not 10% better",
                               float(c["wis"]), float(best_base["wis"]),
                               "not worse" if not_worse else "worse")),
             }

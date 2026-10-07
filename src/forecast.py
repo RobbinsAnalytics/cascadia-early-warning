@@ -198,6 +198,17 @@ def main(argv: list[str]) -> int:
             sys.exit("locked-period rows already exist in forecast.csv; the locked test runs once")
         existing_states = [r for r in existing_states if r["origin"] < "2023-12"]
 
+    # The candidate's points from the earlier stage, so that the locked stage's
+    # ranges rest on the same 36 latest elapsed errors the method states. The
+    # first locked run did not carry them (the candidate's error list started
+    # empty at 2023-12 and its ranges appeared twelve months in), which was a
+    # harness defect against the pre-registration, found before any locked row
+    # was committed and fixed here; the points were unchanged by it.
+    prev_pts: dict[tuple[str, str, int], float] = {}
+    for r in existing:
+        if r["model"] == "candidate" and r["point"] != "":
+            prev_pts[(r["product_code"], r["origin"], int(r["horizon"]))] = float(r["point"])
+
     rows, state_rows = [], []
     for code in codes:
         s = series[code]
@@ -226,10 +237,10 @@ def main(argv: list[str]) -> int:
                     for h in horizons:
                         pts[("candidate", h)] = None
             else:
-                # Not this stage's origin: the candidate's errors for earlier
-                # targets come from the rows the earlier stage wrote.
+                # Not this stage's origin: the candidate's points come from
+                # the rows the earlier stage wrote, so its errors accrue.
                 for h in horizons:
-                    pts[("candidate", h)] = None
+                    pts[("candidate", h)] = prev_pts.get((code, origin, h))
             # harvest errors for targets elapsed at this origin from earlier rows
             for (model, h), pt in pts.items():
                 target = add_months(origin, h)

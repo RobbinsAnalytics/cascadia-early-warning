@@ -1,0 +1,8 @@
+product_code,model_in_use,rule_enabled,locked_coverage80,evaluated_months,flagged_months,episodes,episodes_per_evaluated_month,pending_single_flag_at_end
+DSP,baseline_a,true,0.708,32,4,1,0.0312,false
+DSQ,candidate,true,0.917,32,2,0,0.0000,false
+LWS,baseline_a,true,0.958,32,2,0,0.0000,false
+NIK,baseline_a,true,1.000,32,0,0,0.0000,false
+NPT,candidate,false,0.583,32,3,0,0.0000,false
+OZD,baseline_a,false,0.417,32,9,0,0.0000,false
+PYX,baseline_a,false,0.333,32,10,0,0.0000,false

@@ -1,0 +1,176 @@
+res_event_number,product_codes,event_date_initiated,event_date_posted,classification,enforcement_report_date,enforcement_classification_date,root_cause,reason_cites_reports,product_records,records_with_k_numbers,records_with_pma_numbers,in_enforcement
+73636,DSQ,2016-01-07,2016-07-08,Class I,20160720,20160708,Software design,false,1,0,1,true
+73266,DSP,2016-02-10,2016-03-11,Class I,20160316,20160310,Process control,false,9,9,0,true
+73837,LWS,2016-03-31,,Class II,20160518,20160509,Other,false,1,0,1,true
+74225,DSP,2016-05-13,,Class II,20160615,20160608,Unknown/Undetermined by firm,false,1,1,0,true
+72001,DSQ,2016-06-08,2016-10-17,Class I,20161026,20161017,Device Design,false,1,0,1,true
+74796,NPT,2016-08-03,2016-08-16,Class II,20160824,20160816,Device Design,false,1,0,1,true
+74923,LWS,2016-08-12,2016-08-25,Class II,20160831,20160824,Nonconforming Material/Component,false,2,0,2,true
+74999,DSQ,2016-08-17,,Class I,20161019,20161013,Component design/selection,false,1,0,1,true
+75393,LWS|NIK,2016-10-10,2016-10-21,Class I,20161102,20161021,Device Design,false,3,0,3,true
+75943,NIK,2016-12-09,,Class II,20170118,20170107,Software Design Change,false,1,0,1,true
+76052,DSP,2016-12-23,,Class II,20170308,20170301,Device Design,true,1,1,0,true
+76323,LWS,2017-01-12,,Class II,20170215,20170209,Software design,false,1,0,1,true
+76600,DSQ,2017-02-03,,Class I,20170503,20170426,Software design,false,1,0,1,true
+76807,DSQ,2017-03-10,,Class I,20170503,20170424,Device Design,false,1,0,1,true
+76978,DSQ,2017-03-30,2017-05-24,Class I,20170531,20170524,Device Design,false,3,0,3,true
+76853,NIK,2017-04-12,,Class II,20170531,20170519,Software design,false,1,0,1,true
+76942,DSP,2017-04-12,,Class II,20170531,20170525,Device Design,false,1,1,0,true
+77566,DSP,2017-06-16,2017-06-23,Class I,20170802,20170727,Component design/selection,false,3,3,0,true
+77803,LWS,2017-06-29,2017-08-16,Class II,20170823,20170815,Software design,false,3,0,3,true
+77877,DSP,2017-07-17,,Class I,20170913,20170905,Under Investigation by firm,false,3,3,0,true
+78738,NPT,2017-07-21,2018-01-10,Class I,20180117,20180110,Employee error,false,1,0,1,true
+77983,NIK,2017-07-24,2017-09-28,Class II,20171004,20170927,Software design,false,2,0,2,true
+78068,LWS|NIK,2017-08-28,2017-10-10,Class I,20171018,20171010,Device Design,false,2,0,2,true
+78093,NIK,2017-08-28,,Class II,20171025,20171019,Unknown/Undetermined by firm,false,1,0,1,true
+78323,LWS|NIK,2017-10-04,,Class II,20171115,20171108,Under Investigation by firm,false,5,0,5,true
+78888,LWS|NIK,2017-12-19,2018-02-01,Class I,20180228,20180419,Process design,false,8,0,8,true
+79646,DSP,2018-02-21,2018-04-16,Class II,20180425,20180416,Error in labeling,false,3,3,0,true
+79893,DSQ,2018-04-05,2018-05-17,Class I,20180523,20180516,Device Design,true,1,0,1,true
+80212,LWS|NIK,2018-04-16,,Class II,20180704,20180628,Software design,false,11,0,11,true
+80056,DSQ,2018-05-02,2018-05-21,Class I,20180606,20180531,Device Design,false,1,0,1,true
+80003,DSP,2018-05-03,,Class I,20180606,20180531,Device Design,false,1,1,0,true
+92132,DSQ,2018-05-18,2023-05-25,Class I,20230531,20230524,Component design/selection,false,1,0,1,true
+80394,NPT,2018-06-11,,Class II,20180725,20180713,Labeling False and Misleading,false,1,0,1,true
+80379,LWS,2018-06-21,2018-07-10,Class II,20180718,20180710,Device Design,false,6,0,6,true
+80636,NIK,2018-07-09,,Class II,20180822,20180815,Component design/selection,false,2,0,2,true
+80966,DSQ,2018-08-28,,Class II,20181010,20181003,Device Design,false,1,0,1,true
+81001,LWS,2018-09-10,,Class II,20181003,20180927,Component design/selection,false,5,0,5,true
+81006,LWS,2018-09-10,,Class II,20181003,20180927,Device Design,false,1,0,1,true
+81055,DSP,2018-09-20,2018-10-27,Class I,20181107,20181026,Device Design,false,2,2,0,true
+81709,DSQ,2018-10-15,,Class II,20181226,20181218,Device Design,false,1,0,0,true
+81471,LWS,2018-11-01,,Class II,20181128,20181116,Device Design,false,1,0,1,true
+81609,DSQ,2018-11-19,,Class II,20181219,20181207,Other,false,1,0,1,true
+81924,NPT,2019-01-22,,Class II,20190220,20190214,Labeling design,true,1,0,1,true
+99747,OZD,2019-02-19,2026-09-21,Class II,20260930,20260921,Under Investigation by firm,true,1,0,1,true
+82458,DSQ,2019-03-01,2019-04-19,Class II,20190501,20190419,Device Design,false,1,0,1,true
+83357,DSQ,2019-03-30,,Class II,20190828,20190822,Process design,false,2,0,2,true
+83022,DSP,2019-05-28,,Class II,20190724,20190712,Employee error,false,1,1,0,true
+82897,DSP,2019-06-17,2019-07-16,Class I,20190724,20190715,Use error,false,6,6,0,true
+83252,LWS,2019-06-20,2019-08-02,Class I,20190814,20190802,Process control,false,6,0,6,true
+83293,NPT,2019-07-09,2019-08-21,Class I,20190828,20190821,Other,true,4,0,4,true
+83558,LWS,2019-08-21,,Class II,20190925,20190913,Component design/selection,false,2,0,2,true
+84025,OZD,2019-09-04,,Class II,20191113,20191107,Under Investigation by firm,false,1,0,1,true
+84521,DSP,2019-11-20,,Class II,20200212,20200201,Package design/selection,false,3,0,0,true
+84379,DSQ,2019-12-02,,Class II,20200108,20191227,Device Design,false,1,0,1,true
+84829,DSQ,2020-01-23,2020-03-09,Class I,20200318,20200309,Device Design,false,2,0,2,true
+85077,LWS,2020-02-12,2020-03-03,Class II,20200325,20200318,Under Investigation by firm,false,2,0,2,true
+85275,NIK,2020-02-28,,Class II,20200422,20200410,Under Investigation by firm,false,1,0,1,true
+85397,DSQ,2020-04-03,,Class I,20200603,20200522,Device Design,false,5,0,5,true
+85684,DSP,2020-05-20,2020-06-26,Class I,20200708,20200626,Component design/selection,false,10,10,0,true
+85823,DSP,2020-07-27,2020-08-21,Class II,20200902,20200821,Process change control,false,17,10,0,true
+86534,LWS,2020-09-22,,Class II,20201111,20201031,Software design,false,1,0,1,true
+86681,NPT,2020-10-23,,Class II,20201216,20201210,Labeling design,false,3,0,3,true
+90429,NIK,2020-11-05,2022-07-28,Class II,20220803,20220728,Process control,false,1,0,1,true
+87014,LWS,2020-11-13,2021-01-19,Class I,20210127,20210119,Device Design,false,1,0,1,true
+86887,NIK,2020-11-15,,Class II,20210203,20210126,Process control,false,3,0,3,true
+86947,NPT,2020-11-17,2021-01-09,Class I,20210120,20210109,Device Design,false,6,0,6,true
+86924,DSQ,2020-11-19,2021-02-04,Class I,20210210,20210204,Under Investigation by firm,false,1,0,1,true
+86866,LWS,2020-12-02,,Class II,20210203,20210128,Process change control,false,2,0,2,true
+86902,LWS,2020-12-02,2021-02-05,Class I,20210217,20210205,Process control,false,2,0,2,true
+87261,LWS|NIK,2021-02-03,2021-03-27,Class I,20210407,20210326,Device Design,false,2,0,2,true
+87446,DSQ,2021-02-26,,Class I,20210414,20210406,Device Design,false,6,0,6,true
+87456,DSQ,2021-02-26,,Class I,20210428,20210416,Device Design,false,1,0,1,true
+87603,DSQ,2021-02-26,,Class II,20210428,20210421,Device Design,false,1,0,1,true
+87604,DSQ,2021-02-26,,Class II,20210428,20210420,Device Design,false,1,0,1,true
+93876,OZD,2021-03-01,2024-02-22,Class II,20240228,20240222,Software design,false,1,0,1,true
+87549,LWS,2021-03-08,,Class II,20210428,20210421,Device Design,false,4,0,4,true
+87482,DSP,2021-03-22,2021-04-28,Class III,20210505,20210428,Software design,false,2,2,0,true
+87662,NIK,2021-04-06,,Class II,20210512,20210504,Software design,false,4,0,4,true
+87769,NIK,2021-04-07,,Class II,20210526,20210520,Process control,false,1,0,1,true
+88135,DSQ,2021-05-28,,Class II,20210721,20210713,Nonconforming Material/Component,false,1,0,1,true
+88197,DSQ,2021-06-03,,Class I,20210818,20210806,Unknown/Undetermined by firm,true,10,0,10,true
+88113,NPT,2021-06-11,,Class II,20210714,20210708,Device Design,true,3,0,0,true
+88541,DSQ,2021-08-06,,Class II,20210922,20210916,Device Design,false,1,0,1,true
+88651,DSP,2021-09-08,2021-10-07,Class II,20211013,20211007,Device Design,false,2,2,0,true
+88664,DSP,2021-09-08,,Class II,20211006,20210930,Software design,false,2,2,0,true
+88719,DSP,2021-09-21,2021-10-20,Class I,20211027,20211020,Nonconforming Material/Component,false,1,1,0,true
+88876,DSQ,2021-10-22,,Class II,20211208,20211126,Software design,false,1,0,0,true
+88983,DSP,2021-11-15,2021-12-30,Class I,20211222,20211215,Device Design,false,2,2,0,true
+89559,DSQ,2022-01-27,,Class II,20220316,20220304,Labeling design,false,1,0,1,true
+89816,NIK,2022-03-10,,Class II,20220427,20220421,Software design,false,1,0,1,true
+89825,LWS,2022-03-10,,Class II,20220427,20220421,Component design/selection,false,3,0,3,true
+89967,DSQ,2022-03-30,,Class II,20220525,20220517,Labeling design,false,1,0,1,true
+90079,DSQ,2022-03-30,,Class II,20220525,20220517,Labeling design,false,6,0,6,true
+90085,LWS|NIK,2022-04-12,,Class II,20220622,20220614,Software design,false,2,0,2,true
+89966,DSQ,2022-04-14,,Class I,20220615,20220603,Under Investigation by firm,false,1,0,1,true
+90228,DSQ,2022-05-05,,Class I,20220629,20220621,Process control,false,1,0,1,true
+90565,LWS|NIK,2022-06-22,2022-08-09,Class I,20220817,20220808,Device Design,false,6,0,6,true
+90593,DSQ,2022-06-28,2022-08-18,Class I,20220824,20220818,Device Design,false,1,0,1,true
+90524,LWS|NIK,2022-07-07,,Class II,20220907,20220901,Under Investigation by firm,false,3,0,3,true
+90684,DSP,2022-08-05,2022-09-08,Class II,20220914,20220908,Vendor change control,false,3,3,0,true
+90913,DSQ,2022-08-05,2022-10-24,Class II,20221102,20221024,Labeling Change Control,false,1,1,0,true
+91021,DSP,2022-10-17,2022-12-15,Class I,20221221,20221215,Pending,false,31,31,0,true
+91281,DSQ,2022-11-29,2022-12-21,Class II,20221228,20221221,Device Design,false,9,0,0,true
+91179,DSP,2022-12-19,2023-01-19,Class I,20230125,20230119,Device Design,false,2,2,0,true
+91646,LWS,2023-02-02,2023-03-03,Class II,20230315,20230303,Software Manufacturing/Software Deployment,false,1,0,1,true
+91602,DSP,2023-02-07,2023-03-09,Class I,20230315,20230309,Under Investigation by firm,false,2,2,0,true
+91603,DSP,2023-02-07,2023-03-09,Class I,20230315,20230308,Software design,false,2,2,0,true
+91642,DSP,2023-02-07,2023-03-06,Class II,20230315,20230306,Equipment maintenance,true,2,2,0,true
+91645,DSP,2023-02-07,2023-03-06,Class II,20230315,20230306,Under Investigation by firm,false,2,2,0,true
+91652,DSP,2023-02-28,2023-03-22,Class II,20230329,20230322,Under Investigation by firm,false,4,4,0,true
+92021,DSP,2023-04-04,2023-04-26,Class II,20230503,20230426,Component design/selection,false,1,1,0,true
+91955,OZD,2023-04-17,2023-05-18,Class I,20230524,20230518,Device Design,true,1,0,1,true
+92214,DSP,2023-05-04,2023-06-14,Class III,20230621,20230614,Under Investigation by firm,false,1,1,0,true
+92328,LWS|NIK,2023-05-10,2023-06-16,Class I,20230628,20230616,Under Investigation by firm,false,120,0,120,true
+92350,DSQ,2023-05-16,2023-06-22,Class II,20230628,20230622,Software change control,false,1,0,1,true
+92287,DSP,2023-06-05,2023-07-19,Class I,20230726,20230719,Device Design,false,2,2,0,true
+92335,DSP,2023-06-05,2023-07-20,Class I,20230726,20230720,Component design/selection,false,2,2,0,true
+92321,OZD,2023-06-14,2023-07-14,Class I,20230726,20230714,Under Investigation by firm,false,6,0,0,true
+92527,DSP,2023-06-23,2023-07-21,Class II,20230802,20230721,Under Investigation by firm,true,8,6,0,true
+92411,PYX,2023-06-29,2023-08-03,Class I,20230809,20230803,Under Investigation by firm,false,1,0,0,true
+92760,LWS,2023-07-11,2023-08-22,Class II,20230830,20230822,Software design,false,2,0,2,true
+92480,DSP,2023-07-31,2023-08-30,Class I,20230906,20230830,Under Investigation by firm,false,2,2,0,true
+92489,DSP,2023-07-31,2023-08-31,Class II,20230906,20230830,Under Investigation by firm,false,2,2,0,true
+92491,DSP,2023-07-31,2023-08-30,Class I,20230906,20230830,Under Investigation by firm,true,2,2,0,true
+92498,DSP,2023-07-31,2023-08-30,Class I,20230906,20230830,Device Design,false,2,2,0,true
+92501,DSP,2023-07-31,2023-08-30,Class I,20230906,20230830,Under Investigation by firm,false,2,2,0,true
+92951,DSQ,2023-08-07,2023-09-29,Class II,20231011,20230929,Process control,false,1,0,0,true
+92923,LWS|NIK,2023-08-16,2023-09-19,Class II,20230927,20230919,Component design/selection,false,2,0,2,true
+93406,OZD,2023-10-10,2023-12-01,Class II,20231213,20231201,Software design,false,2,0,2,true
+93405,DSQ,2023-10-31,2023-12-02,Class II,20231213,20231201,Labeling design,false,9,0,1,true
+93519,LWS,2023-11-30,2024-01-05,Class II,20240117,20240105,Under Investigation by firm,false,1,0,1,true
+93581,PYX,2023-12-06,2024-01-04,Class II,20240110,20240104,No Marketing Application,false,1,0,1,true
+93663,LWS,2023-12-07,2024-01-22,Class II,20240131,20240122,Nonconforming Material/Component,false,1,0,1,true
+93746,OZD,2023-12-27,2024-02-12,Class II,20240221,20240212,Labeling Change Control,false,1,0,0,true
+93749,OZD,2023-12-27,2024-02-09,Class I,20240221,20240209,Labeling Change Control,false,1,0,1,true
+93697,DSQ,2024-01-03,2024-02-02,Class I,20240214,20240202,Software design,false,1,0,1,true
+93963,DSQ,2024-02-19,2024-03-22,Class I,20240327,20240321,Material/Component Contamination,false,2,0,2,true
+94232,DSQ,2024-03-01,2024-05-01,Class I,20240508,20240501,Device Design,false,2,0,2,true
+94674,LWS|NIK,2024-04-16,2024-06-26,Class II,20240703,20240626,Nonconforming Material/Component,false,23,0,22,true
+94526,DSP,2024-04-29,2024-06-03,Class I,20240612,20240603,Nonconforming Material/Component,true,3,3,0,true
+94478,DSQ,2024-05-08,2024-06-07,Class I,20240619,20240607,Device Design,false,1,0,1,true
+94588,DSQ,2024-05-22,2024-06-27,Class II,20240703,20240627,Process control,false,1,0,1,true
+94833,OZD,2024-05-31,2024-07-17,Class I,20240724,20240717,Release of Material/Component prior to receiving test results,false,1,0,1,true
+94973,DSQ,2024-06-25,2024-08-13,Class II,20240821,20240813,Process design,false,1,0,1,true
+95129,OZD,2024-08-05,2024-09-04,Class II,20240911,20240904,Under Investigation by firm,false,18,0,0,true
+95150,DSP,2024-08-08,2024-09-20,Class I,20241002,20240920,Software design,false,2,2,0,true
+95168,DSP,2024-08-08,2024-09-20,Class I,20241002,20240920,Software design,false,2,2,0,true
+95396,DSP,2024-09-17,2024-11-05,Class II,20241113,20241105,Error in labeling,false,1,1,0,true
+95627,NPT,2024-10-17,2024-11-20,Class II,20241127,20241120,Under Investigation by firm,false,5,0,5,true
+95780,PYX,2024-12-12,2025-01-15,Class I,20250122,20250115,Under Investigation by firm,false,2,0,2,true
+96471,DSQ,2025-03-13,2025-04-17,Class I,20250423,20250417,Process control,false,1,0,1,true
+97078,OZD,2025-06-23,2025-07-26,Class I,20250806,20250725,Device Design,false,1,0,1,true
+97256,DSQ,2025-06-23,2025-08-13,Class I,20250820,20250813,Vendor change control,false,2,0,2,true
+97246,DSP,2025-07-19,2025-08-13,Class II,20250820,20250813,No Marketing Application,false,1,1,0,true
+97318,LWS,2025-07-24,2025-08-20,Class I,20250827,20250820,Component design/selection,false,1,0,1,true
+97440,OZD,2025-08-20,2025-09-19,Class I,20251001,20250919,Device Design,false,1,0,0,true
+97467,LWS,2025-08-20,2025-10-10,Class I,20251022,20251010,Other,false,1,0,0,true
+97513,OZD,2025-09-16,2025-10-17,Class I,20251029,20251017,Device Design,false,1,0,1,true
+97617,OZD,2025-10-01,2025-10-09,Class I,20251015,20251009,Software design,false,1,0,1,true
+97782,DSQ,2025-10-09,2025-11-14,Class II,20251126,20251114,Device Design,false,4,0,4,true
+97956,DSP,2025-10-23,2025-12-16,Class III,20251224,20251216,Process change control,false,2,2,0,true
+97910,LWS,2025-10-29,2025-11-28,Class II,20251210,20251128,Software design,false,1,0,1,true
+97946,DSP,2025-11-04,2025-12-11,Class II,20251217,20251211,Component design/selection,false,2,2,0,true
+98086,OZD,2025-12-04,2026-01-08,Class II,20260114,20260108,Under Investigation by firm,false,1,0,1,true
+98189,DSP,2026-01-23,2026-03-03,Class II,20260311,20260303,Under Investigation by firm,false,2,2,0,true
+98276,PYX,2026-01-27,2026-02-27,Class I,20260311,20260227,Under Investigation by firm,false,3,0,3,true
+98432,DSP,2026-02-06,2026-03-19,Class III,20260325,20260319,Under Investigation by firm,false,1,1,0,true
+98393,OZD,2026-02-16,2026-03-27,Class I,20260408,20260327,Software design,false,1,0,1,true
+98395,OZD,2026-02-18,2026-03-31,Class I,20260408,20260331,Device Design,false,1,0,1,true
+98770,OZD,2026-04-20,2026-05-22,Class I,20260603,20260522,Under Investigation by firm,false,1,0,1,true
+98797,DSQ,2026-04-24,2026-06-05,Class II,20260617,20260605,Error in labeling,false,1,0,1,true
+99023,DSQ,2026-05-13,2026-06-18,Class II,20260624,20260618,Under Investigation by firm,false,3,0,3,true
+98853,OZD,2026-05-14,2026-06-12,Class I,20260624,20260612,Under Investigation by firm,false,1,0,1,true
+98946,OZD,2026-05-18,2026-06-18,Class I,20260624,20260618,Under Investigation by firm,false,1,0,1,true
+99671,OZD,2026-08-12,2026-09-16,Class I,20260923,20260916,Under Investigation by firm,false,3,0,3,true
