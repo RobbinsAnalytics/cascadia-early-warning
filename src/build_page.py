@@ -56,7 +56,8 @@ DB = CONF / "early_warning.duckdb"
 
 PAGE_URL = "https://www.robbinsanalytics.com/cascadia-early-warning/"
 SITE_URL = "https://www.robbinsanalytics.com/"
-CASE_URL = "https://www.robbinsanalytics.com/projects/cascadia-early-warning.html"
+# The case study is a page beside this one (Part B of Build Brief 2.1), linked relatively.
+CASE_URL = "case-study.html"
 REPO_URL = "https://github.com/RobbinsAnalytics/cascadia-early-warning"
 THUMB_URL = "https://www.robbinsanalytics.com/assets/thumb-early-warning.png"
 SOURCE = "openFDA device event, recall and enforcement endpoints"

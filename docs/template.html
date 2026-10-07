@@ -283,7 +283,7 @@
         </div>
         <details class="data-table rich mt-6"><summary>Recall events in these codes, @@recall_span@@</summary>@@t_recall@@</details>
         <div class="rich prose mt-10 max-w-[46rem]">
-          <h3>@@assurance_title@@</h3>
+          <h3 id="checked" class="scroll-mt-24">@@assurance_title@@</h3>
           <ul>
             <li><strong>The freeze.</strong> @@total_raw@@ distinct reports across the @@n_codes_word@@ codes (@@memberships@@ report-code memberships: @@multi_code@@ @@multi_code_word@@ more than one of the codes), pulled from openFDA in @@n_staged_pages@@ pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of @@n_code_months@@ code-months, against the source's own daily count series pulled separately.</li>
             <li><strong>The exclusion.</strong> A private token list, kept outside the repository, removed <strong>@@excluded@@</strong> @@excluded_word@@ whole; its SHA-256 (<code>@@sha_local@@</code>) and the counts removed per field are published, and no firm is named anywhere.</li>
@@ -309,12 +309,13 @@
     <div class="grid lg:grid-cols-[1.1fr_1fr]">
       <div class="relative z-10 px-7 pt-12 pb-10 sm:px-14 sm:pt-16 lg:pb-16">
         <span class="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-mono text-[0.7rem] tracking-[0.16em] text-white/80 uppercase backdrop-blur">Open build</span>
-        <h2 class="mt-7 font-display text-[clamp(2.4rem,1.6rem+3.2vw,4.1rem)] leading-[1.02] font-semibold tracking-tight">Read the <span class="relative inline-block font-serif font-normal italic tracking-[-0.03em] text-[#8fd3c8]">controls<svg class="absolute -bottom-[0.08em] left-0 h-[0.14em] w-full" viewBox="0 0 120 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8 C 30 2, 60 11, 118 4" fill="none" stroke="#d4f36b" stroke-width="2.5" stroke-linecap="round"/></svg></span>, not the charts<span class="text-accent">.</span></h2>
-        <p class="mt-7 max-w-md text-[1.02rem] leading-relaxed text-white/70">The repository carries the pre-registration, the frozen harness, the two derivation paths, the golden fixtures, the validation report with its proof of failure, the chart review and the panel record, in the order they were committed.</p>
+        <h2 class="mt-7 font-display text-[clamp(2.4rem,1.6rem+3.2vw,4.1rem)] leading-[1.02] font-semibold tracking-tight">Check the forecast and the <span class="relative inline-block font-serif font-normal italic tracking-[-0.03em] text-[#8fd3c8]">evidence<svg class="absolute -bottom-[0.08em] left-0 h-[0.14em] w-full" viewBox="0 0 120 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8 C 30 2, 60 11, 118 4" fill="none" stroke="#d4f36b" stroke-width="2.5" stroke-linecap="round"/></svg></span><span class="text-accent">.</span></h2>
+        <p class="mt-7 max-w-md text-[1.02rem] leading-relaxed text-white/70">The test result and what was checked are on this page. The repository carries the pre-registration, the frozen harness, both derivation paths, the validation report and the chart review, in the order they were committed.</p>
         <div class="mt-9 flex flex-wrap gap-3">
           <a class="group btn bg-lime !py-1.5 !pr-1.5 !pl-5 text-ink hover:bg-lime-2" href="@@repo_url@@">Build repository <span class="grid h-8 w-8 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
+          <a class="btn btn-ghost-light" href="#s2">The test result</a>
+          <a class="btn btn-ghost-light" href="#checked">Validation coverage</a>
           <a class="btn btn-ghost-light" href="@@case_url@@">The case study</a>
-          <a class="btn btn-ghost-light" href="@@site_url@@cascadia.html">Cascadia architecture</a>
         </div>
       </div>
       <div class="relative min-h-[17rem] sm:min-h-[21rem]" aria-hidden="true">
