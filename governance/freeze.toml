@@ -37,11 +37,12 @@ module = "cascadia-early-warning"
 # page. Advancing it is a deliberate act; see CLAUDE.md.
 as_of_date = "2026-08-31"
 
-# The Phase 3 commit, which added the forecast, score, review and recall
-# tables below; the Phase 1 and 2 artifacts were frozen at 777ab234d7de and
-# are unchanged since (the gate at that baseline passed before this move). Strictly stronger than "HEAD": a
-# committed change to any path below is caught, not only an uncommitted one.
-baseline = "12dcaf1a7abf5779528c0c9dcd6dd337de1e6150"
+# The Phase 4 commit, which added the rendered page below; the Phase 1 to 3
+# artifacts were frozen at 777ab234d7de and 12dcaf1a7abf and are unchanged
+# since (the gate at the previous baseline passed before this move).
+# Strictly stronger than "HEAD": a committed change to any path below is
+# caught, not only an uncommitted one.
+baseline = "3434e0f2d6efe3abaaf88c67f428f91e68ba72c9"
 
 # EVERY PATH HERE MUST BE GIT-TRACKED. A gitignored path FAILS OPEN: Path.glob
 # matches the filesystem, `git diff --quiet` reports no change on an untracked
@@ -77,6 +78,21 @@ protected_paths = [
   "data/conformed/recall_context_meta.json",
   "governance/source-register.md",
   "governance/exclusion-receipt-records.md",
+  # Phase 4: the rendered page, every figure on it computed from the tables
+  # above. docs/renders/* is NOT listed, for the reason cascadia-matter-ledger
+  # recorded: the renders are review artifacts that change with chart code,
+  # and binding them to a data-freeze baseline makes the gate cry wolf.
+  #
+  # KNOWN INTERACTION WITH THE LIVE EDGE (Phase 5). reconcile_live_edge.py
+  # rebuilds docs/index.html after every scheduled run so the page's health
+  # surface stays level with the record; from the first such run this gate
+  # reports the page as moved until Aaron commits the run record and moves
+  # this baseline. Matter Ledger resolved the same conflict by leaving its
+  # page out of the list. This module keeps the page IN, because the page
+  # is the frozen forecast and the plan says so; whether to adopt Matter
+  # Ledger's answer once the task is scheduled is Aaron's call, recorded in
+  # the build receipt as an open item.
+  "docs/index.html",
 ]
 
 # No permitted_edit entries. An exemption is a path that is no longer checked.
