@@ -1,0 +1,16 @@
+res_event_number,product_code,event_date_initiated,classification,note
+75393,LWS,2016-10-10,Class I,also NIK; a follow-on event opened 2017-08-28
+75393,NIK,2016-10-10,Class I,also LWS
+79893,DSQ,2018-04-05,Class I,
+80003,DSP,2018-05-03,Class I,
+81055,DSP,2018-09-20,Class I,
+86924,DSQ,2020-11-19,Class I,
+86947,NPT,2020-11-17,Class I,
+87014,LWS,2020-11-13,Class I,sibling events of the same product are Class II
+88983,DSP,2021-11-15,Class I,
+91179,DSP,2022-12-19,Class I,
+91602,DSP,2023-02-07,Class I,
+91603,DSP,2023-02-07,Class I,
+91955,OZD,2023-04-17,Class I,FDA's recorded reason cites a heightened complaint rate
+92321,OZD,2023-06-14,Class I,
+92411,PYX,2023-06-29,Class I,

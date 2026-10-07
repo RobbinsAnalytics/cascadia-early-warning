@@ -624,7 +624,7 @@ def cmd_vmsr() -> int:
     for href, label in links:
         print("  %s  %s" % (label, href))
     for href, label in links:
-        if "media" in href or href.lower().endswith((".xlsx", ".pdf", ".csv")):
+        if "media" in href or href.lower().endswith((".zip", ".xlsx", ".pdf", ".csv")):
             url = href if href.startswith("http") else "https://www.fda.gov" + href
             req = urllib.request.Request(url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Cascadia Early Warning"})

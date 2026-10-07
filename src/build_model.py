@@ -436,6 +436,16 @@ def main() -> int:
               [{"product_code": c, "month": "%s-%s" % (m[:4], m[4:]), "event_type": t, "eligible_reports": n}
                for c, m, t, n in mix])
 
+    # ---- reports whose remedial action includes a recall (pre-registration 6)
+    rem = con.execute("""
+        SELECT b.product_code, r.receipt_month, count(DISTINCT r.mdr_report_key)
+        FROM report r JOIN report_product_code b USING (mdr_report_key)
+        WHERE r.countable AND NOT r.excluded AND lower(r.remedial_action) LIKE '%recall%'
+        GROUP BY 1, 2 ORDER BY 1, 2""").fetchall()
+    write_csv(CONF / "monthly_remedial_recall.csv",
+              [{"product_code": c, "month": "%s-%s" % (m[:4], m[4:]), "eligible_reports_with_recall_action": n}
+               for c, m, n in rem] or [{"product_code": "", "month": "", "eligible_reports_with_recall_action": 0}])
+
     # ---- product codes -------------------------------------------------
     cls = load_classification()
     write_csv(REF / "product_code_classification.csv", [cls[c] for c in sorted(cls)])

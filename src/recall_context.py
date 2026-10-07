@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import json
 import pathlib
+import re
 import sys
 import zipfile
 from collections import defaultdict
@@ -84,6 +85,9 @@ def timeline() -> list[dict]:
         posted = sorted({r.get("event_date_posted") for r in recs if r.get("event_date_posted")})
         codes = sorted({norm_code(r.get("product_code")) for r in recs})
         causes = sorted({(r.get("root_cause_description") or "").strip() for r in recs} - {""})
+        # pre-registration section 3: a flag, never the text, which can carry names
+        cites = any(re.search(r"\b(report|reports|complaint|complaints)\b", (r.get("reason_for_recall") or ""), re.I)
+                    for r in recs)
         e = enf_by_event.get(ev, [])
         classes = sorted({(x.get("classification") or "").strip() for x in e} - {""})
         rdates = sorted({x.get("report_date") for x in e if x.get("report_date")})
@@ -97,6 +101,7 @@ def timeline() -> list[dict]:
             "enforcement_report_date": rdates[0] if rdates else "",
             "enforcement_classification_date": cdates[0] if cdates else "",
             "root_cause": "|".join(causes),
+            "reason_cites_reports": "true" if cites else "false",
             "product_records": len(recs),
             "records_with_k_numbers": sum(1 for r in recs if r.get("k_numbers")),
             "records_with_pma_numbers": sum(1 for r in recs if r.get("pma_numbers")),
