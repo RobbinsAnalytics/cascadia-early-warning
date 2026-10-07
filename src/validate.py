@@ -752,7 +752,7 @@ def check_words_before_chart(results):
 
 
 CASE_OPENING_MAX = 120
-CASE_RESULT_ROWS = 6          # the review's five rows and the November row
+CASE_RESULT_ROWS = 6          # the November row, first, and the review's five rows
 CASE_PRE_TABLE_WORDS = 12     # the results card's label line, and nothing more, before the table
 CANONICAL_ORIGIN = "https://www.robbinsanalytics.com/"
 # Build Brief 2.1 step 17, verbatim: the canonical URL and the social image.
@@ -1096,7 +1096,9 @@ def _scenarios():
            lambda: _docs_tree_copy({"index.html": lambda t: _sub_once(r'(?s)(<div id="s2"[^>]*>.*?)class="chart-card ', r'\1class="was-card ')(
                _sub_once(r'(?s)(<div id="s2"[^>]*>.*?)class="chart-card ', r'\1class="was-card ')(t))}))
     yield (check_case_study, "the case study's opening padded to more than its word limit",
-           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(data-case="opening"[^>]*>)', r"\1" + "word " * 70)}))
+           # Padded past the limit on its own, whatever the opening's length: 70 words tripped only while the
+           # opening was over 50 words, and the Build Brief 2.2 lead is 45.
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(data-case="opening"[^>]*>)', r"\1" + "word " * (CASE_OPENING_MAX + 1))}))
     yield (check_case_study, "the results table moved below the first section",
            lambda: _docs_tree_copy({"case-study.html": lambda t: _move_results_below_first_section(t)}))
     yield (check_case_study, "a section of prose written between the opening and the results table",

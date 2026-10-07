@@ -902,27 +902,35 @@ def case_test_phrase() -> str:
             % month_name(RETRIEVED[:7]))
 
 
-def case_opening(d, n_cand: int, n_dis: int) -> str:
-    """The case-study review's opening, verbatim, with its figures generated."""
+def case_opening(d, n_dis: int) -> str:
+    """The case study's lead, verbatim from Build Brief 2.2 step 1, with "three of seven" generated."""
     n = len(d["forecast_codes"])
-    dis = ("%s codes fell below the coverage floor for automated review, and their rules remain disabled"
-           % num_word(n_dis).capitalize() if n_dis != 1 else
-           "One code fell below the coverage floor for automated review, and its rule remains disabled")
-    return ("Cascadia Early Warning tests whether forecasts of public FDA device-report volume can support a repeatable review "
-            "queue. The candidate model earned use for %s of %s cardiovascular product codes. %s. The case study presents the "
-            "measured results, the implementation repair and the limits of a retrospective evaluation before prospective "
-            "monitoring begins." % (num_word(n_cand), num_word(n), dis))
+    return ("Which product codes deserve a closer look? Cascadia Early Warning forecasts monthly FDA device-report volume, "
+            "compares it with what arrived, and applies a fixed review rule. The retrospective results show where the method "
+            "holds up and why %s of %s %s unsuitable for automated review."
+            % (num_word(n_dis), num_word(n), "code remains" if n_dis == 1 else "codes remain"))
+
+
+def case_description(d) -> str:
+    """The case study's meta description, drafted to follow the lead (Build Brief 2.2 step 1)."""
+    return ("Cascadia Early Warning forecasts monthly FDA device-report volume for %s product codes, compares it with what "
+            "arrived and applies a fixed review rule; the retrospective results show where the method holds up. Counts of "
+            "reports, not rates." % num_word(len(d["forecast_codes"])))
 
 
 def case_results(d, code, c1, c2, n_cand, n_dis, qd, rc) -> list[list[str]]:
-    """The case-study review's results table, rows verbatim, figures generated; the last row is the
-    November outlook, drafted."""
+    """The case-study review's results table, rows verbatim, figures generated. The first row is the
+    November outlook, drafted, so the outlook leads the evidence (Build Brief 2.2 step 1)."""
     ly = d["cfg"]["periods"]["locked"]["targets"]
     n = len(d["forecast_codes"])
     pre = int(rc["class_i_initiations_preceded_by_an_episode_start"])
     init = int(rc["class_i_initiations_in_evaluated_span_by_forecast_code"])
     o = c1["outlook"]
     return [
+        ["%s %s outlook: about %s reports, 80%% range %s to %s, %s months ahead"
+         % (code, month_name(o["target"]), nf(o["point"]), nf(o["lo80"]), nf(o["hi80"]), num_word(o["horizon"])),
+         "At %s months ahead, ranges like it held %d of %d locked-test months; a forecast, not yet scored"
+         % (num_word(o["horizon"]), o["coverageIn"], o["coverageN"])],
         ["Candidate selected for %d of %d codes" % (n_cand, n), "Added model complexity earned use selectively on the development test"],
         ["%s average miss about %s versus %s reports" % (code, nf(c2["scores"]["use"]["mae"]), nf(c2["scores"]["baselineA"]["mae"])),
          "The %s to %s test showed a modest improvement over the trailing mean" % (ly[0][:4], ly[1][:4])],
@@ -932,10 +940,6 @@ def case_results(d, code, c1, c2, n_cand, n_dis, qd, rc) -> list[list[str]]:
          "Illustrative queue output, with %s ungated episodes disclosed separately" % num_word(qd["ungatedEpisodes"])],
         ["%s of %d Class I recall initiations preceded by an episode start" % ("None" if pre == 0 else str(pre), init),
          "No demonstrated recall-prediction result"],
-        ["%s %s outlook: about %s reports, 80%% range %s to %s, %s months ahead"
-         % (code, month_name(o["target"]), nf(o["point"]), nf(o["lo80"]), nf(o["hi80"]), num_word(o["horizon"])),
-         "At %s months ahead, ranges like it held %d of %d locked-test months; a forecast, not yet scored"
-         % (num_word(o["horizon"]), o["coverageIn"], o["coverageN"])],
     ]
 
 
@@ -1177,10 +1181,8 @@ def main() -> int:
                  "facts": facts, "c3": c3}
     f.update({
         "module_url": MODULE_URL, "case_canonical": CASE_CANONICAL,
-        "case_opening": html.escape(case_opening(d, n_cand, n_dis)),
-        "case_description": html.escape("How Cascadia Early Warning tests whether forecasts of public FDA device-report volume can "
-                                        "support a repeatable review queue: the measured results, the implementation repair and the "
-                                        "limits of a retrospective evaluation. Counts of reports, not rates."),
+        "case_opening": html.escape(case_opening(d, n_dis)),
+        "case_description": html.escape(case_description(d)),
         "t_results": table("case-results", "The measured results, each figure generated from the module's frozen tables",
                            ["Result", "Meaning"], case_results(d, code, c1, c2, n_cand, n_dis, qd, rc)),
         "c2_in": str(c2["inside"]),
