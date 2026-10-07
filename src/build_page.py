@@ -468,6 +468,37 @@ def table(tid: str, caption: str, headers: list[str], rows: list[list[str]]) -> 
     return "".join(h)
 
 
+def live_edge_line() -> str:
+    """One sentence from governance/health.json, written by src/reconcile_live_edge.py; the frozen
+    default when no run has happened. Every figure in it is read from that file, never typed."""
+    p = REPO / "governance" / "health.json"
+    if not p.exists():
+        return ("Not yet run. Every figure on this page is the frozen snapshot. A weekly task is written to re-read "
+                "the count series, score each issued forecast as its month elapses and re-issue the next one from the "
+                "same locked structure, recording the result here without publishing it.")
+    h = json.loads(p.read_text(encoding="utf-8"))
+    le, lr = h["live_edge"], h["last_run"]
+    months = le.get("months_seen_beyond_freeze") or []
+    s = ("Last run %s, status %s, %d checks, %d failed. Source last_updated seen %s. "
+         % (lr["started_utc"][:10], lr["status"], lr["checks_total"], len(lr["checks_failed"]),
+            le.get("source_last_updated_seen") or "none"))
+    if months:
+        s += "Months loaded beyond the freeze: %s, as raw counts with no exclusion applied. " % ", ".join(months)
+    else:
+        s += "No month beyond the freeze has been loaded yet, so the frozen outlook stands unscored. "
+    if le.get("model_in_use_h1_scored"):
+        s += ("Forecasts scored as their months elapsed: %d, mean absolute error %s, 80%% coverage %s. "
+              % (le["model_in_use_h1_scored"], nf(le["model_in_use_h1_mae"]),
+                 pct(le["model_in_use_h1_coverage80"]) if le.get("model_in_use_h1_coverage80") is not None else "n/a"))
+    if le.get("latest_live_origin"):
+        s += "Latest live outlook issued from origin %s. " % le["latest_live_origin"]
+    if le.get("frozen_months_re_read"):
+        s += ("The frozen months re-read from the latest vintage: %s of %s read higher, by %s reports in total; %s read lower."
+              % (nf(le["frozen_months_reading_higher"]), nf(le["frozen_months_re_read"]),
+                 nf(le["reports_added_to_frozen_months"]), nf(le["frozen_months_reading_lower"])))
+    return s.strip() + " The record is governance/reconciliation.md."
+
+
 def chart_card(cid: str, index: str, kicker: str, height: int, note_class: str, note: str, tables: list[tuple[str, str]]) -> str:
     tbls = "".join('<details class="data-table rich"><summary>%s</summary>%s</details>' % (html.escape(label), t) for label, t in tables)
     return ('<div class="chart-card rounded-[1.75rem] bg-white p-5 sm:p-7" id="card-%s">'
@@ -566,6 +597,7 @@ def main() -> int:
         "c1_finding": html.escape(c1["finding"]), "c2_finding": html.escape(c2["finding"]), "c3_finding": html.escape(c3["finding"]),
         "c4_finding": html.escape(c4["finding"]), "c5_finding": html.escape(c5["finding"]),
         "disclaimer": html.escape(DISCLAIMER),
+        "live_edge": html.escape(live_edge_line()),
         "c1_card": chart_card("c1", "01", "The outlook", 480, "glacier", c1["annotation"],
                               [("Chart 1 data: %s by month, with the one-month-ahead point and 80%% range" % code,
                                 table("tbl-c1", "Chart 1 data: eligible reports per month for %s, the model in use's point and 80%% range (M-01, M-03)" % code,

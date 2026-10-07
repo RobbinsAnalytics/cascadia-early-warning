@@ -59,7 +59,9 @@ VERBATIM = {".claude/hooks/no_blanket_add_or_force_push.py", ".claude/hooks/hook
             ".githooks/pre-commit", ".githooks/secret_scan.py", ".githooks/no_whitespace_commits.py",
             "src/validate_freeze.py", ".gitattributes",
             # vendored verbatim with a provenance first line; not authored here
-            "docs/assets/cascadia-echarts-theme.js", "docs/assets/echarts.min.js"}
+            "docs/assets/cascadia-echarts-theme.js", "docs/assets/echarts.min.js",
+            # copied byte for byte from cascadia-matter-ledger-analytics (D18); not authored here
+            ".claude/hooks/no_publish_from_scheduled_runs.py"}
 TEXT_EXT = {".md", ".py", ".ps1", ".json", ".csv", ".html", ".js", ".css", ".toml", ".txt", ".qmd", ".yml", ".yaml", ".svg"}
 
 

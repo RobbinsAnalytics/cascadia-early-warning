@@ -50,3 +50,11 @@ then `forecast.py --stage locked`, once.
 
 The record-level responses stay in `data/raw/staging/` (gitignored) and the
 freeze is asserted by hash; see `CLAUDE.md`.
+
+## The live edge (weekly, never published)
+
+```
+.venv\Scripts\python.exe src\pull_live_edge.py        # seven keyless requests; data/live/ and run_history.jsonl
+.venv\Scripts\python.exe src\reconcile_live_edge.py   # health.json, reconciliation.md, then the page
+.venv\Scripts\python.exe src\test_live_edge.py        # offline tests of the pull
+```

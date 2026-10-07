@@ -113,6 +113,22 @@ Held. No remote, no push, no Pages, no site surfacing and no merge to `main`
 until Aaron does each one himself. `git push` is in the `ask` list and stays
 there. When it is published, `docs/` is served by GitHub Pages from `main`.
 
+## The live edge
+
+**A weekly scheduled task, from the Code store, reports and never publishes.**
+Its file is `C:\Users\Ajayr\.claude\scheduled-tasks\cascadia-early-warning-live-edge\SKILL.md`
+(the Code store, which `C:\Users\Ajayr\Claude\Scheduled\` is not; the two
+stores do not see each other). It runs `src/pull_live_edge.py` then
+`src/reconcile_live_edge.py` with the venv interpreter by path, writes
+`data/live/`, `governance/run_history.jsonl`, `governance/health.json` and
+`governance/reconciliation.md`, and rebuilds `docs/index.html` as its last
+step. Live months are raw counts with no exclusion applied and say so (D18).
+Committing a run's record is Aaron's act; `.claude/hooks/no_publish_from_scheduled_runs.py`
+refuses a commit or a push from a scheduled transcript, and a push from any
+transcript it cannot read. The rebuilt page trips the freeze gate until the
+baseline in `governance/freeze.toml` is advanced with that commit (D18).
+`src/test_live_edge.py` drives the pull offline against a fake source.
+
 ## Content
 
 **Canonical domain is `https://www.robbinsanalytics.com`.** Every absolute URL

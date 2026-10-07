@@ -1,0 +1,173 @@
+{
+ "started_utc": "2026-10-07T03:31:13+00:00",
+ "finished_utc": "2026-10-07T03:31:19+00:00",
+ "status": "ok",
+ "passed": true,
+ "checks": [
+  {
+   "check": "frozen datum (meta.last_updated at the freeze)",
+   "value": "2026-09-29",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "HTTP status, DSQ",
+   "value": 200,
+   "expected": 200,
+   "passed": true
+  },
+  {
+   "check": "response schema, DSQ",
+   "value": "5874 buckets, 0 malformed",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "HTTP status, OZD",
+   "value": 200,
+   "expected": 200,
+   "passed": true
+  },
+  {
+   "check": "response schema, OZD",
+   "value": "1842 buckets, 0 malformed",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "HTTP status, PYX",
+   "value": 200,
+   "expected": 200,
+   "passed": true
+  },
+  {
+   "check": "response schema, PYX",
+   "value": "697 buckets, 0 malformed",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "HTTP status, NPT",
+   "value": 200,
+   "expected": 200,
+   "passed": true
+  },
+  {
+   "check": "response schema, NPT",
+   "value": "3848 buckets, 0 malformed",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "HTTP status, NIK",
+   "value": 200,
+   "expected": 200,
+   "passed": true
+  },
+  {
+   "check": "response schema, NIK",
+   "value": "5262 buckets, 0 malformed",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "HTTP status, LWS",
+   "value": 200,
+   "expected": 200,
+   "passed": true
+  },
+  {
+   "check": "response schema, LWS",
+   "value": "7868 buckets, 0 malformed",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "HTTP status, DSP",
+   "value": 200,
+   "expected": 200,
+   "passed": true
+  },
+  {
+   "check": "response schema, DSP",
+   "value": "5372 buckets, 0 malformed",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "meta.last_updated present",
+   "value": "2026-09-29",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "meta.last_updated not before the frozen datum",
+   "value": "2026-09-29",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "responses saved as a vintage",
+   "value": 7,
+   "expected": 7,
+   "passed": true
+  },
+  {
+   "check": "frozen months re-read",
+   "value": 896,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "frozen months reading higher (late loads)",
+   "value": 0,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "frozen months rewritten downward by more than 1%",
+   "value": 0,
+   "expected": 0,
+   "passed": true
+  },
+  {
+   "check": "months elapsed and loaded beyond the freeze",
+   "value": "none",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "forecasts scored at first sight of their month",
+   "value": 0,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "forecasts issued this run",
+   "value": 0,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "candidate fits that failed",
+   "value": 0,
+   "expected": 0,
+   "passed": true
+  }
+ ],
+ "error": null,
+ "requests_made": 7,
+ "last_updated": "2026-09-29",
+ "vintage": "20261007T033113",
+ "months_appended": {},
+ "forecasts_issued": 0,
+ "forecasts_scored": 0,
+ "frozen_variance": {
+  "months_compared": 896,
+  "months_reading_higher": 0,
+  "reports_added_to_frozen_months": 0,
+  "months_reading_lower": 0,
+  "material_downward": []
+ },
+ "notes": []
+}

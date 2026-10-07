@@ -1,0 +1,72 @@
+{
+ "generated_utc": "2026-10-07T03:32:24+00:00",
+ "module": "cascadia-early-warning",
+ "frozen_baseline": {
+  "as_of": "2026-08-31",
+  "retrieved": "2026-10-06",
+  "source_last_updated": "2026-09-29",
+  "codes": [
+   "DSP",
+   "DSQ",
+   "LWS",
+   "NIK",
+   "NPT",
+   "OZD",
+   "PYX"
+  ],
+  "eligible_reports": 649082,
+  "outlook_origin": "2026-08"
+ },
+ "live_edge": {
+  "source_last_updated_seen": "2026-09-29",
+  "runs_total": 1,
+  "vintages": [
+   "20261007T033113"
+  ],
+  "months_seen_beyond_freeze": [],
+  "readings_recorded": 0,
+  "basis": "raw count by receipt date as seen at the vintage; no exclusion applied",
+  "frozen_months_re_read": 896,
+  "frozen_months_reading_higher": 0,
+  "reports_added_to_frozen_months": 0,
+  "frozen_months_reading_lower": 0,
+  "forecasts_issued_total": 0,
+  "latest_live_origin": null,
+  "forecasts_scored_total": 0,
+  "model_in_use_h1_scored": 0,
+  "model_in_use_h1_mae": null,
+  "model_in_use_h1_coverage80": null
+ },
+ "last_run": {
+  "started_utc": "2026-10-07T03:31:13+00:00",
+  "finished_utc": "2026-10-07T03:31:19+00:00",
+  "status": "ok",
+  "passed": true,
+  "checks_total": 25,
+  "checks_failed": [],
+  "error": null,
+  "requests_made": 7,
+  "notes": []
+ },
+ "run_history": {
+  "runs_recorded": 1,
+  "history_started": "2026-10-07T03:31:13+00:00",
+  "last_successful_run": {
+   "started_utc": "2026-10-07T03:31:13+00:00",
+   "finished_utc": "2026-10-07T03:31:19+00:00",
+   "status": "ok",
+   "passed": true,
+   "requests_made": 7,
+   "last_updated": "2026-09-29",
+   "vintage": "20261007T033113",
+   "forecasts_issued": 0,
+   "forecasts_scored": 0,
+   "error": null,
+   "checks_total": 25,
+   "checks_failed": [],
+   "months_appended": 0
+  },
+  "last_run_not_ok": null,
+  "last_failure": null
+ }
+}

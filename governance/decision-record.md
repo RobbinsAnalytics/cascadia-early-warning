@@ -324,3 +324,57 @@ seen before the second run was made.
 
 **Carried by:** `src/forecast.py` (`prev_pts`); `src/validate.py` (the
 locked-once check over committed history); the build report.
+
+## D18 · The live edge: seven calls a week, kept as vintages, never published
+
+The weekly task (`src/pull_live_edge.py`, then `src/reconcile_live_edge.py`,
+from the Code-store task file
+`C:\Users\Ajayr\.claude\scheduled-tasks\cascadia-early-warning-live-edge\SKILL.md`)
+re-reads the S-02 count series for the seven forecast codes, saves each
+week's responses whole as a vintage under `data/live/counts/`, re-reads the
+frozen months and states the variance, appends any month beyond 2026-08-31
+the source has loaded past, scores every forecast issued for a month seen
+for the first time, and re-issues the next forecasts from the locked
+structure in `config/model.json`. It writes `data/live/`,
+`governance/run_history.jsonl`, `governance/health.json`,
+`governance/reconciliation.md` and rebuilds `docs/index.html`, and it never
+publishes: a PreToolUse hook copied byte for byte from
+`cascadia-matter-ledger-analytics` at `97bf279c1ac2` refuses a push, and a
+commit, from a session whose transcript opens with a scheduled-task
+envelope. The task file names the venv interpreter by path and the three
+outcomes a run can report, and says to read `checks_failed` before the
+status.
+
+**Live months carry no exclusion.** The private firm list acts on report
+records and the live edge reads only the count series, so a live month is a
+raw count by receipt date as seen at the vintage, and every live row says
+so in its `basis` field. The frozen exclusion removed 1 report of 649,083;
+the next freeze, a deliberate re-pull by Aaron, is where the list acts on
+new months. Live figures are never written into the frozen tables and no
+figure on the frozen page changes with a run; the page gains one line.
+
+**Scores are taken once, at first sight.** A month's count keeps rising for
+weeks after it elapses; the live edge scores the forecast at the first
+vintage that shows the month and records that vintage, so the score is
+"as seen", and later readings of the same month are kept in
+`live_series.csv` rather than overwriting the score. A frozen month that
+reads lower in a later vintage by more than 1% fails the run: reports do
+not disappear, and a source that rewrites its past is a finding to report.
+
+**The freeze interaction, stated.** `docs/index.html` is on the freeze
+gate's protected list (Phase 4) and the reconcile rebuilds it, so from the
+first run the gate reads the page as moved until Aaron commits the run
+record and advances the baseline. Matter Ledger left its page out of the
+list for this reason; this module keeps it in because the plan says the
+page is the frozen forecast. Which answer to adopt once the task is
+scheduled is Aaron's call, recorded as an open item in the build receipt.
+
+*Counterfactual:* a record-level weekly pull with the private list applied,
+which would make the live months exclusion-consistent at ten to fifteen
+requests a week and a second copy of the exclusion machinery; and scoring
+that revises as months fill, which would make every score a moving figure.
+
+**Carried by:** `src/pull_live_edge.py`; `src/reconcile_live_edge.py`;
+`src/test_live_edge.py`; `.claude/hooks/no_publish_from_scheduled_runs.py`;
+`.claude/settings.json`; the task file in the Code store (outside this
+repository); `src/build_page.py` (`live_edge_line`); `docs/template.html`.
