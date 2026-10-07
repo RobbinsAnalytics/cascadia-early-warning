@@ -114,7 +114,11 @@ def main():
             for cid in CHARTS:
                 card = page.locator("#card-" + cid)
                 target = card if card.count() else page.locator("#" + cid)
-                target.screenshot(path=str(out_dir / ("%s-%d.png" % (cid, width))))
+                # A card taller than the viewport is scrolled to its centre for the capture, which slid it
+                # under the sticky site header (c4 at 320 px). The header is made static for the shot only;
+                # the page a reader loads is unchanged.
+                target.screenshot(path=str(out_dir / ("%s-%d.png" % (cid, width))),
+                                  style="#site-header{position:static !important}")
             seg = page.evaluate(
                 """() => Array.from(document.querySelectorAll('.cascadia-provenance'))
                         .map(n => n.textContent.split(' \\u00b7 ').length)""")

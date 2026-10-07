@@ -569,7 +569,8 @@ def chart3(d):
     finding = ("The 80%% ranges covered between %s and %s of locked-test months across the %s codes; %s"
                % (pct(lo["coverage80"]), pct(hi["coverage80"]), num_word(len(rows)),
                   "every code keeps its review rule" if n_dis == 0 else
-                  "%d code%s below 70%% %s the review rule disabled" % (n_dis, "" if n_dis == 1 else "s", "has" if n_dis == 1 else "have")))
+                  "%s code%s below %s %s the review rule disabled" % (num_word(n_dis), "" if n_dis == 1 else "s", pct(COVERAGE_FLOOR),
+                                                                      "has" if n_dis == 1 else "have")))
     subtitle = ("Share of the %d locked-test months (2024-01 to 2025-12) whose actual fell inside the model in use's 80%% range, "
                 "horizon one, by code; nominal 80%%. The numbers gate expected 60%% to 95%% (the shaded band) and disables the rule below "
                 "70%%; both were written before the test ran. The row label names the model in use: the ETS candidate where it earned use, "
@@ -624,11 +625,11 @@ def chart4(d):
     if n_fl != sum(p["flagged"] for p in qd["perCode"].values()):
         raise SystemExit("chart 4 draws %d flagged months; the rule re-run gives %d" % (n_fl, sum(p["flagged"] for p in qd["perCode"].values())))
     rate = n_ep / qd["enabledMonths"] if qd["enabledMonths"] else 0.0
-    ep_word = lambda n: "%s episode%s" % (nf(n), "" if n == 1 else "s")  # noqa: E731
+    ep_word = lambda n: "%s episode%s" % (num_word(n), "" if n == 1 else "s")  # noqa: E731
     finding = ("A retrospective, filtered demonstration: the rule opened %s in the %d code-months where coverage enabled it, "
                "and %s in all %d without that gate"
                % (ep_word(qd["gatedEpisodes"]) if qd["gatedEpisodes"] else "no episode", qd["enabledMonths"],
-                  nf(qd["ungatedEpisodes"]) if qd["ungatedEpisodes"] else "none", qd["evaluatedMonths"]))
+                  num_word(qd["ungatedEpisodes"]) if qd["ungatedEpisodes"] else "none", qd["evaluatedMonths"]))
     off_ungated = sum(p["ungated"] for p in qd["perCode"].values() if not p["enabled"])
     subtitle = ("One lane per code, %s to %s; lanes with the rule on come first, each group ordered by flagged months. %s "
                 "A filled square is a flagged month (the rule is one-sided by design); a hollow square is the "

@@ -52,8 +52,13 @@
     var px = L.w - 24;
     var f = prewrap(finding, px, TITLE_FONT), s = prewrap(subtitle, px, SUB_FONT);
     var tl = f.split('\n').length, sl = s.split('\n').length;
-    return { title: cascadiaTitle(f, s, { width: L.w - 14 }),
-             top: Math.round(6 + tl * 26 + 6 + sl * 18 + 14) };
+    var title = cascadiaTitle(f, s, { width: L.w - 14 });
+    // The vendored helper sets no subtitle line height, so ECharts drew the lines tighter than the 18 px
+    // per line budgeted here and left a dead band above every plot (long subtitles at 320 px lost
+    // 100 px and more). The line height is set to the budget; the theme file is not edited.
+    title.subtextStyle.lineHeight = 18;
+    // 30 px below the subtitle: the value axis's name stands about 22 px above the plot it names.
+    return { title: title, top: Math.round(6 + tl * 26 + 6 + sl * 18 + 30) };
   }
   function annotation(text, opts) {
     var w = opts.width || 180;
@@ -196,8 +201,107 @@
     ch.setOption({ series: series });
   }
 
-  /* ================= c1 · the series, the points, and the next month as a dotplot ================= */
+  /* ================= c1 · the series, the points, and the outlook as a dotplot ================= */
+  /**
+   * Below the breakpoint chart 1 stacks: the history on top, and the outlook's twenty outcomes as a
+   * horizontal strip underneath on the history's own value scale, so the plot keeps the full width
+   * instead of sharing it with a dot column (at 320 px the history had a 110 px plot). The band's
+   * "80% range" label sits in a row reserved above the plot, with a leader to where the band begins,
+   * so it never crosses the axis labels; the strip is headed by its month and horizon.
+   */
+  function c1Stacked(host, L) {
+    var d = D.c1, n = d.months.length, O = d.outlook;
+    var tb = titleBlock(L, d.finding, d.subtitle), top = tb.top;
+    var endLabelW = gutter(['expected', 'received'], L);
+    var BAND_ROW = 18;
+    var plotW = Math.max(140, L.w - 48 - endLabelW);
+    var plotH = cascadiaBankedHeight(d.actual, plotW, { min: 200, max: 300 }) || 240;
+    var gTop = top + BAND_ROW;
+    var annText = prewrap(d.annotation, L.w - 16, ANN_FONT), annLines = annText.split('\n').length;
+    var headTop = gTop + plotH + 34, annTop = headTop + 20;
+    var stripTop = annTop + annLines * 17 + 14, stripH = 66;
+    host.style.height = (stripTop + stripH + 34) + 'px';
+    var allVals = d.actual.concat(d.hi80.filter(function (v) { return v != null; }), [O.hi80], O.dots);
+    var ax = niceAxis(Math.max.apply(null, allVals), 1.12, 7);
+    var lo = d.lo80.slice(), span = d.hi80.map(function (v, i) { return v == null || d.lo80[i] == null ? null : v - d.lo80[i]; });
+    var iBand = -1;
+    for (var q = 0; q < n; q++) { if (d.hi80[q] != null) { iBand = q; break; } }
+    var binStep = ax.interval / 4, bins = {};
+    O.dots.forEach(function (v) { var b = Math.round(v / binStep); (bins[b] = bins[b] || []).push(v); });
+    function dotStrip(params, api) {
+      var cs = params.coordSys, base = cs.y + cs.height - 8, kids = [];
+      function x(v) { return api.coord([v, 0])[0]; }
+      kids.push({ type: 'line', shape: { x1: x(O.lo80), y1: base + 6, x2: x(O.hi80), y2: base + 6 }, style: { stroke: INK.glacier, lineWidth: 1 } });
+      kids.push({ type: 'line', shape: { x1: x(O.point), y1: base + 6, x2: x(O.point), y2: base - 30 }, style: { stroke: INK.glacier, lineWidth: 2 } });
+      Object.keys(bins).forEach(function (b) {
+        var vs = bins[b], cx = x(parseInt(b, 10) * binStep);
+        vs.forEach(function (v, k) {
+          var inside = v >= O.lo80 && v <= O.hi80;
+          kids.push({ type: 'circle', shape: { cx: cx, cy: base - k * 6.5, r: 2.75 },
+                      style: inside ? { fill: C.glacier } : { fill: C.paper, stroke: C.glacier, lineWidth: 1.5 }, z2: 2 });
+        });
+      });
+      return { type: 'group', children: kids };
+    }
+    var kfmt = function (v) { return v >= 1000 ? (v / 1000) + 'K' : String(v); };
+    var ch = echarts.init(host, 'cascadia');
+    ch.setOption({
+      title: tb.title,
+      grid: [{ left: 8, right: endLabelW + 8, top: gTop, height: plotH, containLabel: true },
+             { left: 8, right: 16, top: stripTop, height: stripH, containLabel: true }],
+      xAxis: [{ gridIndex: 0, type: 'category', data: d.months.map(function (m) { return monthTick(m, true); }), boundaryGap: true,
+                axisLabel: axisLabelX(L, n, plotW), axisTick: { show: false } },
+              { gridIndex: 1, type: 'value', min: 0, max: ax.max, interval: ax.interval * 2, splitLine: { show: false }, axisLine: { show: true },
+                axisLabel: { formatter: kfmt, showMaxLabel: false } }],
+      yAxis: [{ gridIndex: 0, type: 'value', min: 0, max: ax.max, interval: ax.interval, name: 'reports received', nameLocation: 'end',
+                nameGap: 8 + BAND_ROW, nameTextStyle: { color: C.slateMoss, fontFamily: SANS, fontSize: 12, align: 'left' },
+                axisLabel: { formatter: kfmt } },
+              { gridIndex: 1, type: 'category', data: [monthTick(O.target, true)], axisTick: { show: false }, axisLine: { show: false },
+                axisLabel: { fontFamily: SANS, fontSize: 12, color: C.slateMoss } }],
+      tooltip: { show: false },
+      series: [
+        { name: '80% range low', type: 'line', stack: 'band', data: lo, showSymbol: false, symbol: 'none', lineStyle: { opacity: 0 }, itemStyle: { opacity: 0 }, z: 1 },
+        { name: '80% range', type: 'line', stack: 'band', data: span, showSymbol: false, symbol: 'none', lineStyle: { opacity: 0 },
+          areaStyle: { color: C.glacier, opacity: 0.18 }, itemStyle: { opacity: 0 }, z: 1 },
+        { name: d.modelLabel + ' point', type: 'line', data: d.points, showSymbol: false, symbol: 'none', connectNulls: false,
+          lineStyle: { color: C.glacier, width: 2, type: 'dashed' }, itemStyle: { color: C.glacier }, z: 3, endLabel: endLabel('expected', L, INK.glacier) },
+        { name: 'Reports received', type: 'line', data: d.actual, showSymbol: false, symbol: 'none',
+          lineStyle: { color: C.evergreen, width: 2.5 }, itemStyle: { color: C.evergreen }, z: 4, endLabel: endLabel('received', L, INK.evergreen) },
+        { name: O.navName, type: 'custom', xAxisIndex: 1, yAxisIndex: 1, renderItem: dotStrip,
+          data: [[O.point, 0]], clip: false, silent: true, z: 5 }
+      ]
+    });
+    var ip = lastIndex(d.points);
+    spreadEndLabels(ch, [{ seriesIndex: 2, dataIndex: ip, value: d.points[ip] }, { seriesIndex: 3, dataIndex: n - 1, value: d.actual[n - 1] }], 15);
+    var g = [
+      { type: 'text', x: 8, y: headTop, style: { text: O.navName, fill: C.slateMoss, font: '600 12px ' + SANS } },
+      { type: 'text', x: 8, y: annTop, style: { text: annText, fill: INK.glacier, font: ANN_FONT, lineHeight: 17 } }
+    ];
+    if (iBand >= 0) {
+      var bx = ch.convertToPixel({ seriesIndex: 3 }, [iBand, d.hi80[iBand]]);
+      g.push({ type: 'text', x: Math.round(bx[0]), y: gTop - 15, style: { text: '80% range', fill: INK.glacier, font: '12px ' + SANS } });
+      g.push({ type: 'line', shape: { x1: Math.round(bx[0]) + 0.5, y1: gTop - 2, x2: Math.round(bx[0]) + 0.5, y2: Math.round(bx[1]) },
+               style: { stroke: INK.glacier, lineWidth: 1, opacity: 0.6 } });
+    }
+    ch.setOption({ graphic: g });
+    return finish(host, ch, {
+      provenance: d.provenance, summary: d.summary, ariaLabel: d.ariaLabel, noteVisible: false,
+      nav: c1Nav(ch, d, O)
+    }, L);
+  }
+  function c1Nav(ch, d, O) {
+    return { chart: ch, label: d.ariaLabel, series: [
+      { name: 'Reports received', summary: 'from ' + nf(d.actual[0]) + ' to ' + nf(d.actual[d.months.length - 1]),
+        points: d.months.map(function (m, i) { return { label: monthShort(m), value: nf(d.actual[i]), seriesIndex: 3, dataIndex: i }; }) },
+      { name: d.modelLabel + ' one-month-ahead point', summary: 'where issued',
+        points: d.months.map(function (m, i) { return d.points[i] == null ? null : { label: monthShort(m), value: nf(d.points[i]), seriesIndex: 2, dataIndex: i }; }).filter(Boolean) },
+      { name: O.navName, summary: O.navSummary,
+        points: [{ label: monthShort(O.target), value: nf(O.point), seriesIndex: 4, dataIndex: 0 }] }
+    ] };
+  }
+
   mount('c1', function (host, L) {
+    if (L.narrow) return c1Stacked(host, L);
     var d = D.c1, n = d.months.length, O = d.outlook;
     var tb = titleBlock(L, d.finding, d.subtitle), top = tb.top;
     // Layout, left to right: the plot, the end labels, then the next month's dot column. The column is
@@ -295,14 +399,7 @@
     }
     return finish(host, ch, {
       provenance: d.provenance, summary: d.summary, ariaLabel: d.ariaLabel,
-      nav: { chart: ch, label: d.ariaLabel, series: [
-        { name: 'Reports received', summary: 'from ' + nf(d.actual[0]) + ' to ' + nf(d.actual[n - 1]),
-          points: d.months.map(function (m, i) { return { label: monthShort(m), value: nf(d.actual[i]), seriesIndex: 3, dataIndex: i }; }) },
-        { name: d.modelLabel + ' one-month-ahead point', summary: 'where issued',
-          points: d.months.map(function (m, i) { return d.points[i] == null ? null : { label: monthShort(m), value: nf(d.points[i]), seriesIndex: 2, dataIndex: i }; }).filter(Boolean) },
-        { name: O.navName, summary: O.navSummary,
-          points: [{ label: monthShort(O.target), value: nf(O.point), seriesIndex: 4, dataIndex: 0 }] }
-      ] }
+      nav: c1Nav(ch, d, O)
     }, L);
   });
 
