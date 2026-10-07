@@ -187,25 +187,34 @@ def main() -> int:
     files = sorted(STAGING.glob("*/*.json.gz"))
     if not files:
         sys.exit("no staged pages under %s" % STAGING)
+    # ONE PAGE AT A TIME. Materializing every page's JSON in one table ran the
+    # process out of memory on 2026-10-06 (696 pages, about 3.5 GB of text);
+    # each page is read, reduced to the ten fields this path needs, and
+    # appended, so nothing larger than one page is ever held.
     con.execute("""
-        CREATE TABLE page AS
-        SELECT filename, results FROM read_json(?, columns={'meta': 'JSON', 'results': 'JSON'},
-                                                 maximum_object_size=268435456, filename=true)
-    """, [[f.as_posix() for f in files]])
-    con.execute(r"""
-        CREATE TABLE rec AS
-        SELECT regexp_extract(filename, 'event.([A-Z]{3}).', 1) AS code,
-               json_extract_string(r, '$.mdr_report_key') AS k,
-               coalesce(json_extract_string(r, '$.date_received'), '') AS rc,
-               coalesce(json_extract_string(r, '$.date_of_event'), '') AS ev,
-               coalesce(json_extract_string(r, '$.event_type'), '') AS event_type,
-               coalesce(json_extract_string(r, '$.manufacturer_name'), '') AS mn,
-               coalesce(json_extract_string(r, '$.manufacturer_g1_name'), '') AS mg,
-               coalesce(json_extract_string(r, '$.distributor_name'), '') AS dn,
-               coalesce(json_extract_string(r, '$.device[*].manufacturer_d_name'), []) AS dmn,
-               coalesce(json_extract_string(r, '$.device[*].brand_name'), []) AS dbn
-        FROM (SELECT filename, unnest(json_extract(results, '$[*]')) AS r FROM page)
+        CREATE TABLE rec (code VARCHAR, k VARCHAR, rc VARCHAR, ev VARCHAR, event_type VARCHAR,
+                          mn VARCHAR, mg VARCHAR, dn VARCHAR, dmn VARCHAR[], dbn VARCHAR[])
     """)
+    for i, f in enumerate(files, 1):
+        code = f.parent.name
+        con.execute(r"""
+            INSERT INTO rec
+            SELECT ? AS code,
+                   json_extract_string(r, '$.mdr_report_key') AS k,
+                   coalesce(json_extract_string(r, '$.date_received'), '') AS rc,
+                   coalesce(json_extract_string(r, '$.date_of_event'), '') AS ev,
+                   coalesce(json_extract_string(r, '$.event_type'), '') AS event_type,
+                   coalesce(json_extract_string(r, '$.manufacturer_name'), '') AS mn,
+                   coalesce(json_extract_string(r, '$.manufacturer_g1_name'), '') AS mg,
+                   coalesce(json_extract_string(r, '$.distributor_name'), '') AS dn,
+                   coalesce(json_extract_string(r, '$.device[*].manufacturer_d_name'), []) AS dmn,
+                   coalesce(json_extract_string(r, '$.device[*].brand_name'), []) AS dbn
+            FROM (SELECT unnest(json_extract(results, '$[*]')) AS r
+                  FROM read_json(?, columns={'meta': 'JSON', 'results': 'JSON'},
+                                 maximum_object_size=268435456))
+        """, [code, f.as_posix()])
+        if i % 100 == 0:
+            print("  %d of %d pages read" % (i, len(files)))
     n_rec = con.execute("SELECT count(*) FROM rec").fetchone()[0]
     print("staged records read: %s from %d pages" % (format(n_rec, ","), len(files)))
 

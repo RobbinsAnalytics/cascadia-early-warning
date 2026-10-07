@@ -113,8 +113,12 @@ def fit_candidate(history: list[int]) -> dict | None:
         "smoothing_trend": prm.get("smoothing_trend"),
         "smoothing_seasonal": prm.get("smoothing_seasonal"),
         "damping_trend": prm.get("damping_trend"),
+        # statsmodels names the state arrays level, slope and season; `trend`
+        # on the results object is the model's trend TYPE ('add'), which cost
+        # a failed run on 2026-10-06. season[-12:] is s(T-11)..s(T), oldest
+        # first, which is the golden fixture's convention.
         "level": float(res.level[-1]),
-        "trend": float(res.trend[-1]),
+        "trend": float(res.slope[-1]),
         "seasonals": [float(v) for v in res.season[-12:]],
         "aic": float(res.aic),
         "log_likelihood": float(res.llf),
