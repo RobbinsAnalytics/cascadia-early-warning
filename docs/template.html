@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Cascadia Early Warning - Robbins Analytics</title>
-<meta name="description" content="What reporting volume should we expect next, and what would justify a closer look? A public-data module on FDA device reports for seven cardiovascular product codes: a next-month forecast with ranges, a locked test of whether the forecasts earned trust, and a fixed review rule. Counts, not rates.">
+<meta name="description" content="What reporting volume should we expect next, and what would justify a closer look? A public-data module on FDA device reports for @@n_codes_word@@ cardiovascular product codes spanning @@cohort_classes_plain@@: a next-month forecast with ranges, a locked test of whether the forecasts earned trust, and a fixed review rule. Counts, not rates.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Cascadia Early Warning">
 <meta property="og:description" content="@@headline@@: expect about @@o_point@@ reports in @@o_target@@, 80% range @@o_lo80@@ to @@o_hi80@@. The ranges held on a locked test for some codes and not others, and the page says which.">
@@ -120,7 +120,7 @@
           <span class="font-mono text-[0.7rem] tracking-[0.16em] text-teal-2 uppercase">Medical device reporting</span>
         </div>
         <h1 class="mt-5 font-display text-[clamp(2.6rem,1.4rem+4.6vw,5.4rem)] leading-[0.95] font-bold tracking-[-0.045em] text-ink"><span class="text-muted">Cascadia</span> Early <span class="font-serif font-normal italic text-teal tracking-[-0.03em]">Warning</span><span class="text-teal-3">.</span></h1>
-        <p class="mt-7 max-w-2xl text-lg leading-relaxed text-ink-soft sm:text-[1.2rem]">What reporting volume should we expect next, and what would justify a closer look? Seven cardiovascular product codes from FDA's public device-report data, a next-month forecast with ranges, a locked test of whether the forecasts earned trust, and a fixed rule that turns departures from expectation into a human review queue. Counts of reports, never rates.</p>
+        <p class="mt-7 max-w-2xl text-lg leading-relaxed text-ink-soft sm:text-[1.2rem]">What reporting volume should we expect next, and what would justify a closer look? @@N_codes_word@@ cardiovascular product codes spanning @@cohort_classes@@ from FDA's public device-report data, a next-month forecast with ranges, a locked test of whether the forecasts earned trust, and a fixed rule that turns departures from expectation into a human review queue. Counts of reports, never rates.</p>
       </div>
       <aside class="rounded-3xl bg-lime p-6 text-ink sm:p-7">
         <div class="flex items-center justify-between border-b border-ink/80 pb-4">
@@ -132,7 +132,7 @@
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Receipts through</dt><dd class="text-right text-sm font-semibold">@@as_of@@</dd></div>
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Retrieved</dt><dd class="text-right text-sm font-semibold">@@retrieved@@</dd></div>
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Source</dt><dd class="text-right text-sm font-semibold">openFDA</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">@@n_codes@@ codes, Class III</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">@@n_codes@@ codes, @@cohort_classes@@</dd></div>
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Candidate in use</dt><dd class="text-right text-sm font-semibold">@@n_cand@@ of @@n_codes@@ codes</dd></div>
         </dl>
         <ul class="mt-2">
@@ -208,7 +208,7 @@
         </div>
         <div class="mt-8">@@c2_card@@</div>
         <div class="rich prose mt-8 max-w-[46rem]">
-          <p><strong>Did the ranges hold?</strong> An 80% range should contain about four months in five. Across the seven codes the model in use covered between <strong>@@c3_lo@@ and @@c3_hi@@</strong> of locked-test months, and @@c3_disabled@@ code(s) fell below the 70% floor the review rule needs, so their rule is switched off and the queue says so. Ranges too wide and ranges too narrow are both failures of calibration, and both are shown. A code with the rule off is not reviewed by this module, and nothing here stands in for it.</p>
+          <p><strong>Did the ranges hold?</strong> An 80% range should contain about four months in five. Across the @@n_codes_word@@ codes the model in use covered between <strong>@@c3_lo@@ and @@c3_hi@@</strong> of locked-test months, and @@c3_disabled@@ code(s) fell below the 70% floor the review rule needs, so their rule is switched off and the queue says so. Ranges too wide and ranges too narrow are both failures of calibration, and both are shown. A code with the rule off is not reviewed by this module, and nothing here stands in for it.</p>
         </div>
         <div class="mt-8">@@c3_card@@</div>
         <details class="data-table rich mt-6"><summary>Scores by code, model and period</summary>@@t_scores@@</details>
@@ -239,7 +239,7 @@
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Every number on this page was re-derived down a second path</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
           <ul>
-            <li><strong>The freeze.</strong> @@total_raw@@ reports across the seven codes, pulled from openFDA in 696 pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of 896 code-months, against the source's own daily count series pulled separately.</li>
+            <li><strong>The freeze.</strong> @@total_raw@@ reports across the @@n_codes_word@@ codes, pulled from openFDA in 696 pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of 896 code-months, against the source's own daily count series pulled separately.</li>
             <li><strong>The exclusion.</strong> A private token list, kept outside the repository, removed <strong>@@excluded@@</strong> report(s) whole; its SHA-256 (<code>@@sha_local@@</code>) and the counts removed per field are published, and no firm is named anywhere.</li>
             <li><strong>Two paths.</strong> Every published cell, the counts, the lag-matched counts, the forecast points from exported model states, the ranges, the scores and the review episodes, is recomputed by a separately written SQL path (<a href="@@repo_url@@/blob/main/src/validate_measures.py">validate_measures.py</a>) and must agree before anything is published.</li>
             <li><strong>Golden fixtures</strong>, written by hand before any engine code: both baselines on a made series, the ETS recurrence from fixed states, the review rule with a reset, the lag-matched count and the interval scores, passing on both paths.</li>
@@ -259,7 +259,7 @@
         <div class="rich prose mt-5 max-w-[46rem]">
           <blockquote><p>@@disclaimer@@</p></blockquote>
           <p>FDA's own words, from the openFDA documentation: MDR data alone cannot be used to establish rates of events; a causal relationship cannot be established between product and the reactions listed in a report; and every API response says to assume all results are unvalidated. Reporting is passive, mixed voluntary and mandatory, batched by filers, moved by litigation and media and by a recall itself, and never carries a denominator. A quiet code is not a safe code.</p>
-          <p><strong>What is counted.</strong> One report is one record the source holds, in the month FDA received it. These seven codes are ineligible for malfunction summary reporting, so one record stays one report across the whole window; that is why they were chosen. @@c5_missing@@ of the headline code's eligible reports carry no event date and are counted beside the lag chart, not in it.</p>
+          <p><strong>What is counted.</strong> One report is one record the source holds, in the month FDA received it. @@what_counted@@ @@c5_missing@@ of the headline code's eligible reports carry no event date and are counted beside the lag chart, not in it.</p>
         </div>
         <div class="mt-8">@@c5_card@@</div>
         <div class="rich prose mt-8 max-w-[46rem]">
@@ -332,7 +332,7 @@
         <li class="py-1 text-white/65">Source: openFDA device event, recall and enforcement</li>
         <li class="py-1 text-white/65">Receipts through @@as_of@@; loaded as of @@last_updated@@</li>
         <li class="py-1 text-white/65">Retrieved and frozen @@retrieved@@</li>
-        <li class="py-1 text-white/65">@@total_eligible@@ eligible reports across seven codes</li>
+        <li class="py-1 text-white/65">@@total_eligible@@ eligible reports across @@n_codes_word@@ codes</li>
       </ul>
     </div>
     <div>

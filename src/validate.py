@@ -19,6 +19,7 @@ from __future__ import annotations
 import csv
 import gzip
 import hashlib
+import html.parser
 import json
 import pathlib
 import re
@@ -27,7 +28,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import date
 
 import duckdb
@@ -50,6 +51,7 @@ FORECAST = CONF / "forecast.csv"
 SCORED = CONF / "forecast_scored.csv"
 QUEUE = CONF / "review_queue.csv"
 RECALL_CTX = CONF / "recall_context.csv"
+PRODUCT_CODE = CONF / "product_code.csv"
 CONFIG = REPO / "config" / "model.json"
 LOCAL = GOV / "exclusion-list.local.txt"
 REPORT = GOV / "validation_report.md"
@@ -431,9 +433,167 @@ def check_known_events(results):
                     not bad, "%d known rows checked against %d derived events" % (len(known), len(rows)), bad))
 
 
+# ---------------------------------------------------------------------------
+# page checks: what the rendered pages say, read back from the HTML
+# ---------------------------------------------------------------------------
+
+_BLOCKS = {"p", "li", "dd", "dt", "td", "th", "h1", "h2", "h3", "h4", "h5", "h6", "caption", "summary", "blockquote",
+           "figcaption", "div", "section", "header", "footer", "main", "aside", "nav", "ul", "ol", "dl", "table", "tr",
+           "details", "body", "title", "br"}
+_VOID = {"meta", "link", "br", "img", "input", "hr", "source", "area", "base", "col", "embed", "param", "track", "wbr"}
+
+
+class _PageText(html.parser.HTMLParser):
+    """The text a reader meets, as block segments, with three things held apart: the text of
+    elements marked data-cohort-fact (generated statements, checked on their own), the chart
+    data block (whose strings are drawn into the canvases), and the recall table (whose
+    'Class' column is a recall classification, not a device class)."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.stack, self.segments, self.facts, self.meta, self.data_json = [], [], [], [], None
+        self._buf, self._fact = [], None
+
+    def _flush(self):
+        s = "".join(self._buf).strip()
+        if s:
+            self.segments.append(s)
+        self._buf = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "meta" and a.get("content") and (a.get("name") or a.get("property") or "").endswith(("description", "title")):
+            self.meta.append(a["content"])
+        if tag in _BLOCKS and self._fact is None:
+            self._flush()
+        if tag in _VOID:
+            return
+        self.stack.append((tag, a))
+        if "data-cohort-fact" in a and self._fact is None:
+            self._fact = {"kind": a["data-cohort-fact"], "attrs": a, "text": [], "depth": len(self.stack)}
+            self._buf.append(" \x00 ")
+
+    def handle_endtag(self, tag):
+        if tag in _VOID:
+            return
+        while self.stack:
+            t, _ = self.stack.pop()
+            if self._fact is not None and len(self.stack) < self._fact["depth"]:
+                self._fact["text"] = "".join(self._fact["text"]).strip()
+                self.facts.append(self._fact)
+                self._fact = None
+            if t == tag:
+                break
+        if tag in _BLOCKS and self._fact is None:
+            self._flush()
+
+    def handle_data(self, data):
+        tags = [t for t, _ in self.stack]
+        if "style" in tags:
+            return
+        if "script" in tags:
+            if any(t == "script" and a.get("id") == "cascadia-data" for t, a in self.stack):
+                self.data_json = (self.data_json or "") + data
+            return
+        if any(t == "table" and a.get("id") == "tbl-recall" for t, a in self.stack):
+            return
+        (self._fact["text"] if self._fact is not None else self._buf).append(data)
+
+    def close(self):
+        super().close()
+        self._flush()
+
+
+def page_text(path: pathlib.Path) -> _PageText:
+    p = _PageText()
+    p.feed(path.read_text(encoding="utf-8"))
+    p.close()
+    return p
+
+
+def _strings(obj):
+    if isinstance(obj, str):
+        yield obj
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            yield from _strings(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from _strings(v)
+
+
+_ROMAN = {"1": "I", "2": "II", "3": "III"}
+_CLASS_RX = re.compile(r"\bClass(?:es)?\s+(?:II|III|2|3)\b(?:\s*(?:,|and|&)\s*(?:II|III|2|3)\b)*")
+_SENTENCE_RX = re.compile(r"(?<=[.;!?])\s+")
+
+
+def check_cohort_facts(results):
+    """Every device-class and summary-reporting-eligibility statement on the pages, in their
+    meta descriptions and in the chart text drawn into their canvases, agrees with
+    product_code.csv. An eligibility statement must sit in an element marked
+    data-cohort-fact="summary" whose code lists match the file; a class phrase anywhere must
+    be the cohort's own (no per-code class statement is made, and one would have to be added
+    here first). Recall classifications are not device classes: the recall table is skipped,
+    and "Class I" is not matched. Every built page must carry both generated statements."""
+    rows = read_csv(PRODUCT_CODE)
+    codes = sorted(r["product_code"] for r in rows if r["forecast"] == "true")
+    cls = sorted({r["device_class"] for r in rows if r["forecast"] == "true"})
+    roman = [_ROMAN[c] for c in cls]
+    want = ("Class " if len(roman) == 1 else "Classes ") + (roman[0] if len(roman) == 1 else ", ".join(roman[:-1]) + " and " + roman[-1])
+    elig = {r["product_code"] for r in rows if r["forecast"] == "true" and r["summary_malfunction_reporting"] == "Eligible"}
+    inelig = set(codes) - elig
+    bad, n_pages, n_facts = [], 0, 0
+
+    def scan(where, text, markable):
+        for m in _CLASS_RX.finditer(text):
+            if m.group(0) != want:
+                bad.append("%s: device class stated as %r; product_code.csv gives %r" % (where, m.group(0), want))
+        for s in _SENTENCE_RX.split(text):
+            if re.search(r"(?i)\bsummary\b", s) and re.search(r"(?i)\b(?:in)?eligible\b", s):
+                bad.append("%s: a summary-reporting eligibility statement %s: %r"
+                           % (where, "outside a marked data-cohort-fact element" if markable else "in chart text, where it cannot be checked", s[:90]))
+
+    for path in sorted(DOCS.glob("*.html")):
+        n_pages += 1
+        rel = "docs/" + path.name
+        pt = page_text(path)
+        for seg in pt.segments:
+            scan(rel, seg, True)
+        for m in pt.meta:
+            scan(rel + " (meta)", m, False)
+        if pt.data_json and not pt.data_json.strip().startswith("@@"):
+            try:
+                for s in _strings(json.loads(pt.data_json)):
+                    scan(rel + " (chart text)", s, False)
+            except ValueError:
+                bad.append("%s: the chart data block does not parse" % rel)
+        kinds = {f["kind"] for f in pt.facts}
+        for f in pt.facts:
+            n_facts += 1
+            if f["kind"] == "classes":
+                if f["text"] != want:
+                    bad.append("%s: marked class statement %r; product_code.csv gives %r" % (rel, f["text"], want))
+            elif f["kind"] == "summary":
+                e = set(f["attrs"].get("data-eligible", "").split())
+                i = set(f["attrs"].get("data-ineligible", "").split())
+                named = {c for c in codes if re.search(r"\b%s\b" % c, f["text"])}
+                if e != elig or i != inelig:
+                    bad.append("%s: marked eligibility statement lists eligible %s, ineligible %s; product_code.csv gives %s, %s"
+                               % (rel, sorted(e), sorted(i), sorted(elig), sorted(inelig)))
+                if named != e | i:
+                    bad.append("%s: marked eligibility statement names %s, not every cohort code" % (rel, sorted(named)))
+            else:
+                bad.append("%s: unknown data-cohort-fact kind %r" % (rel, f["kind"]))
+        if "template" not in path.name and not {"classes", "summary"} <= kinds:
+            bad.append("%s: a built page without the generated %s statement" % (rel, " and ".join(sorted({"classes", "summary"} - kinds))))
+    results.append(("cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv",
+                    not bad and n_pages > 0, "%d pages, %d marked statements; cohort %s, summary-eligible %s"
+                    % (n_pages, n_facts, want, ", ".join(sorted(elig)) or "none"), bad[:20] or ([] if n_pages else ["no pages under docs/"])))
+
+
 CHECKS = [check_hashes, check_extraction_log, check_m01, check_dates, check_uniqueness, check_exclusion,
           check_chronology, check_locked_once, check_names, check_emdash, check_asof, check_cohort, check_review,
-          check_known_events]
+          check_known_events, check_cohort_facts]
 
 
 # ---------------------------------------------------------------------------
@@ -521,6 +681,39 @@ def _docs_copy(filename: str, text: str):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+@contextmanager
+def _docs_tree_copy(mutations: dict):
+    """Every page under docs/ copied, then {filename: text -> text} applied; a page check then
+    reads a full set of pages with one thing wrong, so it trips on that thing and not on a page
+    missing from a one-file copy."""
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="cascadia-prove-failable-"))
+    try:
+        d = tmp / "docs"
+        d.mkdir()
+        for p in DOCS.glob("*.html"):
+            shutil.copyfile(p, d / p.name)
+        for name, fn in mutations.items():
+            p = d / name
+            before = p.read_text(encoding="utf-8") if p.exists() else ""
+            after = fn(before)
+            if after == before:
+                raise RuntimeError("the mutation of %s changed nothing; the scenario would prove nothing" % name)
+            p.write_text(after, encoding="utf-8")
+        with _repoint("DOCS", d):
+            yield
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _sub_once(pattern: str, repl: str):
+    def fn(text: str) -> str:
+        out, n = re.subn(pattern, repl, text, count=1)
+        if not n:
+            raise RuntimeError("pattern %r not found; the scenario would prove nothing" % pattern)
+        return out
+    return fn
+
+
 def _first_eligible_token() -> str:
     s = private_sections()
     t = s["firm_tokens"][0]
@@ -557,6 +750,12 @@ def _scenarios():
            lambda: _docs_copy("probe.html", "<p>a " + chr(0x2014) + " b</p>"))
     yield (check_known_events, "a verified Class I event removed from the derived recall set",
            lambda: _csv_copy("RECALL_CTX", lambda rows: [rows.remove(r) for r in list(rows) if r["res_event_number"] == "91955"]))
+    yield (check_cohort_facts, "the module page's cohort typed as Class III, as the template once did",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(<span data-cohort-fact="classes">)[^<]*(</span>)', r"\1Class III\2")}))
+    yield (check_cohort_facts, "the summary-eligibility statement re-pointed at a code the source lists as ineligible",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'data-eligible="[^"]*"', 'data-eligible="DSQ"')}))
+    yield (check_cohort_facts, "an unmarked sentence calling every code ineligible for summary reporting",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r"</main>", "<p>All of these codes are ineligible for malfunction summary reporting.</p></main>")}))
     yield (check_review, "an episode claimed for a month that does not satisfy the rule",
            lambda: _csv_copy("QUEUE", lambda rows: rows.append(dict(rows[0], episode_start="2024-01", episode_end="2024-02", months_in_episode="2"))
                              if rows and rows[0]["product_code"] else rows.append({"product_code": "DSQ", "model_in_use": "baseline_a", "episode_start": "2024-01", "episode_end": "2024-02", "months_in_episode": "2", "max_excess_over_point": "0", "status": "x"})))
@@ -580,7 +779,15 @@ def prove_failable():
             if check in (check_known_events,) and not RECALL_CTX.exists():
                 proofs.append((check.__name__, scenario, None, "skipped: no recall context yet"))
                 continue
-            with ctx():
+            with ExitStack() as stack:
+                # Building the corrupted copy is not the check. A scenario whose setup raises
+                # proves nothing about the check, so it is recorded as NOT tripped and fails the
+                # gate, rather than counted as proof (which is how it used to be counted).
+                try:
+                    stack.enter_context(ctx())
+                except Exception as exc:  # noqa: BLE001
+                    proofs.append((check.__name__, label + "  [setup raised %s: proves nothing]" % type(exc).__name__, False, ""))
+                    continue
                 check(probe)
             name, passed = probe[0][0], probe[0][1]
             tripped = not passed

@@ -20,7 +20,7 @@ Five charts:
       the model in use's 80% range, and the largest miss annotated
   c3  did the ranges hold: 80% coverage in the locked test per code
   c4  what deserves review: flagged months, episodes and Class I initiations
-      on one timeline, 2024-01 to 2026-08, all seven codes
+      on one timeline, 2024-01 to 2026-08, every forecast code
   c5  how complete is the recent record: the headline code's event-month
       counts at 3, 6 and 12 months of receipt lag (M-02)
 
@@ -51,6 +51,7 @@ REF = REPO / "data" / "reference"
 GOV = REPO / "governance"
 DOCS = REPO / "docs"
 CONFIG = REPO / "config" / "model.json"
+DB = CONF / "early_warning.duckdb"
 
 PAGE_URL = "https://www.robbinsanalytics.com/cascadia-early-warning/"
 SITE_URL = "https://www.robbinsanalytics.com/"
@@ -111,6 +112,27 @@ def words(s: str) -> int:
     return len(s.split())
 
 
+NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"]
+
+
+def num_word(n: int) -> str:
+    return NUM_WORDS[n] if 0 <= n < len(NUM_WORDS) else nf(n)
+
+
+def join_and(items) -> str:
+    items = list(items)
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+ROMAN = {"1": "I", "2": "II", "3": "III"}
+
+
+def class_phrase(classes) -> str:
+    """'Class III' for one device class, 'Classes II and III' for several, from product_code.csv."""
+    cs = [ROMAN[c] for c in sorted(set(classes))]
+    return ("Class " if len(cs) == 1 else "Classes ") + join_and(cs)
+
+
 # ---------------------------------------------------------------------------
 # data
 # ---------------------------------------------------------------------------
@@ -142,6 +164,71 @@ def load():
     d["eligible"] = {(r["product_code"], r["month"]): int(r["eligible_reports"]) for r in d["m01"]}
     d["in_use"] = {c: cfg["promoted"][c]["model_in_use"] for c in d["forecast_codes"]}
     return d
+
+
+def cohort_facts(d) -> dict:
+    """Every device-class and summary-reporting statement either page makes, generated from
+    product_code.csv for the forecast codes. validate.py's cohort-facts check reads the same
+    file and fails a page whose statements disagree with it, or that makes one unmarked."""
+    rows = {c["product_code"]: c for c in d["codes"]}
+    codes = d["forecast_codes"]
+    elig = sorted(c for c in codes if rows[c]["summary_malfunction_reporting"] == "Eligible")
+    return {"classes": class_phrase([rows[c]["device_class"] for c in codes]),
+            "eligible": elig, "ineligible": sorted(c for c in codes if c not in elig)}
+
+
+def record_facts(d) -> dict:
+    """Facts only the record table holds: each forecast code's summary-report composition (one
+    summary report can stand for many events). Read from the engine's DuckDB record table, which
+    src/build_model.py rebuilds from the freeze; the page fails closed without it rather than
+    typing the figures."""
+    if not DB.exists():
+        raise SystemExit("no record table at %s: the summary-report composition is read from it. "
+                         "Restore the staged pages (src/acquire.py --restore) and rebuild it." % DB.relative_to(REPO).as_posix())
+    import duckdb
+    codes = d["forecast_codes"]
+    con = duckdb.connect(str(DB), read_only=True)
+    q = """SELECT b.product_code, count(DISTINCT r.mdr_report_key),
+                  count(DISTINCT CASE WHEN r.summary_report_flag = 'Y' THEN r.mdr_report_key END),
+                  count(DISTINCT CASE WHEN r.summary_report_flag = 'Y' AND try_cast(r.noe_summarized AS INT) > 1
+                                      THEN r.mdr_report_key END),
+                  max(CASE WHEN r.summary_report_flag = 'Y' THEN try_cast(r.noe_summarized AS INT) END),
+                  sum(CASE WHEN r.summary_report_flag = 'Y' THEN try_cast(r.noe_summarized AS INT) END)
+           FROM report r JOIN report_product_code b USING (mdr_report_key)
+           WHERE r.countable AND NOT r.excluded AND b.product_code IN (%s) GROUP BY 1""" % ",".join("'%s'" % c for c in codes)
+    summary = {c: {"reports": int(n), "summary": int(s), "multi": int(m), "max_events": int(x or 0), "events": int(e or 0)}
+               for c, n, s, m, x, e in con.execute(q).fetchall()}
+    con.close()
+    return {"summary": summary}
+
+
+def what_is_counted(d, cf: dict, rf: dict) -> str:
+    """The cohort sentences of 'What is counted', as HTML. The eligibility statement sits in a
+    marked span that the cohort-facts check reads; nothing outside it may state eligibility."""
+    sm, n_word = rf["summary"], num_word(len(d["forecast_codes"]))
+    lst = "on FDA's list of product codes eligible for voluntary malfunction summary reporting"
+    if cf["eligible"] and cf["ineligible"]:
+        elig_txt = "%s %s %s, and %s %s not" % (join_and(cf["eligible"]), "is" if len(cf["eligible"]) == 1 else "are", lst,
+                                              join_and(cf["ineligible"]), "is" if len(cf["ineligible"]) == 1 else "are")
+    elif cf["eligible"]:
+        elig_txt = "all %s codes are %s" % (n_word, lst)
+    else:
+        elig_txt = "none of the %s codes is %s" % (n_word, lst)
+    s = ('<span data-cohort-fact="summary" data-eligible="%s" data-ineligible="%s">%s.</span>'
+         % (" ".join(cf["eligible"]), " ".join(cf["ineligible"]), html.escape(elig_txt[0].upper() + elig_txt[1:])))
+    for c in cf["eligible"]:
+        x = sm[c]
+        s += (" Of %s's %s reports, %s carry the source's summary-report flag and together stand for %s events; %s of them "
+              "summarize more than one event, up to %s in a single report. A change in how summary reporting is used can "
+              "move %s's count with no change in events, and the target stays the count of reports."
+              % (c, nf(x["reports"]), nf(x["summary"]), nf(x["events"]), nf(x["multi"]), nf(x["max_events"]), c))
+    others = [c for c in cf["ineligible"] if sm.get(c, {}).get("summary")]
+    if others:
+        n_o, multi_o = sum(sm[c]["summary"] for c in others), sum(sm[c]["multi"] for c in others)
+        s += (" The other codes carry %s summary-flagged report%s between them, %s."
+              % (num_word(n_o), "" if n_o == 1 else "s",
+                 "each for a single event" if multi_o == 0 else "%s of them for more than one event" % num_word(multi_o)))
+    return s
 
 
 def model_label(m: str) -> str:
@@ -311,8 +398,8 @@ def chart3(d):
     rows.sort(key=lambda r: (-r["coverage80"], r["code"]))
     lo, hi = min(rows, key=lambda r: r["coverage80"]), max(rows, key=lambda r: r["coverage80"])
     n_dis = sum(1 for r in rows if not r["enabled"])
-    finding = ("The 80%% ranges covered between %s and %s of locked-test months across the seven codes; %s"
-               % (pct(lo["coverage80"]), pct(hi["coverage80"]),
+    finding = ("The 80%% ranges covered between %s and %s of locked-test months across the %s codes; %s"
+               % (pct(lo["coverage80"]), pct(hi["coverage80"]), num_word(len(rows)),
                   "every code keeps its review rule" if n_dis == 0 else
                   "%d code%s below 70%% %s the review rule disabled" % (n_dis, "" if n_dis == 1 else "s", "has" if n_dis == 1 else "have")))
     subtitle = ("Share of the %d locked-test months (2024-01 to 2025-12) whose actual fell inside the model in use's 80%% range, "
@@ -365,18 +452,17 @@ def chart4(d):
     eval_months = sum(int(w["evaluated_months"]) for w in d["work"])
     rate = n_ep / eval_months if eval_months else 0.0
     if n_ep == 0:
-        finding = ("The review rule opened no episode in %d evaluated months across seven codes; %d single months were flagged and %d Class I recall%s began in the span"
-                   % (eval_months, n_fl, n_rec, "" if n_rec == 1 else "s"))
+        finding = ("The review rule opened no episode in %d evaluated months across %s codes; %d single months were flagged and %d Class I recall%s began in the span"
+                   % (eval_months, num_word(len(lanes)), n_fl, n_rec, "" if n_rec == 1 else "s"))
     else:
-        finding = ("The review rule opened %d episode%s in %d evaluated months across seven codes, %.3f per month; %d Class I recall%s began in the span"
-                   % (n_ep, "" if n_ep == 1 else "s", eval_months, rate, n_rec, "" if n_rec == 1 else "s"))
+        finding = ("The review rule opened %d episode%s in %d evaluated months across %s codes, %.3f per month; %d Class I recall%s began in the span"
+                   % (n_ep, "" if n_ep == 1 else "s", eval_months, num_word(len(lanes)), rate, n_rec, "" if n_rec == 1 else "s"))
     subtitle = ("One lane per code, %s to %s; lanes with the rule on come first, each group ordered by flagged months. A filled square is a "
                 "month whose actual exceeded the 80%% range by five or more reports (the rule is one-sided by design); a hollow square is the "
                 "same in a lane with the rule off, where it opens no episode; a bar is an episode of two or more consecutive filled squares; "
                 "a diamond, raised above the lane, is the firm-initiated date of a Class I recall event in that code, same-month events side "
                 "by side. %d of the %d flagged months fall in the %d lanes with the rule off. Of the %d Class I initiations, %d were preceded "
-                "by an episode start. Association only: the timeline is context, not validation. FDA's 2024-08-29 summary-reporting change "
-                "does not apply to these codes."
+                "by an episode start. Association only: the timeline is context, not validation."
                 % (month_short(EVAL_START), month_short(EVAL_END), n_off_flags, n_fl, n_off, rc_init, rc_prec))
     # The annotation names the episode the title counts; with none, it says so (Rule 3.4: at the mark the claim depends on).
     ep_note, best = None, None
@@ -562,6 +648,8 @@ def main() -> int:
                   nf(g["eligible_training_reports"]), "pass" if g["forecast"] == "true" else "fail"] for g in d["gate"]]
     receipt_rows = [[r["product_code"], r["field"], nf(r["reports_matched"])] for r in d["receipt"]]
 
+    cf, rf = cohort_facts(d), record_facts(d)
+
     data = {"asOf": AS_OF, "retrieved": RETRIEVED, "lastUpdated": LAST_UPDATED, "source": SOURCE, "headline": code,
             "c1": c1, "c2": c2, "c3": c3, "c4": c4, "c5": c5}
     f = {
@@ -570,6 +658,9 @@ def main() -> int:
                           if any(d["in_use"][c] == "candidate" for c in d["forecast_codes"]) else
                           "the largest-volume code whose review rule is enabled; the candidate earned use nowhere"),
         "n_cand": str(n_cand), "n_codes": str(len(d["forecast_codes"])),
+        "n_codes_word": num_word(len(d["forecast_codes"])), "N_codes_word": num_word(len(d["forecast_codes"])).capitalize(),
+        "cohort_classes": '<span data-cohort-fact="classes">%s</span>' % cf["classes"], "cohort_classes_plain": cf["classes"],
+        "what_counted": what_is_counted(d, cf, rf),
         "cand_codes": ", ".join(c for c in d["forecast_codes"] if use[c] == "candidate") or "none",
         "base_codes": ", ".join(c for c in d["forecast_codes"] if use[c] != "candidate") or "none",
         "o_target": month_name(c1["outlook"]["target"]), "o_point": nf(c1["outlook"]["point"]),

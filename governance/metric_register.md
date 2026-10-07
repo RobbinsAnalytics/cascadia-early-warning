@@ -53,9 +53,16 @@ and the only date that says what was knowable when.
 - **The most recent months are complete only as of `meta.last_updated`
   2026-09-29.** Reports received in August 2026 and loaded after that date are
   not in this freeze. The page says so.
-- **These codes are ineligible for malfunction summary reporting**, so one
-  record is one report across the whole window; the classification extract
-  carries the eligibility flag per code as evidence.
+- **One record is one report, and for NPT one report is not one event.**
+  Six of the seven codes are ineligible for voluntary malfunction summary
+  reporting; NPT is eligible, and its count includes summary reports that each
+  stand for many events, so a change in how summary reporting is used can move
+  NPT's count with no change in events. The target stays the count of reports.
+  The classification extract carries the eligibility flag per code;
+  `src/build_page.py` generates both statements from it and the summary
+  composition from the record table, and `src/validate.py`'s cohort-facts
+  check fails a page that says otherwise. *(Corrected 2026-10-07, D19: this
+  limit said all seven codes were ineligible.)*
 
 ## M-02 · Lag-matched counts and event-to-receipt lag
 
