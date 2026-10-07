@@ -308,6 +308,11 @@ until they covered, would have been selection on the test.
 **Carried by:** `governance/numbers-gate.md` (Results); `data/conformed/review_workload.csv`
 (`rule_enabled`); `src/review.py` (`COVERAGE_FLOOR`); the page's review section.
 
+**Resolved 2026-10-06, Aaron: accepted as built.** The band stays where it
+was pre-registered and the three codes stay on the page with their review
+rule off. Widening or moving the band after reading the locked test would
+be selection on the test.
+
 ## D17 · The locked stage was run a second time before any locked row was committed, to repair a harness defect
 
 The first locked run did not carry the candidate's development-period errors
@@ -378,3 +383,9 @@ that revises as months fill, which would make every score a moving figure.
 `src/test_live_edge.py`; `.claude/hooks/no_publish_from_scheduled_runs.py`;
 `.claude/settings.json`; the task file in the Code store (outside this
 repository); `src/build_page.py` (`live_edge_line`); `docs/template.html`.
+
+**Resolved 2026-10-06, Aaron: Matter Ledger's answer.** `docs/index.html`
+comes off the freeze gate's protected list. The tables it is computed from
+stay frozen, so no frozen figure can move without the gate failing, and the
+weekly rebuild no longer reads as a breach. Carried by
+`governance/freeze.toml`.

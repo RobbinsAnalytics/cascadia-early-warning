@@ -21,7 +21,8 @@
 # baseline moves to the commit that last legitimately added a protected
 # artifact, stated here with its reason. Phases 1 and 2 landed together in
 # the freeze commit below. Phase 3 adds the forecast, score, review and
-# recall tables by name; Phase 4 adds docs/index.html.
+# recall tables by name. Phase 4 added docs/index.html; D18's resolution
+# took it off again (2026-10-06).
 #
 # EVERY PATH HERE IS NAMED, NOT GLOBBED, except the count series. A glob over
 # data/conformed/ would fail the gate the moment Phase 3 adds a table that did
@@ -80,21 +81,12 @@ protected_paths = [
   "data/conformed/recall_context_meta.json",
   "governance/source-register.md",
   "governance/exclusion-receipt-records.md",
-  # Phase 4: the rendered page, every figure on it computed from the tables
-  # above. docs/renders/* is NOT listed, for the reason cascadia-matter-ledger
-  # recorded: the renders are review artifacts that change with chart code,
-  # and binding them to a data-freeze baseline makes the gate cry wolf.
-  #
-  # KNOWN INTERACTION WITH THE LIVE EDGE (Phase 5). reconcile_live_edge.py
-  # rebuilds docs/index.html after every scheduled run so the page's health
-  # surface stays level with the record; from the first such run this gate
-  # reports the page as moved until Aaron commits the run record and moves
-  # this baseline. Matter Ledger resolved the same conflict by leaving its
-  # page out of the list. This module keeps the page IN, because the page
-  # is the frozen forecast and the plan says so; whether to adopt Matter
-  # Ledger's answer once the task is scheduled is Aaron's call, recorded in
-  # the build receipt as an open item.
-  "docs/index.html",
+  # docs/index.html is NOT listed (D18, resolved by Aaron 2026-10-06). The
+  # page is computed from the tables above, which stay frozen, and the live
+  # edge rebuilds it after every scheduled run; on the list it would fail
+  # this gate every week. This is cascadia-matter-ledger's answer.
+  # docs/renders/* is not listed either: review artifacts that change with
+  # chart code.
 ]
 
 # No permitted_edit entries. An exemption is a path that is no longer checked.
