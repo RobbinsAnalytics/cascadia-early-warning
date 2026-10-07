@@ -1191,6 +1191,8 @@ def main() -> int:
         "q_gated_word": ("%s episode" if qd["gatedEpisodes"] == 1 else "%s episodes") % num_word(qd["gatedEpisodes"]),
         "q_ungated_word": num_word(qd["ungatedEpisodes"]),
         "n_rule_on": str(qd["enabledCodes"]),
+        # The card's horizons row, from config/model.json "horizons".
+        "horizons_phrase": "%s months ahead" % join_and([num_word(h) for h in sorted(cfg["horizons"])]),
         "case_test_phrase": html.escape(case_test_phrase()),
         "case_experiment_history": html.escape(CASE_EXPERIMENT_HISTORY),
         "case_prereg_narrowed": html.escape(CASE_PREREG_NARROWED),

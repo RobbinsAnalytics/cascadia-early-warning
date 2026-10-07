@@ -126,23 +126,25 @@
         <h1 class="mt-5 font-display text-[clamp(2.6rem,1.4rem+4.6vw,5.4rem)] leading-[0.95] font-bold tracking-[-0.045em] text-ink"><span class="text-muted">Cascadia</span> Early <span class="font-serif font-normal italic text-teal tracking-[-0.03em]">Warning</span><span class="text-teal-3">.</span></h1>
         <p id="case-opening" data-case="opening" class="mt-7 max-w-2xl text-lg leading-relaxed text-ink-soft sm:text-[1.2rem]">@@case_opening@@</p>
       </div>
-      <aside class="rounded-3xl bg-lime p-6 text-ink sm:p-7">
+      <!-- The card (Build Brief 2.2 step 2): Felix's lime spec aside with one action, the 6.3 "Disc CTA, dark"
+           button, placed under the heading so it is the first thing in the card; at most three rows below it. -->
+      <aside data-case="card" class="rounded-3xl bg-lime p-6 text-ink sm:p-7" aria-labelledby="card-title">
         <div class="flex items-center justify-between border-b border-ink/80 pb-4">
-          <p class="font-display text-lg leading-tight font-bold tracking-tight uppercase">Case study</p>
+          <p id="card-title" class="font-display text-lg leading-tight font-bold tracking-tight uppercase">Forecast module</p>
           <span class="h-2.5 w-2.5 rounded-full bg-ink" aria-hidden="true"></span>
         </div>
-        <dl>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Owner</dt><dd class="text-right text-sm font-semibold">Aaron Robbins</dd></div>
+        <p class="mt-4 text-sm leading-relaxed text-ink/75">Explore the outlook, the test and the review queue</p>
+        <a class="group btn mt-4 bg-ink !py-1.5 !pr-1.5 !pl-5 text-sm text-white hover:bg-teal" href="@@module_url@@">
+          Open forecast module
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-lime text-ink transition-transform group-hover:-rotate-12" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg>
+          </span>
+        </a>
+        <dl class="mt-5 border-t border-ink/25">
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Receipts through</dt><dd class="text-right text-sm font-semibold whitespace-nowrap">@@as_of@@</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">@@n_codes@@ codes, @@cohort_classes@@</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Candidate in use</dt><dd class="text-right text-sm font-semibold">@@n_cand@@ of @@n_codes@@ codes</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Review rule on</dt><dd class="text-right text-sm font-semibold">@@n_rule_on@@ of @@n_codes@@ codes</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Horizons</dt><dd class="text-right text-sm font-semibold">@@horizons_phrase@@</dd></div>
+          <div class="flex items-baseline justify-between gap-4 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">@@n_codes@@ codes, @@cohort_classes@@</dd></div>
         </dl>
-        <ul class="mt-2">
-          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="@@module_url@@"><span>The module</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
-          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="@@module_url@@#s5"><span>Method and receipts</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
-          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="@@repo_url@@"><span>Build repository</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
-        </ul>
       </aside>
     </div>
   </div>
@@ -229,7 +231,14 @@
             <li><strong>Two paths.</strong> @@assurance_boundary@@</li>
             <li><strong>Checks that can fail.</strong> The domain gate runs @@proof_checks@@ checks and re-runs them against deliberately corrupted copies of their input in @@proof_scenarios@@ scenarios; the validation report records that @@proof_result@@. Golden fixtures, computed outside both engines and committed before either existed, pass on both paths.</li>
             <li><strong>The chart review.</strong> @@case_panel@@</li>
-            <li><strong>The receipts.</strong> How the snapshot was frozen and hashed, how the second path is built, and how the model's states are exported for it are set out in the module's <a href="@@module_url@@#s5">method and receipts</a>.</li>
+          </ul>
+        </div>
+        <!-- The links the card no longer carries, as a links list in the evidence section (Build Brief 2.2 step 2). -->
+        <div class="mt-10 border-t border-line pt-8">
+          <p class="eyebrow">Links</p>
+          <ul class="rich prose mt-4 max-w-[46rem]">
+            <li><a href="@@module_url@@#s5">Method and receipts</a>: how the snapshot was frozen and hashed, how the second path is built, and how the model's states are exported for it.</li>
+            <li><a href="@@repo_url@@">Build repository</a>: the pre-registration, the frozen harness, both derivation paths, the validation report and the chart review, each with its commit.</li>
           </ul>
         </div>
       </div>
@@ -265,10 +274,9 @@
       <span class="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-mono text-[0.7rem] tracking-[0.16em] text-white/80 uppercase backdrop-blur">Open build</span>
       <h2 class="mt-7 font-display text-[clamp(2.4rem,1.6rem+3.2vw,4.1rem)] leading-[1.02] font-semibold tracking-tight">The <span class="relative inline-block font-serif font-normal italic tracking-[-0.03em] text-[#8fd3c8]">evidence<svg class="absolute -bottom-[0.08em] left-0 h-[0.14em] w-full" viewBox="0 0 120 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8 C 30 2, 60 11, 118 4" fill="none" stroke="#d4f36b" stroke-width="2.5" stroke-linecap="round"/></svg></span> is on the module page<span class="text-accent">.</span></h2>
       <p class="mt-7 max-w-md text-[1.02rem] leading-relaxed text-white/70">Every figure here comes from the same build as the module page, which sets out the forecast, the test, the review queue and the checks with their charts and tables.</p>
+      <!-- The closing invitation: the second route to the module, and only that (Build Brief 2.2 step 2). -->
       <div class="mt-9 flex flex-wrap gap-3">
-        <a class="group btn bg-lime !py-1.5 !pr-1.5 !pl-5 text-ink hover:bg-lime-2" href="@@module_url@@">The module <span class="grid h-8 w-8 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
-        <a class="btn btn-ghost-light" href="@@module_url@@#s5">Method and receipts</a>
-        <a class="btn btn-ghost-light" href="@@repo_url@@">Build repository</a>
+        <a class="group btn bg-lime !py-1.5 !pr-1.5 !pl-5 text-ink hover:bg-lime-2" href="@@module_url@@">Open forecast module <span class="grid h-8 w-8 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
       </div>
     </div>
   </div>
