@@ -8,13 +8,21 @@ values live in `data/conformed/`; this document defines them and does not
 restate them. A figure that appears in any rendered output and is not defined
 here is not certified and must not be published.*
 
-**Independent validation.** `src/validate_measures.py` re-derives every
-certified cell down a separately written path: DuckDB SQL over the staged
-records for the counts, a hand-written recurrence for the candidate's
-mechanics, and its own implementations of the scores and the review rule,
-written from this register and the decision record and never by reading the
-engine. **Nothing is published unless that script exits zero.** A measure that
-only agrees with itself has not been validated.
+**Independent validation.** `src/validate_measures.py` re-derives M-01 to
+M-05 down a separately written path: DuckDB SQL over the staged records for
+the counts, a hand-written recurrence for the candidate's mechanics over its
+exported states (no refit), and its own implementations of the ranges, the
+scores and the review rule, written from this register and the decision
+record and never by reading the engine; it also re-derives the figures the
+page computes from those tables (the queue with and without its coverage
+gate, and chart 4's flagged months) and compares them with each page's data
+block. **Nothing is published unless that script exits zero.** A measure that
+only agrees with itself has not been validated. **What it does not cover**
+*(corrected 2026-10-07, D19; this paragraph said "every certified cell")*:
+M-06 has no second path (the recall set is checked against fourteen
+hand-verified events by `src/validate.py`), and the cohort gate, the
+exclusion receipt, the reports without an event date, the promotion decision
+and the outlook's twenty dots are carried from the build without one.
 
 **Three words that do the work.** *Report* means one `mdr_report_key`, which
 openFDA holds as the most recent version of a submission; a follow-up to the
@@ -109,7 +117,7 @@ and the only date that says what was knowable when.
 | **Lineage** | M-01 `eligible_reports` at or before the origin; `config/model.json` |
 | **Population** | Origins 2018-12 to 2026-08 for the codes that pass the cohort gate; periods warmup, development, locked, recent, outlook |
 | **Statistic** | Point and quantile ranges |
-| **Certified** | **No.** A forecast is a computation, not a fact. What is certified is that the mechanics are re-derived: the baselines in SQL, the candidate's point from its exported states by an independent recurrence, the quantiles from the exported errors |
+| **Certified** | **No.** A forecast is a computation, not a fact. What is certified is that the mechanics are re-derived: baseline A in SQL and baseline B by lookup, the candidate's point from its exported states by an independent recurrence, the quantiles from the exported errors |
 | **Version** | 1.0, 2026-10-06 |
 | **Reviewer** | Not yet reviewed |
 
@@ -144,8 +152,12 @@ and the only date that says what was knowable when.
 | **Reviewer** | Not yet reviewed |
 
 **Limits.**
-- **The locked test ran once** (D5). Its scores are the answer, whatever they
-  are; a weak result is published as plainly as a strong one.
+- **One locked result** (D5, D17). The locked stage ran a second time before
+  any locked row was committed, to repair a harness defect; the committed
+  result is the corrected one, and promotion and point forecasts were
+  unchanged. Its scores are the answer, whatever they are; a weak result is
+  published as plainly as a strong one. *(Corrected 2026-10-07, D19: this
+  limit said the locked test ran once.)*
 - **Scaled MAE above 1 means the candidate did worse than a trailing mean**,
   and the page says so where it happens.
 

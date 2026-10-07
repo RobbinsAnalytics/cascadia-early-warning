@@ -297,7 +297,7 @@ def check_locked_once(results):
         if locked:
             hashes.add(hashlib.sha256(locked.encode("utf-8")).hexdigest())
     ok = len(hashes) <= 1
-    results.append(("the locked test ran once: the locked rows have one content hash across history and the working tree",
+    results.append(("one locked result: the locked rows have one content hash across committed history and the working tree",
                     ok, "%d distinct locked-row hashes" % len(hashes),
                     [] if ok else ["locked rows differ between commits or the working tree"]))
 
@@ -705,6 +705,36 @@ def _docs_tree_copy(mutations: dict):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+@contextmanager
+def _gov_copy(filename: str, mutate_text):
+    """governance/<filename> copied and mutated; GOV repointed at the copy's folder."""
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="cascadia-prove-failable-"))
+    try:
+        before = (GOV / filename).read_text(encoding="utf-8")
+        after = mutate_text(before)
+        if after == before:
+            raise RuntimeError("the mutation of %s changed nothing; the scenario would prove nothing" % filename)
+        (tmp / filename).write_text(after, encoding="utf-8")
+        with _repoint("GOV", tmp):
+            yield
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _first_staged(manifest: dict) -> str:
+    return next(k for k in manifest["files"] if k.startswith("data/raw/staging/event/"))
+
+
+def _flip_sha(manifest: dict):
+    e = manifest["files"][_first_staged(manifest)]
+    e["sha256"] = ("0" if e["sha256"][0] != "0" else "1") + e["sha256"][1:]
+
+
+def _bump_first_locked(rows: list[dict]):
+    r = next(r for r in rows if r["period"] == "locked")
+    r["point"] = "%.6f" % (float(r["point"]) + 1)
+
+
 def _sub_once(pattern: str, repl: str):
     def fn(text: str) -> str:
         out, n = re.subn(pattern, repl, text, count=1)
@@ -721,6 +751,8 @@ def _first_eligible_token() -> str:
 
 
 def _scenarios():
+    yield (check_hashes, "one staged page's recorded SHA-256 altered by one hex digit in a copy of the manifest",
+           lambda: _json_copy("MANIFEST", _flip_sha))
     yield (check_extraction_log, "a window marked failed: a missing partition must read as missing, never zero",
            lambda: _json_copy("EXTRACTION_LOG", lambda d: d["windows"].__setitem__(next(iter(d["windows"])), dict(next(iter(d["windows"].values())), status="failed: 500"))))
     yield (check_m01, "one eligible count perturbed by one",
@@ -740,10 +772,17 @@ def _scenarios():
            lambda: _db_copy(["UPDATE report SET date_received = '20260915' WHERE mdr_report_key = (SELECT mdr_report_key FROM report WHERE countable LIMIT 1)"]))
     yield (check_exclusion, "an audit row's token replaced by a string that is not in the private list: an alias the list does not own",
            lambda: _csv_copy("AUDIT", lambda rows: rows[0].__setitem__("token", "zzz-not-a-list-token")))
-    yield (check_exclusion, "an audit row re-pointed at a different report key: the receipt's ANY count no longer agrees with the record table",
+    yield (check_exclusion, "an audit row added for a report key the record table does not hold: the per-field count and the distinct-key total no longer agree",
            lambda: _csv_copy("AUDIT", lambda rows: rows.append(dict(rows[0], mdr_report_key="0000000"))))
     yield (check_chronology, "a forecast row whose target equals its origin",
            lambda: _csv_copy("FORECAST", lambda rows: rows[0].__setitem__("target", rows[0]["origin"])))
+    yield (check_locked_once, "one locked row's point forecast moved by one report in the working copy: a second locked result",
+           lambda: _csv_copy("FORECAST", _bump_first_locked))
+    yield (check_asof, "freeze.toml's as_of_date moved back a day",
+           lambda: _gov_copy("freeze.toml", lambda t: re.sub(r'as_of_date = "(\d{4}-\d{2})-(\d{2})"',
+                                                            lambda m: 'as_of_date = "%s-%02d"' % (m.group(1), int(m.group(2)) - 1), t, count=1)))
+    yield (check_cohort, "forecast rows for a code that never entered the cohort gate (DXY, the reference series)",
+           lambda: _csv_copy("FORECAST", lambda rows: rows.append(dict(rows[0], product_code="DXY"))))
     yield (check_names, "a private token written into a page under docs/",
            lambda: _docs_copy("probe.html", "<p>%s</p>" % _first_eligible_token()))
     yield (check_emdash, "an em dash written into a page under docs/",
@@ -767,6 +806,9 @@ def prove_failable():
         probe = []
         label = scenario
         try:
+            if check is check_hashes and not (RAW / "staging" / "event").exists():
+                proofs.append((check.__name__, scenario, None, "skipped: no staged pages on disk (a fresh clone; restore them first)"))
+                continue
             if check in (check_m01, check_dates, check_uniqueness, check_exclusion) and not DB.exists():
                 proofs.append((check.__name__, scenario, None, "skipped: no record table yet"))
                 continue

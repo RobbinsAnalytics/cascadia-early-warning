@@ -9,9 +9,18 @@ states by its own recurrence, the empirical ranges by SQL quantiles over the
 exported errors, the scores and the review episodes, and compares each with
 what the engine published, cell by cell.
 
-This is the house pattern: every figure that will ever be published is
-independently validated against raw SQL. A measure that only agrees with
-itself has not been validated. Written from governance/metric_register.md,
+It also re-derives the figures the page build computes from these tables and
+writes to no table (the queue with and without its coverage gate, chart 4's
+flagged months), and compares them with each built page's data block.
+
+What it does NOT cover, stated so the page cannot claim more: M-06 (the
+recall context), the cohort gate, the exclusion receipt as a table, the
+reports without an event date, the promotion decision and the outlook's
+twenty dots. It is DuckDB SQL plus its own Python arithmetic, not SQL alone,
+and it consumes the engine's published points and states as inputs to the
+ranges and scores: a chain of verified links, not an end-to-end rebuild. A
+measure that only agrees with itself has not been validated. Written from
+governance/metric_register.md,
 governance/decision-record.md and config/model.json, never by reading the
 engine.
 
@@ -521,7 +530,7 @@ def report(checked: int, failures: list[str]) -> int:
             print("  ... and %d more" % (len(failures) - 40))
         print("\nVALIDATE MEASURES: FAILED. Publish nothing.")
         return 1
-    print("\nVALIDATE MEASURES: PASSED. Every published cell reconciles down a separately written path.")
+    print("\nVALIDATE MEASURES: PASSED. Every cell this path re-derives reconciles with what was published.")
     return 0
 
 

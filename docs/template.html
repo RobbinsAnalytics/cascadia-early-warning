@@ -203,7 +203,7 @@
         <p class="eyebrow">02 / The test</p>
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Whether the forecasts earned trust on months the model never saw</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
-          <p>@@chronology@@ The selection period's targets were @@dev_span@@; the harness was committed to <code>config/model.json</code> at <code>@@model_first_commit@@</code> and the promotion decision at <code>@@model_commit@@</code>, before any locked-period forecast existed. The locked test is @@locked_n@@ months, @@locked_span@@, from origins at or after @@locked_min_origin@@, and it ran once. The recent check, @@recent_span@@, is reported beside it and was not used for anything. @@issue_dates@@</p>
+          <p>@@chronology@@ The selection period's targets were @@dev_span@@; the harness was committed to <code>config/model.json</code> at <code>@@model_first_commit@@</code> and the promotion decision at <code>@@model_commit@@</code>, before any locked-period forecast existed. The locked test is @@locked_n@@ months, @@locked_span@@, from origins at or after @@locked_min_origin@@. @@locked_history@@ The recent check, @@recent_span@@, is reported beside it and was not used for anything. @@issue_dates@@</p>
           <p>For @@headline@@ the model in use missed by <strong>@@c2_mae_use@@ reports a month</strong> on average over the locked test (candidate @@c2_mae_c@@, trailing mean @@c2_mae_a@@), and its 80% range covered <strong>@@c2_cov@@</strong> of those months. The largest miss, chosen as the largest absolute error and nothing else, was @@c2_miss_month@@: @@c2_miss_actual@@ reports arrived against @@c2_miss_point@@ expected.</p>
         </div>
         <div class="mt-8">@@c2_card@@</div>
@@ -236,15 +236,15 @@
       <!-- 04 -->
       <div id="s4" class="mt-16 border-t border-line pt-10 scroll-mt-24">
         <p class="eyebrow">04 / What was checked</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Every number on this page was re-derived down a second path</h2>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">@@assurance_title@@</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
           <ul>
-            <li><strong>The freeze.</strong> @@total_raw@@ reports across the @@n_codes_word@@ codes, pulled from openFDA in 696 pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of 896 code-months, against the source's own daily count series pulled separately.</li>
+            <li><strong>The freeze.</strong> @@total_raw@@ reports across the @@n_codes_word@@ codes, pulled from openFDA in @@n_staged_pages@@ pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of @@n_code_months@@ code-months, against the source's own daily count series pulled separately.</li>
             <li><strong>The exclusion.</strong> A private token list, kept outside the repository, removed <strong>@@excluded@@</strong> report(s) whole; its SHA-256 (<code>@@sha_local@@</code>) and the counts removed per field are published, and no firm is named anywhere.</li>
-            <li><strong>Two paths.</strong> Every published cell, the counts, the lag-matched counts, the forecast points from exported model states, the ranges, the scores and the review episodes, is recomputed by a separately written SQL path (<a href="@@repo_url@@/blob/main/src/validate_measures.py">validate_measures.py</a>) and must agree before anything is published.</li>
+            <li><strong>Two paths.</strong> @@assurance_boundary@@ The second path is <a href="@@repo_url@@/blob/main/src/validate_measures.py">validate_measures.py</a>.</li>
             <li><strong>Golden fixtures</strong>, written by hand before any engine code: both baselines on a made series, the ETS recurrence from fixed states, the review rule with a reset, the lag-matched count and the interval scores, passing on both paths.</li>
-            <li><strong>Proof the checks can fail.</strong> The <a href="@@repo_url@@/blob/main/governance/validation_report.md">validation report</a> feeds each check a deliberately corrupted copy of its input, a missing partition, a duplicate key, a report dropped from one of two codes, a blanked date, a future observation, an alias the list does not own, a count perturbed by one, a forecast whose target equals its origin, and records that each one tripped.</li>
-            <li><strong>Chronology.</strong> The git log shows the pre-registration and the frozen harness before the first forecast row, the promotion decision before the first locked row, and one locked run.</li>
+            <li><strong>Proof the checks can fail.</strong> The <a href="@@repo_url@@/blob/main/governance/validation_report.md">validation report</a> re-runs the @@proof_checks@@ checks of the domain gate against deliberately corrupted copies of their input in @@proof_scenarios@@ scenarios, from a missing partition and a moved hash to a page that states the wrong device class, and records that @@proof_result@@. @@proof_coverage@@ The second path has no such proof mode of its own.</li>
+            <li><strong>Chronology.</strong> The git log shows the pre-registration and the frozen harness before the first forecast row and the promotion decision before the first locked row. @@locked_history@@</li>
             <li><strong>The chart review and the reading panel</strong> under VIZ-PRINCIPLES v2.8 and CHART-REVIEW v2.8, recorded in <a href="@@repo_url@@/blob/main/governance/chart-review.md">the chart review</a>.</li>
           </ul>
         </div>
@@ -314,7 +314,7 @@
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true" class="shrink-0"><rect x="2" y="12" width="5" height="12" rx="2.5" fill="#d4f36b" opacity="0.55"/><rect x="10.5" y="7" width="5" height="17" rx="2.5" fill="#d4f36b" opacity="0.8"/><rect x="19" y="2" width="5" height="22" rx="2.5" fill="#d4f36b"/></svg>
         <span class="font-display text-[1.3rem] leading-none tracking-tight whitespace-nowrap text-white"><span class="font-semibold">Robbins</span> <span class="font-serif font-normal italic text-teal-3">Analytics</span><span class="text-lime">.</span></span>
       </a>
-      <p class="mt-5 max-w-sm text-sm leading-relaxed text-white/60">An independent portfolio project by Aaron Robbins. Public data, a frozen snapshot, two derivation paths, and a rule written down before the data was pulled.</p>
+      <p class="mt-5 max-w-sm text-sm leading-relaxed text-white/60">An independent portfolio project by Aaron Robbins. Public data, a frozen snapshot, two derivation paths, and a rule registered before the first forecast existed.</p>
     </div>
     <div>
       <p class="font-mono text-[0.7rem] tracking-[0.16em] text-white/60 uppercase">This module</p>

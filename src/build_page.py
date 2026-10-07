@@ -128,7 +128,8 @@ def words(s: str) -> int:
     return len(s.split())
 
 
-NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"]
+NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+             "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
 
 
 def num_word(n: int) -> str:
@@ -250,6 +251,45 @@ def what_is_counted(d, cf: dict, rf: dict) -> str:
 def period_span(d, name: str) -> str:
     a, b = d["cfg"]["periods"][name]["targets"]
     return "%s to %s" % (a, b)
+
+
+# The locked-test history, in the module review's words (D17 is the record).
+LOCKED_HISTORY = ("One corrected result was frozen after a documented harness repair; promotion and point forecasts were "
+                  "unchanged.")
+ASSURANCE_TITLE = "Counts, forecast arithmetic, scores and review episodes were re-derived down a second path"
+
+
+def assurance_boundary(d) -> str:
+    """What Path 2 (src/validate_measures.py) re-derives and what it does not, from that file's
+    own scope. The known-event count is read from the reference table."""
+    known = len({k["res_event_number"] for k in d["known"]})
+    return ("A separately written path, DuckDB SQL over the staged FDA pages plus its own Python arithmetic, recomputes the "
+            "monthly and lag-matched counts, every forecast point and range, the scores, the review episodes, and the queue "
+            "with and without its coverage gate as this page publishes it, and they must agree before anything is published. "
+            "It does not refit the ETS model: candidate points are recomputed from the model's exported states, and ranges and "
+            "scores from the published points. The recall timeline is checked only against %s hand-verified Class I events, and "
+            "the cohort gate, the exclusion receipt, the reports without an event date, the promotion decision, the "
+            "pre-registered recall count and the outlook's %s dots are carried from the build without a second derivation."
+            % (num_word(known), num_word(DOT_N)))
+
+
+def proof_counts() -> dict:
+    """The domain gate's checks and its prove-failable scenarios, counted from src/validate.py
+    itself (importing it runs nothing), and how many tripped, read from the committed validation
+    report. The build fails if the report was written for a different set of scenarios."""
+    import validate
+    checks = [c.__name__ for c in validate.CHECKS]
+    scen = [c.__name__ for c, _, _ in validate._scenarios()]
+    untested = [c for c in checks if c not in set(scen)]
+    rep = (GOV / "validation_report.md").read_text(encoding="utf-8")
+    m = re.search(r"\*\*(\d+) of (\d+) scenarios tripped\.\*\*", rep)
+    if not m:
+        raise SystemExit("governance/validation_report.md carries no proof section; run src/validate.py --prove-failable first")
+    tripped, ran = int(m.group(1)), int(m.group(2))
+    if ran != len(scen):
+        raise SystemExit("governance/validation_report.md records %d scenarios; src/validate.py now has %d. "
+                         "Run src/validate.py --prove-failable, then build." % (ran, len(scen)))
+    return {"checks": len(checks), "scenarios": len(scen), "tripped": tripped, "untested": untested}
 
 
 def chronology(d) -> str:
@@ -433,10 +473,10 @@ def chart2(d, code):
                    % (n_in, len(months), code, nf(sc_a["mae"]), nf(sc_c["mae"])))
     subtitle = ("One-month-ahead points from both models against what arrived, %s to %s, %d locked months; the band is the %s's 80%% range, "
                 "which covered %s of these months; rings mark the %d months it did not. %s Selection used targets through %s and was "
-                "registered in %s, before the retained test results were generated; the test is retrospective, on the %s snapshot, "
-                "and this test ran once."
+                "registered in %s, before the retained test results were generated; the test is retrospective, on the %s snapshot. %s"
                 % (month_short(months[0]), month_short(months[-1]), len(months), model_label(use), pct(sc_use["coverage80"]), len(outside), RULE,
-                   d["cfg"]["periods"]["development"]["targets"][1], month_name(d["cfg"]["frozen_on"][:7]), month_name(RETRIEVED[:7])))
+                   d["cfg"]["periods"]["development"]["targets"][1], month_name(d["cfg"]["frozen_on"][:7]), month_name(RETRIEVED[:7]),
+                   LOCKED_HISTORY))
     annotation = "largest miss: %s, %s arrived against %s expected" % (month_short(miss_m), nf(actual[i_miss]), nf(miss_pt))
     summary = ("Line chart over the %d locked-test months %s to %s for product code %s. Actual reports range %s to %s. The %s's "
                "points carry a mean absolute error of %s and its 80%% range covered %s of months (mean width %s); the %s's mean "
@@ -457,7 +497,7 @@ def chart2(d, code):
         "candidateBetter": better,
         "finding": finding, "subtitle": subtitle, "annotation": annotation, "summary": summary, "ariaLabel": summary,
         "provenance": {"source": no_sep(SOURCE, "source"), "asOf": no_sep("receipts through " + AS_OF, "asOf"),
-                       "flags": no_sep("counts, not rates; locked test %s, selection on targets through %s, run once"
+                       "flags": no_sep("counts, not rates; locked test %s, selection on targets through %s, one corrected result (D17)"
                                        % (period_span(d, "locked"), d["cfg"]["periods"]["development"]["targets"][1]), "flags")},
         "table": table,
     }
@@ -738,7 +778,7 @@ def main() -> int:
                   nf(g["eligible_training_reports"]), "pass" if g["forecast"] == "true" else "fail"] for g in d["gate"]]
     receipt_rows = [[r["product_code"], r["field"], nf(r["reports_matched"])] for r in d["receipt"]]
 
-    cf, rf = cohort_facts(d), record_facts(d)
+    cf, rf, pc = cohort_facts(d), record_facts(d), proof_counts()
 
     # Figures computed here from the tables and written to no table; src/validate_measures.py
     # re-derives each one down Path 2 and compares it with this block on every built page.
@@ -775,6 +815,16 @@ def main() -> int:
         "locked_span": period_span(d, "locked"), "recent_span": period_span(d, "recent"), "dev_span": period_span(d, "development"),
         "locked_n": str(months_between(*cfg["periods"]["locked"]["targets"]) + 1), "locked_min_origin": cfg["periods"]["locked"]["min_origin"],
         "chronology": html.escape(chronology(d)), "issue_dates": html.escape(issue_dates(d)),
+        "locked_history": html.escape(LOCKED_HISTORY), "assurance_title": html.escape(ASSURANCE_TITLE),
+        "assurance_boundary": html.escape(assurance_boundary(d)),
+        "proof_checks": str(pc["checks"]), "proof_scenarios": str(pc["scenarios"]),
+        "proof_result": ("every one tripped" if pc["tripped"] == pc["scenarios"] else
+                         "%d of them tripped, so the gate failed" % pc["tripped"]),
+        "proof_coverage": ("Every check has at least one scenario." if not pc["untested"] else
+                           "Untested, with no clean scenario: %s." % ", ".join(pc["untested"])),
+        "n_staged_pages": nf(sum(1 for k in json.loads((REPO / "data" / "raw" / "manifest.json").read_text(encoding="utf-8"))["files"]
+                                 if k.startswith("data/raw/staging/event/"))),
+        "n_code_months": nf(len(d["m01"])),
         "rc_preceded": str(rc["class_i_initiations_preceded_by_an_episode_start"]),
         "rc_initiations": str(rc["class_i_initiations_in_evaluated_span_by_forecast_code"]),
         "rc_episodes_in_window": str(rc["episodes_whose_start_falls_in_the_18_months_before_a_class_i_initiation"]),
