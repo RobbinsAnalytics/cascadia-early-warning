@@ -1,4 +1,4 @@
-# governance/freeze.toml — the module-specific half of the freeze gate.
+# governance/freeze.toml - the module-specific half of the freeze gate.
 #
 # Instantiated from cascadia-standards/templates/freeze.example.toml v1.0.0.
 # `src/validate_freeze.py` is a verbatim copy of the template and is never

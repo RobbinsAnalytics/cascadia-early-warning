@@ -1,4 +1,4 @@
-# Cascadia Early Warning — what an agent needs to know
+# Cascadia Early Warning - what an agent needs to know
 
 A public-data module that forecasts the next month's volume of FDA medical
 device reports for a small cohort of product codes, shows whether its forecasts
@@ -8,8 +8,8 @@ expectation into a human review queue. Source is openFDA `/device/event`,
 publishes `docs/` to `https://www.robbinsanalytics.com/cascadia-early-warning/`
 once Aaron approves; no remote exists until he creates it.
 
-**The estate's session rules — surfaces, guards, and the traps that have each
-cost a session — are at
+**The estate's session rules - surfaces, guards, and the traps that have each
+cost a session - are at
 `C:\Projects\cascadia-standards\governance\SESSION-RULES.md`.** Read §1–§7 and
 stop at the line. What gets published is governed by `PRINCIPLES.md` in the
 same directory. This file carries only what is true of this repo.
@@ -43,7 +43,7 @@ looks wrong, say so in the report; do not re-fit.
 and that date is a claim made out loud.** `governance/source-register.md`
 holds every request, its retrieval time, the API's own `meta.last_updated`,
 and a SHA-256 per response. `src/acquire.py` re-pulls the source and
-**overwrites the freeze** — only run it to deliberately refresh. Everything
+**overwrites the freeze** - only run it to deliberately refresh. Everything
 else rebuilds from the committed snapshot, offline; `run.ps1 build` makes no
 network request.
 
@@ -82,12 +82,12 @@ need only the standard library.
 
 ## Committing
 
-**Stage by name — never the two blanket forms.** They are denied in
+**Stage by name - never the two blanket forms.** They are denied in
 `.claude/settings.json`, and that block does **not** bind under
 `bypassPermissions`. What binds is
 `.claude/hooks/no_blanket_add_or_force_push.py`, a `PreToolUse` hook.
 
-**Line-ending churn on frozen data is not cosmetic** — it makes "the snapshot
+**Line-ending churn on frozen data is not cosmetic** - it makes "the snapshot
 is untouched" unassertable. `.gitattributes` prevents it; the git `pre-commit`
 hook in `.githooks/` catches what gets through and refuses the commit, and it
 fails closed. **It is inert until `git config core.hooksPath .githooks` has
@@ -104,7 +104,7 @@ was done under the guard. The hook-manifest entry in
 `cascadia-standards/governance/hook_manifest.json` is owed to a session rooted
 there and is not written from here.
 
-**A stale `.git/index.lock` is benign** — delete it and retry.
+**A stale `.git/index.lock` is benign** - delete it and retry.
 `git update-index --refresh` reveals one; `git status` does not.
 
 ## Publishing

@@ -1,0 +1,13 @@
+case,product_code,origin,horizon,target,model,expect_absent,expected_point
+B1,GLD,2021-12,1,2022-01,baseline_a,0,102
+B2,GLD,2021-12,3,2022-03,baseline_a,0,102
+B3,GLD,2021-12,1,2022-01,baseline_b,0,112
+B4,GLD,2021-12,3,2022-03,baseline_b,0,134
+B5,GLD,2023-06,1,2023-07,baseline_a,0,160
+B6,GLD,2023-06,3,2023-09,baseline_a,0,160
+B7,GLD,2023-06,1,2023-07,baseline_b,0,130
+B8,GLD,2023-06,3,2023-09,baseline_b,0,112
+B9,GLD,2020-05,1,2020-06,baseline_a,0,126.333333
+B10,GLD,2020-02,1,2020-03,baseline_a,1,
+B11,GLD,2020-03,3,2020-06,baseline_b,1,
+B12,GLD,2020-03,1,2020-04,baseline_a,0,111

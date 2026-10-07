@@ -1,4 +1,4 @@
-# Decision record — Cascadia Early Warning
+# Decision record - Cascadia Early Warning
 
 *Owner: Aaron Robbins. Opened 2026-10-06, Layer 0 (before any data was pulled).
 Decisions D1 to D13 restate the approved build plan so that the repository

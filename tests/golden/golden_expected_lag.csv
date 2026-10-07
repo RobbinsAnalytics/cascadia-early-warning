@@ -1,0 +1,3 @@
+case,product_code,event_month,reports_with_event_month,within_3,within_6,within_12,negative_lag
+L1,GLD,2024-01,5,2,3,4,0
+L2,GLD,2024-03,1,0,0,0,1

@@ -1,0 +1,2 @@
+case,product_code,model,horizon,n,mae,coverage50,coverage80,width50,width80,wis
+S1,GLD,candidate,1,3,6.666667,0.333333,1.0,10,20,4.466667
