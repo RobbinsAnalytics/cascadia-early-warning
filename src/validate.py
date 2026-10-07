@@ -96,6 +96,9 @@ def tracked_files() -> list[str]:
 def check_hashes(results):
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     bad, n, absent = [], 0, 0
+    on_disk = {p.relative_to(REPO).as_posix() for p in (RAW / "staging" / "event").glob("*/*.json.gz")}
+    for rel in sorted(on_disk - set(manifest["files"])):
+        bad.append("staged page on disk with no manifest entry: %s" % rel)
     for rel, e in manifest["files"].items():
         p = REPO / rel
         if not p.exists():
@@ -112,8 +115,8 @@ def check_hashes(results):
         n += 1
         if h != e["sha256"]:
             bad.append("moved since the freeze: %s" % rel)
-    results.append(("freeze hashes: every manifest entry on disk recomputes", not bad,
-                    "%d files hashed, %d absent (non-staging), %d bad" % (n, absent, len(bad)), bad))
+    results.append(("freeze hashes: every manifest entry on disk recomputes, and no staged page is unmanifested", not bad,
+                    "%d files hashed, %d absent (non-staging), %d staged pages on disk, %d bad" % (n, absent, len(on_disk), len(bad)), bad))
 
 
 def check_extraction_log(results):

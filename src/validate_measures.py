@@ -194,7 +194,7 @@ def main() -> int:
     """, [[f.as_posix() for f in files]])
     con.execute(r"""
         CREATE TABLE rec AS
-        SELECT regexp_extract(filename, 'event/([A-Z]{3})/', 1) AS code,
+        SELECT regexp_extract(filename, 'event.([A-Z]{3}).', 1) AS code,
                json_extract_string(r, '$.mdr_report_key') AS k,
                coalesce(json_extract_string(r, '$.date_received'), '') AS rc,
                coalesce(json_extract_string(r, '$.date_of_event'), '') AS ev,
@@ -202,8 +202,8 @@ def main() -> int:
                coalesce(json_extract_string(r, '$.manufacturer_name'), '') AS mn,
                coalesce(json_extract_string(r, '$.manufacturer_g1_name'), '') AS mg,
                coalesce(json_extract_string(r, '$.distributor_name'), '') AS dn,
-               coalesce(CAST(json_extract(r, '$.device[*].manufacturer_d_name') AS VARCHAR[]), []) AS dmn,
-               coalesce(CAST(json_extract(r, '$.device[*].brand_name') AS VARCHAR[]), []) AS dbn
+               coalesce(json_extract_string(r, '$.device[*].manufacturer_d_name'), []) AS dmn,
+               coalesce(json_extract_string(r, '$.device[*].brand_name'), []) AS dbn
         FROM (SELECT filename, unnest(json_extract(results, '$[*]')) AS r FROM page)
     """)
     n_rec = con.execute("SELECT count(*) FROM rec").fetchone()[0]
@@ -292,6 +292,9 @@ def main() -> int:
     print("M-02: %d code-event-months compared" % len(m02))
 
     # -- M-03 mechanics ------------------------------------------------------
+    if not (CONF / "forecast.csv").exists():
+        print("M-03 to M-05: not yet built; only M-01 and M-02 were re-derived")
+        return report(checked, failures)
     fc = read_csv(CONF / "forecast.csv")
     states = {(r["product_code"], r["origin"]): r for r in read_csv(CONF / "forecast_states.csv")}
     elig = {(r["product_code"], r["month"]): float(r["eligible_reports"]) for r in m01}
@@ -368,6 +371,9 @@ def main() -> int:
 
     # -- M-04 ------------------------------------------------------------
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
+    if not (CONF / "forecast_score.csv").exists():
+        print("M-04 and M-05: not yet built")
+        return report(checked, failures)
     sc = read_csv(CONF / "forecast_score.csv")
     scored_rows = []
     for r in fc:
@@ -415,6 +421,9 @@ def main() -> int:
 
     # -- M-05 ------------------------------------------------------------
     promoted = cfg.get("promoted") or {}
+    if not (CONF / "review_queue.csv").exists():
+        print("M-05: not yet built")
+        return report(checked, failures)
     queue = [r for r in read_csv(CONF / "review_queue.csv") if r["product_code"]]
     work = read_csv(CONF / "review_workload.csv")
     for w in work:
@@ -442,7 +451,10 @@ def main() -> int:
             fail("M-05 %s: workload evaluated/episodes %s/%s, re-derived %d/%d" % (code, w["evaluated_months"], w["episodes"], len(rows), len(eps)))
     print("M-05: %d codes compared, %d published episodes" % (len(work), len(queue)))
 
-    # -- report -----------------------------------------------------------
+    return report(checked, failures)
+
+
+def report(checked: int, failures: list[str]) -> int:
     print("\n%d cells checked" % checked)
     if failures:
         print("%d MISMATCH(ES):" % len(failures))

@@ -183,3 +183,67 @@ warning, the locked test is its proof, and the limits say it flags reporting
 change and predicts nothing about safety.
 
 **Carried by:** the page title; the repository name.
+
+---
+
+*Layer 1, 2026-10-06, before the first page commit: the design directive.*
+
+## D14 · D-Felix: page chrome follows the Felix design system v1.0, by pointer, not copy
+
+The page's chrome (background, header and navigation, footer, typography,
+headings, prose, cards, panels, pills, chips, badges, buttons, tables,
+callouts, CTA banner, TOC sidebar, figure frames, section openers, spacing,
+grids, breakpoints, motion, focus styles) follows
+`C:\Projects\cascadia-standards\design-system\felix-design-system.md`
+**v1.0, at commit `1a41a5e`**, read whole before any page code. Felix is
+referenced by that path and hash and is never copied into this repository.
+The one vendored piece of tooling, `docs/assets/felix.src.css`, carries
+sections 1.1, 2, 4 and 5 of that document verbatim with "copied from
+cascadia-standards @ 1a41a5e" as its first line, and is compiled at build
+time by the Tailwind v4 CLI (pinned in `package.json`, Node 24) into
+`docs/assets/felix.css`, which is committed; the page makes no runtime call
+for its stylesheet. The class strings of section 6 are used as written and
+the templates of section 7 and the twelve rules of section 8 are followed. No
+restyling, no re-tokening, no improvement: sameness with the portfolio site
+is the requirement. This replaces the earlier choice of `cascadia.css` from
+Revenue Assurance for chrome.
+
+Two decisions taken with the directive and applied as written:
+
+- **6a, contrast.** For any text below 0.875rem the page uses `ink-soft`
+  where Felix shows `muted`, and `white/60` or lighter where Felix shows
+  `white/40` or `white/35`; the tokens themselves are unchanged, so the
+  parent site's "WCAG 2.2 AA target" pill is true for the chrome.
+  Everything at 0.875rem and above is exactly as Felix writes it.
+- **6b, fonts.** The page is static HTML, not Next.js, so Inter, Inter
+  Tight, Fraunces (italic) and JetBrains Mono load from Google Fonts with the
+  same CSS variable names as Felix section 1.3, and the section 1.1 token
+  block works unchanged. **This is a recorded collision**: every other module
+  page vendors its assets and makes no runtime call, and this page calls
+  Google Fonts. The directive is followed as written and the collision is
+  reported, not resolved silently.
+
+*Counterfactual:* `cascadia.css` from Revenue Assurance, which is the Fee
+Examiner stylesheet with its font sources removed, and which looks like the
+module pages and not like the portfolio site the reader arrives from.
+
+**Carried by:** `docs/assets/felix.src.css`; `package.json`;
+`src/build_page.py`; `CLAUDE.md`.
+
+## D15 · D-Viz: charts follow VIZ-PRINCIPLES v2.8, gated by CHART-REVIEW v2.8
+
+Every chart follows `cascadia-standards/design-system/VIZ-PRINCIPLES.md`
+**v2.8** and is reviewed under `CHART-REVIEW.md` **v2.8**, with
+`theme/cascadia-echarts-theme.js` vendored from the same directory. Felix
+does not reach inside a chart canvas (its own lines 12, 16 and rule 12, line
+1111); inside a canvas VIZ-PRINCIPLES wins over Felix. Felix may set the
+frame, spacing and surrounding layout of a chart, never its principles. The
+two version numbers are independent: Felix v1.0, the standard v2.8; never
+one number where the other belongs.
+
+*Counterfactual:* restyling the canvases to Felix's palette, which would put
+the lime accent and the display face inside a chart that the standard, the
+theme and the reading panel have never seen.
+
+**Carried by:** `docs/assets/cascadia-echarts-theme.js` (vendored, first line
+names its source and hash); `docs/assets/page.js`; `governance/chart-review.md`.

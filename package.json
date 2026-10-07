@@ -1,0 +1,13 @@
+{
+  "name": "cascadia-early-warning-chrome",
+  "private": true,
+  "description": "Build-time compilation of the Felix design system's Tailwind v4 class strings into docs/assets/felix.css. Nothing here runs in the browser; the compiled stylesheet is committed and the page makes no call to any CDN for it.",
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "@tailwindcss/typography": "^0.5.16",
+    "tailwindcss": "4.3.3"
+  },
+  "scripts": {
+    "felix": "tailwindcss -i docs/assets/felix.src.css -o docs/assets/felix.css --minify"
+  }
+}

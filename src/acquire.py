@@ -146,6 +146,16 @@ def save_manifest(m: dict) -> None:
     tmp = MANIFEST.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(m, indent=1, sort_keys=False) + "\n",
                    encoding="utf-8", newline="\n")
+    # Windows refuses the rename while another process holds the file open
+    # for reading. One window of the first extraction died of exactly that on
+    # 2026-10-06 (a concurrent read of the manifest), so retry briefly rather
+    # than lose a page that was already fetched and hashed.
+    for attempt in range(10):
+        try:
+            tmp.replace(MANIFEST)
+            return
+        except PermissionError:
+            time.sleep(0.5 * (attempt + 1))
     tmp.replace(MANIFEST)
 
 

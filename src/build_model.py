@@ -128,6 +128,13 @@ def check_extraction() -> dict:
 
 
 def check_hashes(manifest: dict) -> int:
+    # A page on disk that the manifest does not know is data with no receipt;
+    # it would flow into the counts through iter_pages' glob and be checked by
+    # nothing. Refuse it.
+    on_disk = {p.relative_to(REPO).as_posix() for p in (STAGING / "event").glob("*/*.json.gz")}
+    stray = sorted(on_disk - set(manifest["files"]))
+    if stray:
+        sys.exit("%d staged page(s) on disk are not in the manifest: %s" % (len(stray), stray[:5]))
     n = 0
     for rel, e in manifest["files"].items():
         if not rel.startswith("data/raw/staging/event/"):
@@ -325,11 +332,29 @@ def main() -> int:
                      a["event_type"], a["report_source_code"], a["type_of_report"], a["summary_report_flag"],
                      a["noe_summarized"], a["number_devices_in_event"], a["n_devices"], a["device_codes"],
                      a["remedial_action"], rm, em, lag, key in excluded_keys, key in countable))
-    con.executemany("INSERT INTO report VALUES (%s)" % ",".join("?" * 19), rows)
+    # Bulk loads through pandas frames: executemany on 650,000 rows ran for
+    # the better part of an hour on 2026-10-06; a registered frame loads in
+    # seconds and the row content is identical.
+    import pandas as pd
+    report_cols = ["mdr_report_key", "report_number", "date_received", "date_of_event", "date_report",
+                   "event_type", "report_source_code", "type_of_report", "summary_report_flag",
+                   "noe_summarized", "number_devices_in_event", "n_devices", "device_codes",
+                   "remedial_action", "receipt_month", "event_month", "lag_months", "excluded", "countable"]
+    df_report = pd.DataFrame(rows, columns=report_cols)
+    df_report["lag_months"] = df_report["lag_months"].astype("Int64")
+    con.register("df_report", df_report)
+    con.execute("INSERT INTO report SELECT * FROM df_report")
+    con.unregister("df_report")
     con.execute("CREATE TABLE report_product_code (mdr_report_key VARCHAR, product_code VARCHAR)")
-    con.executemany("INSERT INTO report_product_code VALUES (?, ?)", sorted(bridge))
+    df_bridge = pd.DataFrame(sorted(bridge), columns=["mdr_report_key", "product_code"])
+    con.register("df_bridge", df_bridge)
+    con.execute("INSERT INTO report_product_code SELECT * FROM df_bridge")
+    con.unregister("df_bridge")
     con.execute("CREATE TABLE exclusion_audit (mdr_report_key VARCHAR, product_code VARCHAR, field VARCHAR, token VARCHAR)")
-    con.executemany("INSERT INTO exclusion_audit VALUES (?,?,?,?)", audit)
+    df_audit = pd.DataFrame(audit, columns=["mdr_report_key", "product_code", "field", "token"])
+    con.register("df_audit", df_audit)
+    con.execute("INSERT INTO exclusion_audit SELECT * FROM df_audit")
+    con.unregister("df_audit")
 
     # ---- M-01 monthly_report_count -------------------------------------
     series = {}

@@ -40,3 +40,7 @@ data/raw/bulk/*.part
 
 # Derived databases are rebuilt from the freeze; not committed.
 data/conformed/*.duckdb
+
+# Build-time toolchain for the Felix class strings (Tailwind v4 CLI). The
+# compiled docs/assets/felix.css is committed; the toolchain is not.
+node_modules/
