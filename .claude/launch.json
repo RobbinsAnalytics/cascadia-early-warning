@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "early-warning-docs",
+      "runtimeExecutable": "C:\\Projects\\cascadia-early-warning\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "8731", "--directory", "docs"],
+      "port": 8731
+    }
+  ]
+}
