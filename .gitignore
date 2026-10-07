@@ -44,3 +44,7 @@ data/conformed/*.duckdb
 # Build-time toolchain for the Felix class strings (Tailwind v4 CLI). The
 # compiled docs/assets/felix.css is committed; the toolchain is not.
 node_modules/
+
+# Full-page renders are 6 MB each at device scale 2 and are re-made by src/render_charts.py;
+# the per-chart renders and the ladder record are committed, the page renders are not.
+docs/renders/page-*.png

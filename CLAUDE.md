@@ -136,3 +136,17 @@ them is a recurring failure mode elsewhere in this estate.
 **No em dashes in anything rendered under `docs/`.** The names gate and the
 em-dash gate in `src/validate.py` run over `docs/` and the committed files
 they name.
+
+**Two page facts the next session will meet.** The page `<title>` joins its
+two parts with a hyphen where Felix shows an em dash: the em-dash gate runs
+over everything under `docs/` and the gate wins (D14 amendment). The desktop
+app's preview tool wants a `.claude/launch.json` at `C:\Projects`, outside
+this repository; `src/render_charts.py` expects the page at
+`http://localhost:8731/`, which `python -m http.server 8731 --directory docs`
+provides (the repo's own `.claude/launch.json` names the same command).
+
+**The chart review is a record, not a form.** `governance/chart-review.md`
+carries the Rule 7.4 panel (roster, verbatim returns, disposition, D/N/R),
+the per-chart checklist and the author's own findings; a revision gets the
+gate and a link, not a new panel. `governance/pre-panel-notes.md` is written
+before any seat is spawned and never after.

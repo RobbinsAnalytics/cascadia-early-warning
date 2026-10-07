@@ -230,6 +230,29 @@ module pages and not like the portfolio site the reader arrives from.
 **Carried by:** `docs/assets/felix.src.css`; `package.json`;
 `src/build_page.py`; `CLAUDE.md`.
 
+*Amended 2026-10-06, Phase 4, after the first render.* Two departures from
+"as written" were found by looking at the page at 320 px and are corrected,
+not accepted:
+
+- **Section 3.1 (the container rule) had not been carried into
+  `felix.src.css`**, which listed sections 1.1, 2, 4 and 5. Without it the
+  page had no side gutters and no maximum width at any viewport. The rule is
+  now in the file verbatim, and the file's own list of sections reads 1.1,
+  2, 3.1, 4 and 5.
+- **The compact header was two pills beside the wordmark**, which overflowed
+  a 320 px viewport by 80 px and is not Felix's compact header. The page now
+  follows section 6.2: a hamburger button and a mobile menu panel, with the
+  class strings as written. Felix draws its glyphs with an icon font this
+  page does not load; the bars, the cross and the arrows are inline SVG, the
+  substitution the page already made for the arrow glyphs.
+
+Two further page facts, recorded here because the next session will meet
+them: the page `<title>` joins its two parts with a hyphen where Felix shows
+an em dash, because the em-dash gate runs over everything rendered under
+`docs/` and the gate wins; and the desktop app's preview tool needs a
+`.claude/launch.json` at `C:\Projects`, outside this repository, so the
+renders are served by `python -m http.server 8731 --directory docs` instead.
+
 ## D15 · D-Viz: charts follow VIZ-PRINCIPLES v2.8, gated by CHART-REVIEW v2.8
 
 Every chart follows `cascadia-standards/design-system/VIZ-PRINCIPLES.md`

@@ -57,7 +57,9 @@ AS_OF = "20260831"
 WINDOW_START = "20160101"
 VERBATIM = {".claude/hooks/no_blanket_add_or_force_push.py", ".claude/hooks/hook_test_matrix.py",
             ".githooks/pre-commit", ".githooks/secret_scan.py", ".githooks/no_whitespace_commits.py",
-            "src/validate_freeze.py", ".gitattributes"}
+            "src/validate_freeze.py", ".gitattributes",
+            # vendored verbatim with a provenance first line; not authored here
+            "docs/assets/cascadia-echarts-theme.js", "docs/assets/echarts.min.js"}
 TEXT_EXT = {".md", ".py", ".ps1", ".json", ".csv", ".html", ".js", ".css", ".toml", ".txt", ".qmd", ".yml", ".yaml", ".svg"}
 
 
@@ -326,9 +328,9 @@ def check_names(results):
         if rel.endswith("exclusion-list.local.txt"):
             continue
         # The verbatim estate files are canonical copies this repo may not
-        # edit; the freeze-gate template uses the plain word "interview" in
-        # its docstring, which is not a reference to anything. Everything
-        # authored here, and everything rendered, is scanned.
+        # edit, and one of them uses an everyday word from the extra list in
+        # its docstring in a sense that refers to nothing. Everything authored
+        # here, and everything rendered, is scanned.
         if rel in VERBATIM:
             continue
         try:
@@ -351,7 +353,7 @@ def check_emdash(results):
         # The code point, as an escape: a literal em dash in this file was once
         # rewritten by a blanket scrub into a hyphen, and the gate then counted
         # hyphens. An escape cannot be scrubbed.
-        n = txt.count("—")
+        n = txt.count(chr(0x2014))
         if n:
             hits.append("%s: %d em dash(es)" % (rel, n))
     results.append(("em-dash gate: no em dash in docs/ or any authored file", not hits,
@@ -541,14 +543,16 @@ def _scenarios():
            lambda: _db_copy(["UPDATE report SET date_received = '' WHERE mdr_report_key = (SELECT mdr_report_key FROM report WHERE countable LIMIT 1)"]))
     yield (check_dates, "a countable report received after the as-of date: a future observation",
            lambda: _db_copy(["UPDATE report SET date_received = '20260915' WHERE mdr_report_key = (SELECT mdr_report_key FROM report WHERE countable LIMIT 1)"]))
-    yield (check_exclusion, "an excluded alias dropped from the audit: the receipt no longer agrees",
-           lambda: _csv_copy("AUDIT", lambda rows: rows.pop(0)))
+    yield (check_exclusion, "an audit row's token replaced by a string that is not in the private list: an alias the list does not own",
+           lambda: _csv_copy("AUDIT", lambda rows: rows[0].__setitem__("token", "zzz-not-a-list-token")))
+    yield (check_exclusion, "an audit row re-pointed at a different report key: the receipt's ANY count no longer agrees with the record table",
+           lambda: _csv_copy("AUDIT", lambda rows: rows.append(dict(rows[0], mdr_report_key="0000000"))))
     yield (check_chronology, "a forecast row whose target equals its origin",
            lambda: _csv_copy("FORECAST", lambda rows: rows[0].__setitem__("target", rows[0]["origin"])))
     yield (check_names, "a private token written into a page under docs/",
            lambda: _docs_copy("probe.html", "<p>%s</p>" % _first_eligible_token()))
     yield (check_emdash, "an em dash written into a page under docs/",
-           lambda: _docs_copy("probe.html", "<p>a — b</p>"))
+           lambda: _docs_copy("probe.html", "<p>a " + chr(0x2014) + " b</p>"))
     yield (check_known_events, "a verified Class I event removed from the derived recall set",
            lambda: _csv_copy("RECALL_CTX", lambda rows: [rows.remove(r) for r in list(rows) if r["res_event_number"] == "91955"]))
     yield (check_review, "an episode claimed for a month that does not satisfy the rule",

@@ -1,0 +1,153 @@
+{
+ "url": "http://localhost:8731/",
+ "widths": [
+  320,
+  655,
+  656,
+  1040
+ ],
+ "breakpoints": [
+  560
+ ],
+ "crossings": [
+  {
+   "chart": "c1",
+   "breakpoint": 560,
+   "viewport": 656
+  },
+  {
+   "chart": "c2",
+   "breakpoint": 560,
+   "viewport": 656
+  },
+  {
+   "chart": "c3",
+   "breakpoint": 560,
+   "viewport": 656
+  },
+  {
+   "chart": "c4",
+   "breakpoint": 560,
+   "viewport": 656
+  },
+  {
+   "chart": "c5",
+   "breakpoint": 560,
+   "viewport": 656
+  }
+ ],
+ "per_width": {
+  "320": {
+   "strip_segments": [
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "canvas": {
+    "c1": "480x1144",
+    "c2": "480x1248",
+    "c3": "480x1312",
+    "c4": "480x1664",
+    "c5": "480x1304"
+   },
+   "grid_px": {
+    "c1": 110,
+    "c2": 150,
+    "c3": 84,
+    "c4": 164,
+    "c5": 139
+   },
+   "overflow": {
+    "scroll": 320,
+    "client": 320
+   },
+   "console_errors": []
+  },
+  "655": {
+   "strip_segments": [
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "canvas": {
+    "c1": "1118x860",
+    "c2": "1118x912",
+    "c3": "1118x940",
+    "c4": "1118x1040",
+    "c5": "1118x896"
+   },
+   "grid_px": {
+    "c1": 429,
+    "c2": 469,
+    "c3": 403,
+    "c4": 483,
+    "c5": 458
+   },
+   "overflow": {
+    "scroll": 655,
+    "client": 655
+   },
+   "console_errors": []
+  },
+  "656": {
+   "strip_segments": [
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "canvas": {
+    "c1": "1120x860",
+    "c2": "1120x912",
+    "c3": "1120x1072",
+    "c4": "1120x1228",
+    "c5": "1120x896"
+   },
+   "grid_px": {
+    "c1": 351,
+    "c2": 406,
+    "c3": 188,
+    "c4": 429,
+    "c5": 401
+   },
+   "overflow": {
+    "scroll": 656,
+    "client": 656
+   },
+   "console_errors": []
+  },
+  "1040": {
+   "strip_segments": [
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "canvas": {
+    "c1": "1296x824",
+    "c2": "1296x824",
+    "c3": "1296x1020",
+    "c4": "1296x1192",
+    "c5": "1296x860"
+   },
+   "grid_px": {
+    "c1": 439,
+    "c2": 494,
+    "c3": 276,
+    "c4": 517,
+    "c5": 489
+   },
+   "overflow": {
+    "scroll": 1040,
+    "client": 1040
+   },
+   "console_errors": []
+  }
+ }
+}

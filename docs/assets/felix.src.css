@@ -1,5 +1,5 @@
 /* copied from cascadia-standards @ 1a41a5e: design-system/felix-design-system.md
-   sections 1.1 (tokens), 2 (base), 4 (components) and 5 (motion), verbatim.
+   sections 1.1 (tokens), 2 (base), 3.1 (container), 4 (components) and 5 (motion), verbatim.
    This is the SOURCE the Tailwind v4 CLI compiles into felix.css at build
    time; it is tooling, not a copy of the design-system document, and the
    document itself is referenced by path and hash in
@@ -60,6 +60,10 @@
   :focus-visible { outline: 2px solid var(--color-teal-2); outline-offset: 3px; }
   button:not(:disabled), [role=button]:not([aria-disabled=true]), label[for], select { cursor: pointer; }
 }
+
+/* 3.1 Layout: container (Felix section 3.1, verbatim; unlayered as the md gives it) */
+.container-x { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: 1.25rem; }
+@media (min-width: 768px) { .container-x { padding-inline: 2rem; } }
 
 @layer components {
   .eyebrow {
