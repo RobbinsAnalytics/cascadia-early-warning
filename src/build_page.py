@@ -108,6 +108,11 @@ def git_short(path: str) -> str:
     return r.stdout.strip() or "uncommitted"
 
 
+def git_first(path: str) -> str:
+    r = subprocess.run(["git", "log", "--reverse", "--format=%h", "--", path], cwd=REPO, capture_output=True, text=True)
+    return (r.stdout.split() or ["uncommitted"])[0]
+
+
 def asset_v(name: str) -> str:
     b = (DOCS / "assets" / name).read_bytes()
     return "assets/%s?v=%s" % (name, hashlib.md5(b).hexdigest()[:10])
@@ -245,6 +250,34 @@ def what_is_counted(d, cf: dict, rf: dict) -> str:
 def period_span(d, name: str) -> str:
     a, b = d["cfg"]["periods"][name]["targets"]
     return "%s to %s" % (a, b)
+
+
+def chronology(d) -> str:
+    """The module review's chronology sentences, with its months generated: the last development
+    target, the month the harness was registered, and the month of the snapshot."""
+    cfg = d["cfg"]
+    return ("Model selection used target months through %s and was registered in %s before generating the retained test "
+            "results. This is a retrospective test using the %s data snapshot. It does not reconstruct exactly what was "
+            "publicly available at each historical date."
+            % (month_name(cfg["periods"]["development"]["targets"][1]), month_name(cfg["frozen_on"][:7]), month_name(RETRIEVED[:7])))
+
+
+def issue_dates(d) -> str:
+    """What the issue_date column means, from forecast.csv itself and the git log. Fails the build
+    if a row breaks the rule the sentence states."""
+    outlook = {r["issue_date"] for r in d["fc"] if r["period"] == "outlook"}
+    for r in d["fc"]:
+        if r["period"] != "outlook" and r["issue_date"] != add_months(r["origin"], 1) + "-01":
+            raise SystemExit("forecast row %s %s %s carries issue date %s, not the first day after its origin month"
+                             % (r["product_code"], r["model"], r["origin"], r["issue_date"]))
+    if len(outlook) != 1:
+        raise SystemExit("the outlook rows carry %d issue dates" % len(outlook))
+    computed = subprocess.run(["git", "log", "--reverse", "--format=%ad", "--date=short", "--", "data/conformed/forecast.csv"],
+                              cwd=REPO, capture_output=True, text=True).stdout.split()
+    computed = computed[0] if computed else "uncommitted"
+    return ("Every back-test row carries a nominal issue date, the first day of the month after its origin, which the harness "
+            "assigns rather than records: all of them were computed on %s from that day's snapshot. Only the outlook rows carry "
+            "the date they were actually issued, %s." % (computed, next(iter(outlook))))
 
 
 def queue_diagnostic(d) -> dict:
@@ -399,8 +432,11 @@ def chart2(d, code):
         finding = ("On the locked test the trailing mean's 80%% range held %d of %d %s months; its average miss was %s reports a month; the candidate missed by %s and was not promoted"
                    % (n_in, len(months), code, nf(sc_a["mae"]), nf(sc_c["mae"])))
     subtitle = ("One-month-ahead points from both models against what arrived, %s to %s, %d locked months; the band is the %s's 80%% range, "
-                "which covered %s of these months; rings mark the %d months it did not. %s Selection was frozen at 2023-12 and this test ran once."
-                % (month_short(months[0]), month_short(months[-1]), len(months), model_label(use), pct(sc_use["coverage80"]), len(outside), RULE))
+                "which covered %s of these months; rings mark the %d months it did not. %s Selection used targets through %s and was "
+                "registered in %s, before the retained test results were generated; the test is retrospective, on the %s snapshot, "
+                "and this test ran once."
+                % (month_short(months[0]), month_short(months[-1]), len(months), model_label(use), pct(sc_use["coverage80"]), len(outside), RULE,
+                   d["cfg"]["periods"]["development"]["targets"][1], month_name(d["cfg"]["frozen_on"][:7]), month_name(RETRIEVED[:7])))
     annotation = "largest miss: %s, %s arrived against %s expected" % (month_short(miss_m), nf(actual[i_miss]), nf(miss_pt))
     summary = ("Line chart over the %d locked-test months %s to %s for product code %s. Actual reports range %s to %s. The %s's "
                "points carry a mean absolute error of %s and its 80%% range covered %s of months (mean width %s); the %s's mean "
@@ -421,7 +457,8 @@ def chart2(d, code):
         "candidateBetter": better,
         "finding": finding, "subtitle": subtitle, "annotation": annotation, "summary": summary, "ariaLabel": summary,
         "provenance": {"source": no_sep(SOURCE, "source"), "asOf": no_sep("receipts through " + AS_OF, "asOf"),
-                       "flags": no_sep("counts, not rates; locked test 2024-01 to 2025-12, selection frozen 2023-12, run once", "flags")},
+                       "flags": no_sep("counts, not rates; locked test %s, selection on targets through %s, run once"
+                                       % (period_span(d, "locked"), d["cfg"]["periods"]["development"]["targets"][1]), "flags")},
         "table": table,
     }
 
@@ -736,6 +773,8 @@ def main() -> int:
         "q_ungated_by_code": join_and(["%s %d" % (c, p["ungated"]) for c, p in sorted(qd["perCode"].items()) if p["ungated"]]) or "none",
         "q_episodes_word": "episode" if qd["gatedEpisodes"] == 1 else "episodes",
         "locked_span": period_span(d, "locked"), "recent_span": period_span(d, "recent"), "dev_span": period_span(d, "development"),
+        "locked_n": str(months_between(*cfg["periods"]["locked"]["targets"]) + 1), "locked_min_origin": cfg["periods"]["locked"]["min_origin"],
+        "chronology": html.escape(chronology(d)), "issue_dates": html.escape(issue_dates(d)),
         "rc_preceded": str(rc["class_i_initiations_preceded_by_an_episode_start"]),
         "rc_initiations": str(rc["class_i_initiations_in_evaluated_span_by_forecast_code"]),
         "rc_episodes_in_window": str(rc["episodes_whose_start_falls_in_the_18_months_before_a_class_i_initiation"]),
@@ -745,7 +784,7 @@ def main() -> int:
         "rc_k_pct": pct(rm["records_with_k_numbers"] / max(1, rm["in_scope_product_records"]), 1),
         "total_eligible": nf(total_eligible), "total_raw": nf(total_raw), "excluded": nf(excluded),
         "sha_local": sha_local[:16] + "..." if sha_local else "see the receipt",
-        "prereg_commit": preregistration_commit, "model_commit": model_commit,
+        "prereg_commit": preregistration_commit, "model_commit": model_commit, "model_first_commit": git_first("config/model.json"),
         "c5_missing": nf(c5["missingEventDate"]),
         "c1_finding": html.escape(c1["finding"]), "c2_finding": html.escape(c2["finding"]), "c3_finding": html.escape(c3["finding"]),
         "c4_finding": html.escape(c4["finding"]), "c5_finding": html.escape(c5["finding"]),

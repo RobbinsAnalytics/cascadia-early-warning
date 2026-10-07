@@ -203,7 +203,7 @@
         <p class="eyebrow">02 / The test</p>
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Whether the forecasts earned trust on months the model never saw</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
-          <p>Model selection used targets from 2022-01 to 2023-12 and was frozen at 2023-12 in the repository (<code>config/model.json</code>, commit <code>@@model_commit@@</code>) before any locked-period forecast existed. The locked test is 24 months, 2024-01 to 2025-12, from origins at or after 2023-12, and it ran once. The recent check, 2026-01 to 2026-08, is reported beside it and was not used for anything.</p>
+          <p>@@chronology@@ The selection period's targets were @@dev_span@@; the harness was committed to <code>config/model.json</code> at <code>@@model_first_commit@@</code> and the promotion decision at <code>@@model_commit@@</code>, before any locked-period forecast existed. The locked test is @@locked_n@@ months, @@locked_span@@, from origins at or after @@locked_min_origin@@, and it ran once. The recent check, @@recent_span@@, is reported beside it and was not used for anything. @@issue_dates@@</p>
           <p>For @@headline@@ the model in use missed by <strong>@@c2_mae_use@@ reports a month</strong> on average over the locked test (candidate @@c2_mae_c@@, trailing mean @@c2_mae_a@@), and its 80% range covered <strong>@@c2_cov@@</strong> of those months. The largest miss, chosen as the largest absolute error and nothing else, was @@c2_miss_month@@: @@c2_miss_actual@@ reports arrived against @@c2_miss_point@@ expected.</p>
         </div>
         <div class="mt-8">@@c2_card@@</div>
