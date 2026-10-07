@@ -889,17 +889,28 @@ CASE_CANONICAL = PAGE_URL + "case-study.html"
 CASE_PANEL = ("Four AI agents reviewed rendered charts using simulated reviewer personas. They were instructed to use only the "
               "supplied images; reviewer isolation was not independently verified. Their findings exposed a concrete ambiguity: "
               "disabled review lanes still appeared to contain active episodes.")
+# The one place the case study states the calibration repair (Build Brief 2.2 step 3): the review's sentences with
+# the repeated mention at the end folded into the second, drafted for Aaron's review.
 CASE_EXPERIMENT_HISTORY = ("Model selection stayed fixed. A calibration-history defect was corrected after the first test run; point "
-                           "forecasts were unchanged. The corrected interval results are preserved, with the repair disclosed.")
+                           "forecasts were unchanged, and the corrected interval results are the ones reported.")
 # Drafted for Aaron's review: the pre-registration claim narrowed to what the git log supports.
 CASE_PREREG_NARROWED = ("The registered model form, the promotion rule and the review thresholds were committed before the first "
                         "forecast row existed. The data snapshot was retrieved in the same session, so the rule was registered "
                         "alongside the data rather than before it.")
 
 
-def case_test_phrase() -> str:
-    return ("Rolling forecasts, each fitted only through its origin, evaluated retrospectively using the %s snapshot."
-            % month_name(RETRIEVED[:7]))
+def case_test(d) -> str:
+    """The test and its chronology in one place, verbatim from Build Brief 2.2 step 3, with its months
+    generated: the snapshot's month, the last development target, and the month the promotion decision
+    was committed to config/model.json (its git log)."""
+    decided = subprocess.run(["git", "log", "-1", "--format=%ad", "--date=short", "--", "config/model.json"],
+                             cwd=REPO, capture_output=True, text=True).stdout.strip()
+    if not decided:
+        raise SystemExit("config/model.json has no commit: the month its decision was recorded is read from the git log")
+    return ("Rolling forecasts were fitted only through each origin and evaluated using the %s snapshot. Model selection used "
+            "target months through %s; its decision was recorded in %s before the retained test results were generated. "
+            "Historical public-data vintages were not reconstructed."
+            % (month_name(RETRIEVED[:7]), month_name(d["cfg"]["periods"]["development"]["targets"][1]), month_name(decided[:7])))
 
 
 def case_opening(d, n_dis: int) -> str:
@@ -1193,7 +1204,7 @@ def main() -> int:
         "n_rule_on": str(qd["enabledCodes"]),
         # The card's horizons row, from config/model.json "horizons".
         "horizons_phrase": "%s months ahead" % join_and([num_word(h) for h in sorted(cfg["horizons"])]),
-        "case_test_phrase": html.escape(case_test_phrase()),
+        "case_test": html.escape(case_test(d)),
         "case_experiment_history": html.escape(CASE_EXPERIMENT_HISTORY),
         "case_prereg_narrowed": html.escape(CASE_PREREG_NARROWED),
         "case_panel": html.escape(CASE_PANEL),
