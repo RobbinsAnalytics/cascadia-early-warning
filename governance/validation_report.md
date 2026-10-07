@@ -24,7 +24,7 @@
 | 14 | known-answer recovery: every verified Class I event is in the derived recall set with its date | PASS | 15 known rows checked against 175 derived events |
 | 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 4 pages, 7 marked statements; cohort Classes II and III, summary-eligible NPT |
 | 16 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | PASS | s1 3; s2 4; s3 4; s4 7 |
-| 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 46 words; order opening 79, results 107, first H2 227, first section 225; 6 result rows; H1 1 |
+| 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 46 words; order opening 79, results 107, first H2 231, first section 229; 6 result rows; H1 1 |
 
 ## Proof the checks can fail
 

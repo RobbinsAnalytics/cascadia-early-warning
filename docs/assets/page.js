@@ -660,9 +660,8 @@
       });
     }
     ch.setOption(option);
-    // Key as flat text under the plot (3.6: a legend only where direct labels cannot sit; three mark types in one lane).
-    var key = el('key-c4');
-    if (key) key.textContent = 'filled square: flagged month; filled bar: episode; hollow square: flagged month in a lane with the rule off; outlined bar: an episode the rule would open if it were on; diamond, raised: Class I recall initiation';
+    // The key under the plot (3.6: a legend only where direct labels cannot sit; three mark types in one lane) is
+    // written into the card by build_page.py (Build Brief 2.2 step 8); it was composed here, against K2.
     return finish(host, ch, {
       provenance: d.provenance, summary: d.summary, ariaLabel: d.ariaLabel, noteVisible: L.narrow,
       nav: { chart: ch, label: d.ariaLabel, series: lanes.map(function (l, li) {

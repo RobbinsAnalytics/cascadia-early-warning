@@ -22,22 +22,26 @@
 <style>
   /* Chart cards: module-specific internals that Felix does not describe. The
      canvas keeps the Cascadia theme (D15); the card around it is Felix's
-     white surface. Visual order inside a card: canvas, note, navigator, strip,
-     summary, tables; the summary stays FIRST in the DOM (Rule 5.1). */
+     white surface. Visual order inside a card: canvas, note, key, navigator, strip,
+     bullets, summary, tables; the summary stays FIRST in the DOM (Rule 5.1). */
   .chart-card { display:flex; flex-direction:column; }
   .chart-card > .chart { order:1; width:100%; }
   .chart-card > .chart-note { order:2; }
   .chart-card > .chart-key { order:2; }
   .chart-card > .cascadia-nav { order:3; }
   .chart-card > .cascadia-provenance { order:4; }
-  .chart-card > .chart-summary { order:5; }
-  .chart-card > details.data-table { order:6; }
+  .chart-card > .chart-points { order:5; }
+  .chart-card > .chart-summary { order:6; }
+  .chart-card > details.data-table { order:7; }
   .chart-summary { font:13px/1.6 var(--font-sans); color:var(--color-ink-soft); margin:10px 2px 0; max-width:72ch; }
   .chart-note { font:13px/1.55 "Source Serif 4", Georgia, serif; margin:6px 2px 2px; max-width:72ch; }
   .chart-note.evergreen { color:#1E7A4C; }
   .chart-note.madrona { color:#BA572D; }
   .chart-note.glacier { color:#4279A7; }
   .chart-key { font:12px/1.5 var(--font-sans); color:var(--color-ink-soft); margin:6px 2px 0; }
+  /* Under each chart, in HTML: two or three one-sentence bullets (Build Brief 2.2 step 8), after the strip. */
+  .chart-points { list-style:disc; padding-left:1.15rem; margin:12px 2px 0; max-width:72ch; font:14px/1.55 var(--font-sans); color:var(--color-ink-soft); }
+  .chart-points li + li { margin-top:.35rem; }
   details.data-table { margin:10px 2px 0; }
   details.data-table summary { font:12px/1.5 var(--font-mono); color:var(--color-ink-soft); cursor:pointer; min-height:24px; letter-spacing:.04em; }
   details.data-table table { font-size:.8rem; border-collapse:collapse; }
@@ -194,8 +198,6 @@
         <p class="eyebrow">01 / Outlook</p>
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">@@s1_h2@@</h2>
         <div class="mt-8">@@c1_card@@</div>
-        <p class="chart-key"><strong>@@o_target@@, @@o_h_word@@ months ahead.</strong> At this horizon the model in use's 80% ranges held @@o_cov_in@@ of @@o_cov_n@@ locked-test months (@@o_cov@@).</p>
-        <p class="chart-key"><strong>@@s_target@@, one month ahead.</strong> An elapsed-period estimate, not yet in the source: point @@s_point@@, 80% range @@s_lo80@@ to @@s_hi80@@.</p>
         <details class="data-table rich mt-6"><summary>The outlook for every forecast code, at each horizon</summary>@@t_outlook@@</details>
       </div>
 
@@ -204,13 +206,7 @@
         <p class="eyebrow">02 / Test</p>
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">The rolling test shows where forecast ranges held</h2>
         <div class="mt-8">@@c2_card@@</div>
-        <div class="rich prose mt-6 max-w-[46rem]">
-          <p>For @@headline@@ the model in use missed by <strong>@@c2_mae_use@@ reports a month</strong> on average over the @@locked_n@@ locked-test months (candidate @@c2_mae_c@@, trailing mean @@c2_mae_a@@), and its one-month-ahead 80% range covered <strong>@@c2_cov@@</strong> of them. The largest miss, chosen as the largest absolute error and nothing else, was @@c2_miss_month@@: @@c2_miss_actual@@ reports arrived against @@c2_miss_point@@ expected.</p>
-        </div>
         <div class="mt-8">@@c3_card@@</div>
-        <div class="rich prose mt-6 max-w-[46rem]">
-          <p>An 80% range should hold about four months in five; across the @@n_codes_word@@ codes the model in use's ranges held between <strong>@@c3_lo@@ and @@c3_hi@@</strong>, and @@c3_disabled_phrase@@ below the @@floor@@ floor, so @@c3_disabled_rule@@ off. Ranges too wide and too narrow are both calibration failures, and a code with the rule off is not reviewed by this module.</p>
-        </div>
         <details class="data-table rich mt-6"><summary>Scores by code, model and period</summary>@@t_scores@@</details>
       </div>
 
@@ -219,12 +215,9 @@
         <p class="eyebrow">03 / Review</p>
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">@@s3_h2@@</h2>
         <div class="mt-8">@@c4_card@@</div>
-        <p id="key-c4" class="chart-key"></p>
-        <p class="chart-key"><strong>A retrospective, filtered demonstration, @@q_ungated@@ episodes ungated against @@q_gated@@ gated:</strong> the rule is on for a code only where its ranges held in the @@locked_span@@ locked test, the first @@locked_n@@ of the @@eval_n@@ months it is then applied to.</p>
         <div class="rich mt-6 max-w-none">@@t_work@@</div>
         <div class="rich prose mt-6 max-w-[46rem]">
           <p>The queue orders attention; a person decides what is in it. A flag is a departure from expected reporting volume and nothing more: it does not say why, and it is not a statement about any device or firm.</p>
-          <p>@@rc_detail@@</p>
         </div>
         <details class="data-table rich mt-6"><summary>The review queue</summary>@@t_queue@@</details>
         <details class="data-table rich mt-3"><summary>Reports whose remedial action names a recall, beside the queue</summary>@@t_remedial@@</details>
@@ -282,6 +275,7 @@
             <li><strong>The candidate</strong> earned use on @@n_cand@@ of @@n_codes@@ codes (@@cand_codes@@); the trailing mean is in use on the rest (@@base_codes@@).</li>
             <li><strong>Promotion</strong> was decided on one-month-ahead errors in the development period.</li>
             <li><strong>Every code's outlook</strong> is in the table under chart 1.</li>
+            <li><strong>Chart 2's largest miss</strong> is chosen as the largest absolute error of the model in use and nothing else: @@c2_miss_month@@, @@c2_miss_actual@@ reports against @@c2_miss_point@@ expected.</li>
           </ul>
           <h3>The test's chronology</h3>
           <p>@@chronology@@</p>
@@ -304,6 +298,7 @@
             <li><strong>With the gate</strong> the rule ran on @@q_enabled_codes@@ codes, @@q_enabled_months@@ code-months, and opened <strong>@@q_gated@@ @@q_episodes_word@@</strong>.</li>
             <li><strong>Without it</strong> the same rule, over all @@q_all_months@@ code-months, opens <strong>@@q_ungated@@</strong> (@@q_ungated_by_code@@) and flags @@c4_flagged@@ months.</li>
             <li><strong>Against chance</strong>, as the pre-registration says the workload is read: @@q_chance@@</li>
+            <li><strong>Reading coverage.</strong> An 80% range should hold about four months in five; across the @@n_codes_word@@ codes the model in use's ranges held between @@c3_lo@@ and @@c3_hi@@ of locked-test months, and ranges too wide and too narrow are both calibration failures. A code with the rule off is not reviewed by this module.</li>
           </ul>
           <h3>Recall events, as retrospective context</h3>
           <p>FDA's recall record for these codes is shown beside the queue, not as its validation. Association only: no shuffled-dates null was run, and the page claims no prediction.</p>
