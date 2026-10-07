@@ -16,8 +16,8 @@ each built page's data block.
 
 What it does NOT cover, stated so the page cannot claim more: M-06 (the
 recall context), the cohort gate, the exclusion receipt as a table, the
-reports without an event date, the promotion decision and the outlook's
-twenty dots. It is DuckDB SQL plus its own Python arithmetic, not SQL alone,
+reports without an event date, the promotion decision, the summary-report
+composition and the outlook's twenty dots. It is DuckDB SQL plus its own Python arithmetic, not SQL alone,
 and it consumes the engine's published points and states as inputs to the
 ranges and scores: a chain of verified links, not an end-to-end rebuild. A
 measure that only agrees with itself has not been validated. Written from
@@ -516,6 +516,13 @@ def main() -> int:
                 if (pc.get("ungated"), pc.get("flagged")) != (v["ungated"], len(v["flagged"])):
                     fail("page %s queue %s: published ungated/flagged %s/%s, re-derived %d/%d"
                          % (page.name, code, pc.get("ungated"), pc.get("flagged"), v["ungated"], len(v["flagged"])))
+        # The module page must carry chart 4 with one lane per code; a missing chart or lane is a failure,
+        # not a comparison skipped.
+        lanes_drawn = {lane["code"] for lane in (data.get("c4") or {}).get("lanes", [])}
+        if page.name == "index.html":
+            checked += 1
+            if lanes_drawn != set(q2):
+                fail("page %s chart 4: lanes for %s, re-derived codes %s" % (page.name, sorted(lanes_drawn), sorted(q2)))
         for lane in (data.get("c4") or {}).get("lanes", []):
             checked += 2
             if sorted(lane["flagged"]) != q2.get(lane["code"], {}).get("flagged"):

@@ -120,6 +120,10 @@
     };
   }
   function finish(host, ch, spec, L) {
+    // ECharts writes its own generated aria-label onto the host on every render, including the resize that
+    // cascadiaResize schedules, and so overwrote the label set below with one built from series names. Giving
+    // it the authored text as its description makes the label it writes the authored one.
+    ch.setOption({ aria: { enabled: true, label: { description: spec.ariaLabel } } });
     cascadiaResize(host, ch);
     cascadiaProvenance(host, spec.provenance);
     el('sum-' + host.id).textContent = spec.summary;
@@ -154,6 +158,7 @@
     }
     return lab;
   }
+  function plural(k, word) { return k + ' ' + word + (k === 1 ? '' : 's'); }
   function alpha(hex, a) {
     var h = hex.replace('#', '');
     return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
@@ -387,7 +392,7 @@
         { name: 'Reports received', type: 'line', data: d.actual, showSymbol: false, symbol: 'none',
           lineStyle: { color: C.evergreen, width: 2.5 }, itemStyle: { color: C.evergreen }, z: 4,
           endLabel: endLabel('received', L, INK.evergreen) },
-        { name: 'Next month, twenty outcomes', type: 'custom', renderItem: dotColumn, data: [[n - 1, O.point]], clip: false,
+        { name: O.navName, type: 'custom', renderItem: dotColumn, data: [[n - 1, O.point]], clip: false,
           silent: true, z: 5, tooltip: { show: false } }
       ]
     };
@@ -505,7 +510,7 @@
     var valueLabel = function (r) {
       var s = L.narrow ? pct(r.coverage80) : pct(r.coverage80) + ': ' + r.inside + ' of ' + r.n + ' months';
       if (!r.enabled) return s + (L.narrow ? ' rule off' : ', rule off');
-      return s + (!L.narrow && r.coverage80 > 0.95 ? ', above the gate band' : '');
+      return s + (!L.narrow && 100 * r.coverage80 > d.band[1] ? ', above the gate band' : '');
     };
     var band = L.narrow ? 34 : 40;
     var refTop = L.narrow ? 0 : 24;
@@ -527,7 +532,7 @@
       series: [{
         type: 'bar', barCategoryGap: '38%', z: 3,
         // The gate's expected band, 60% to 95%, as a shaded region under the bars (panel finding 10).
-        markArea: { silent: true, itemStyle: { color: C.mist, opacity: 0.55 }, data: [[{ xAxis: 60 }, { xAxis: 95 }]] },
+        markArea: { silent: true, itemStyle: { color: C.mist, opacity: 0.55 }, data: [[{ xAxis: d.band[0] }, { xAxis: d.band[1] }]] },
         data: rows.map(function (r) {
           // Disabled codes take Madrona with the word in the label (2.3.2); enabled take Evergreen.
           return { value: Math.round(1000 * r.coverage80) / 10,
@@ -541,16 +546,16 @@
           lineStyle: { color: 'rgba(0,0,0,0)', width: 1 },
           label: { show: !L.narrow, position: 'start', distance: 6, fontFamily: SANS, fontSize: 12, color: C.slateMoss,
                    formatter: function (p) { return p.name; } },
-          data: [{ xAxis: 80, name: 'nominal 80%', label: { align: 'left' } },
-                 { xAxis: 70, name: 'rule disabled below 70%', label: { align: 'right', color: INK.madrona } }]
+          data: [{ xAxis: d.nominal, name: 'nominal ' + d.nominal + '%', label: { align: 'left' } },
+                 { xAxis: d.floor, name: d.floorLabel, label: { align: 'right', color: INK.madrona } }]
         }
       }, {
         // The two reference lines, drawn beneath the bars and their labels so a value label masks the line behind it (panel finding 8).
-        type: 'custom', silent: true, z: 1, tooltip: { show: false }, data: [[70, 0], [80, 0]],
+        type: 'custom', silent: true, z: 1, tooltip: { show: false }, data: [[d.floor, 0], [d.nominal, 0]],
         renderItem: function (params, api) {
           var x = api.coord([api.value(0), 0])[0], cs = params.coordSys;
           return { type: 'line', shape: { x1: x, y1: cs.y, x2: x, y2: cs.y + cs.height },
-                   style: { stroke: api.value(0) === 70 ? INK.madrona : C.slateMoss, lineWidth: 1, lineDash: [4, 4] } };
+                   style: { stroke: api.value(0) === d.floor ? INK.madrona : C.slateMoss, lineWidth: 1, lineDash: [4, 4] } };
         }
       }]
     };
@@ -599,7 +604,7 @@
         if (v.r) return v.code + ': Class I recall event ' + v.r.event + ' initiated ' + v.r.date + '<br>root cause as recorded: ' + (v.r.rootCause || 'not recorded');
         if (v.e && v.u) return v.code + ': ' + monthShort(v.e.start) + ' to ' + monthShort(v.e.end) + ' (' + v.e.months + ' months) would be an episode if the rule were on; it opens nothing';
         if (v.e) return v.code + ': episode ' + monthShort(v.e.start) + ' to ' + monthShort(v.e.end) + ' (' + v.e.months + ' months), largest excess ' + nf(v.e.excess) + ' reports';
-        return v.code + ': ' + monthShort(v.month) + ' flagged: above the 80% upper bound and at least five reports above the point forecast';
+        return v.code + ': ' + monthShort(v.month) + ' flagged. ' + d.rule;
       } }),
       series: [
         // Episodes as bars drawn with the custom renderer across their months, under the marks.
@@ -644,8 +649,8 @@
         l.flagged.forEach(function (m) { pts.push({ label: monthShort(m), value: 'flagged', seriesIndex: 1, dataIndex: flagData.findIndex(function (f) { return f.code === l.code && f.month === m; }) }); });
         l.classI.forEach(function (r) { pts.push({ label: r.date, value: 'Class I recall initiated, event ' + r.event, seriesIndex: 2, dataIndex: recData.findIndex(function (f) { return f.code === l.code && f.r.event === r.event; }) }); });
         return { name: l.code + (l.enabled ? '' : ' (rule disabled)'),
-                 summary: l.flagged.length + ' flagged months, ' + l.episodes.length + ' episodes' +
-                          (l.enabled ? '' : ' (' + l.ungated.length + ' if the rule were on)') + ', ' + l.classI.length + ' Class I initiations',
+                 summary: plural(l.flagged.length, 'flagged month') + ', ' + plural(l.episodes.length, 'episode') +
+                          (l.enabled ? '' : ' (' + l.ungated.length + ' if the rule were on)') + ', ' + plural(l.classI.length, 'Class I initiation'),
                  points: pts.length ? pts : [{ label: 'none', value: 'no flags, no episodes, no Class I initiation', seriesIndex: 1, dataIndex: 0 }] };
       }) }
     }, L);
@@ -674,7 +679,10 @@
       tooltip: tip(L, { trigger: 'axis', formatter: function (qs) {
         var i = qs[0].dataIndex;
         return monthShort(d.months[i]) + ' events<br>received within 3 months: ' + nf(d.within3[i]) + '<br>within 6: ' + nf(d.within6[i]) +
-               '<br>within 12: ' + nf(d.within12[i]) + (d.incomplete12.indexOf(d.months[i]) >= 0 ? '<br>still filling' : '');
+               '<br>within 12: ' + nf(d.within12[i]) +
+               (d.incomplete3.indexOf(d.months[i]) >= 0 ? '<br>every window still filling' :
+                d.incomplete6.indexOf(d.months[i]) >= 0 ? '<br>6- and 12-month windows still filling' :
+                d.incomplete12.indexOf(d.months[i]) >= 0 ? '<br>12-month window still filling' : '');
       } }),
       series: [
         { name: 'within 12 months', type: 'line', data: d.within12, showSymbol: false, symbol: 'none',

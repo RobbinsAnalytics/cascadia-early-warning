@@ -7,6 +7,8 @@
 #                      (with the proof the checks can fail), freeze.
 #   run.ps1 build      the pages, from the retained frozen outputs. Offline.
 #                      Writes docs/ only; no stage that writes a frozen path.
+#                      Needs the gitignored record table
+#                      data/conformed/early_warning.duckdb (README, Rebuild).
 #   run.ps1 all        validate, then build, then validate again; stops at the
 #                      first failure with that stage's exit code.
 #

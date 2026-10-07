@@ -53,6 +53,10 @@ network request.
 the build session ran them directly and the git log records what they wrote.
 `run.ps1 validate` runs the four gates; `run.ps1 all` runs validate, build,
 validate and stops at the first failing stage with that stage's exit code.
+`build` reads the gitignored DuckDB record table for the distinct report
+totals and the summary-report composition, so a fresh clone needs the staged
+pages restored and `src/build_model.py` run first (it rewrites the frozen
+conformed tables, which the freeze gate must then show unchanged).
 The execution policy here is Restricted, so invoke it as
 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 <task>`.
 Until 2026-10-07 the wrapper passed no arguments to any stage (its parameter

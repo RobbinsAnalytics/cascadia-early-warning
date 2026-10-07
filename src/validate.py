@@ -523,8 +523,32 @@ def _strings(obj):
 
 
 _ROMAN = {"1": "I", "2": "II", "3": "III"}
-_CLASS_RX = re.compile(r"\bClass(?:es)?\s+(?:II|III|2|3)\b(?:\s*(?:,|and|&)\s*(?:II|III|2|3)\b)*")
+# Case-insensitive, and "Class-II" as well as "Class II": a class claim in any spelling is a claim.
+_CLASS_RX = re.compile(r"(?i)\bclass(?:es)?[\s-]+(?:II|III|2|3)\b(?:\s*(?:,|and|&)\s*(?:II|III|2|3)\b)*")
+_ELIG_RX = re.compile(r"(?i)\b(?:in)?eligible\b|\bqualif")
 _SENTENCE_RX = re.compile(r"(?<=[.;!?])\s+")
+
+
+def _asserted_eligibility(text: str, codes: list[str]):
+    """What a marked eligibility statement SAYS, read from its words: (eligible, ineligible) as sets of
+    codes, or None when the sentence is not in a form this check can read (which fails the check). The
+    first sentence must place codes on FDA's list ("X is on FDA's list ...") and may add "and Y are
+    not"; "every code" / "all N codes" and "no code" / "none of the N codes" are the whole cohort."""
+    first = re.split(r"(?<=\.)\s+", text.strip())[0]
+    named = lambda s: {c for c in codes if re.search(r"\b%s\b" % c, s)}  # noqa: E731
+    head, _, tail = first.partition(", and ")
+    if not re.search(r"(?i)\bon FDA's list\b", head):
+        return None
+    if re.search(r"(?i)^\s*(?:no code|none of)\b", head):
+        return set(), set(codes)
+    if re.search(r"(?i)\bnot on\b", head):
+        return None
+    yes = set(codes) if re.search(r"(?i)^\s*(?:every code|all \w+ codes)\b", head) else named(head)
+    if tail:
+        if not re.search(r"(?i)\bnot\.?\s*$", tail):
+            return None
+        return yes, named(tail)
+    return yes, set(codes) - yes
 
 
 def check_cohort_facts(results):
@@ -549,7 +573,7 @@ def check_cohort_facts(results):
             if m.group(0) != want:
                 bad.append("%s: device class stated as %r; product_code.csv gives %r" % (where, m.group(0), want))
         for s in _SENTENCE_RX.split(text):
-            if re.search(r"(?i)\bsummary\b", s) and re.search(r"(?i)\b(?:in)?eligible\b", s):
+            if re.search(r"(?i)\bsummary\b", s) and _ELIG_RX.search(s):
                 bad.append("%s: a summary-reporting eligibility statement %s: %r"
                            % (where, "outside a marked data-cohort-fact element" if markable else "in chart text, where it cannot be checked", s[:90]))
 
@@ -576,12 +600,19 @@ def check_cohort_facts(results):
             elif f["kind"] == "summary":
                 e = set(f["attrs"].get("data-eligible", "").split())
                 i = set(f["attrs"].get("data-ineligible", "").split())
-                named = {c for c in codes if re.search(r"\b%s\b" % c, f["text"])}
                 if e != elig or i != inelig:
                     bad.append("%s: marked eligibility statement lists eligible %s, ineligible %s; product_code.csv gives %s, %s"
                                % (rel, sorted(e), sorted(i), sorted(elig), sorted(inelig)))
-                if named != e | i:
-                    bad.append("%s: marked eligibility statement names %s, not every cohort code" % (rel, sorted(named)))
+                # The words, not only the attributes: what the sentence says must be what the file says.
+                said = _asserted_eligibility(f["text"], codes)
+                if said is None:
+                    bad.append("%s: marked eligibility statement in a form this check cannot read: %r" % (rel, f["text"][:120]))
+                elif said != (elig, inelig):
+                    bad.append("%s: marked eligibility statement says eligible %s, ineligible %s; product_code.csv gives %s, %s"
+                               % (rel, sorted(said[0]), sorted(said[1]), sorted(elig), sorted(inelig)))
+                for m in _CLASS_RX.finditer(f["text"]):
+                    if m.group(0) != want:
+                        bad.append("%s: device class stated as %r inside a marked statement; product_code.csv gives %r" % (rel, m.group(0), want))
             else:
                 bad.append("%s: unknown data-cohort-fact kind %r" % (rel, f["kind"]))
         if "template" not in path.name and not {"classes", "summary"} <= kinds:
@@ -613,7 +644,7 @@ class _SectionWords(html.parser.HTMLParser):
     def _hidden(self):
         for t, a in self.stack:
             cls = a.get("class") or ""
-            if t in ("script", "style", "svg", "template", "noscript") or "hidden" in a or a.get("aria-hidden") == "true" \
+            if t in ("script", "style", "svg", "template", "noscript") or "hidden" in a \
                     or "sr-only" in cls.split():
                 return True
         for i, (t, a) in enumerate(self.stack):
@@ -901,6 +932,9 @@ def _scenarios():
            lambda: _docs_tree_copy({"index.html": _sub_once(r'(<span data-cohort-fact="classes">)[^<]*(</span>)', r"\1Class III\2")}))
     yield (check_cohort_facts, "the summary-eligibility statement re-pointed at a code the source lists as ineligible",
            lambda: _docs_tree_copy({"index.html": _sub_once(r'data-eligible="[^"]*"', 'data-eligible="DSQ"')}))
+    yield (check_cohort_facts, "the eligibility statement's words swapped to name a code the source lists as ineligible, its attributes left right",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(data-cohort-fact="summary"[^>]*>)([A-Z]{3})( (?:is|are) on FDA)',
+                                                            r"\1DSQ\3")}))
     yield (check_cohort_facts, "an unmarked sentence calling every code ineligible for summary reporting",
            lambda: _docs_tree_copy({"index.html": _sub_once(r"</main>", "<p>All of these codes are ineligible for malfunction summary reporting.</p></main>")}))
     yield (check_words_before_chart, "a forty-five-word paragraph written between section 01's H2 and its chart",

@@ -1003,3 +1003,39 @@ read the earlier ones, which are in the git history at 7d275ce. Path 2
 (`src/validate_measures.py`) now also compares every episode chart 4 draws
 in a rule-off lane with its own re-derivation; a page copy with PYX's
 outlined episodes removed fails it.
+
+### 6.4 · After an adversarial review of Part A: text corrections, re-rendered
+
+Before Part B, five read-only reviewers checked Part A against the brief, the
+data and the code, and each finding was put to a separate refuter (workflow
+wf_2d824820-6b8; 46 findings, 39 confirmed). Those touching the charts were
+corrected in their text or their data source, not their marks:
+
+- **Chart 2:** the subtitle now carries the module review's three chronology
+  sentences verbatim instead of a paraphrase that dropped "It does not
+  reconstruct exactly what was publicly available at each historical date."
+- **Chart 3:** the locked span, the 70% floor, the 60% to 95% band and the
+  "36 errors" in its subtitle, annotation, summary, strip and reference lines
+  now come from `config/model.json`, `review.py`, `forecast.csv` and one
+  constant citing gate G5, instead of being typed in `build_page.py` and
+  `page.js`. The render is unchanged.
+- **Chart 4:** the subtitle says the gate used the first 24 of the 32 months
+  the rule runs over (it said "the same months"), counts the Class I
+  initiations that fall in rule-off lanes, and generates "two or more" from
+  `review.py`; the tooltip states the registered rule sentence from the data
+  block; the navigator says "1 episode", not "1 episodes".
+- **Chart 5:** the six-month window is still filling for the latest six event
+  months, which the subtitle, annotation, tooltip and table now say (they had
+  called everything outside the last three months complete but for the
+  12-month figure); the summary separates figures for the charted span from
+  figures for all of the code's reports.
+- **Every chart:** ECharts was replacing each host's authored aria-label with
+  one generated from series names (chart 1's called November "Next month" and
+  dated it Aug 2026). `finish()` now gives ECharts the authored text as its
+  aria description; read back from the rendered page, all five labels equal
+  the authored summaries. Chart 1's dot series is named for its month and
+  horizon.
+
+None of these changes what a chart claims or draws, so no panel was re-run.
+The K6 ladder was re-run at 320, 655, 656 and 1040: no overflow, every chart
+drawn, three strip segments everywhere.

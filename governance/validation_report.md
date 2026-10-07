@@ -16,20 +16,20 @@
 | 6 | exclusion receipt agrees with the private audit, and every audit token is in the list | PASS | 1 audit rows, 15 receipt rows |
 | 7 | chronology: origin precedes target, locked origins at or after 2023-12, promotion committed before locked rows | PASS | 3906 rows, 966 locked |
 | 8 | one locked result: the locked rows have one content hash across committed history and the working tree | PASS | 1 distinct locked-row hashes |
-| 9 | names gate: no private token in docs/ or any tracked file (verbatim kit files exempt) | PASS | 118 files scanned |
-| 10 | em-dash gate: no em dash in docs/ or any authored file | PASS | 118 files scanned, verbatim kit files exempt |
+| 9 | names gate: no private token in docs/ or any tracked file (verbatim kit files exempt) | PASS | 119 files scanned |
+| 10 | em-dash gate: no em dash in docs/ or any authored file | PASS | 119 files scanned, verbatim kit files exempt |
 | 11 | as-of agrees: freeze.toml, the count series' newest receipt day, and this gate | PASS | freeze 2026-08-31, newest receipt 20260831, gate 20260831 |
 | 12 | cohort gate: forecast rows exist only for codes that passed both stages | PASS | 7 of 7 codes forecast |
 | 13 | review queue: every episode satisfies the rule on the scored rows | PASS | 1 episodes checked |
 | 14 | known-answer recovery: every verified Class I event is in the derived recall set with its date | PASS | 15 known rows checked against 175 derived events |
-| 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 2 pages, 3 marked statements; cohort Classes II and III, summary-eligible NPT |
+| 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 2 pages, 4 marked statements; cohort Classes II and III, summary-eligible NPT |
 | 16 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | PASS | s1 0; s2 0; s3 0; s4 0 |
 
 ## Proof the checks can fail
 
 *Each check above is re-run against a deliberately corrupted copy of its input and must reject it. A check that passes corrupted input is not testing anything, and reads identically in this report to one that works. The frozen data is never modified: the corruption is applied to a temporary copy and the path is restored after every scenario.*
 
-**23 of 23 scenarios tripped.**
+**24 of 24 scenarios tripped.**
 
 | Check | Corruption fed to it | Tripped? |
 |---|---|---|
@@ -52,6 +52,7 @@
 | known-answer recovery: every verified Class I event is in the derived recall set with its date | a verified Class I event removed from the derived recall set | tripped |
 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | the module page's cohort typed as Class III, as the template once did | tripped |
 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | the summary-eligibility statement re-pointed at a code the source lists as ineligible | tripped |
+| cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | the eligibility statement's words swapped to name a code the source lists as ineligible, its attributes left right | tripped |
 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | an unmarked sentence calling every code ineligible for summary reporting | tripped |
 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | a forty-five-word paragraph written between section 01's H2 and its chart | tripped |
 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | section 02's chart cards removed: a section that leads with no chart | tripped |

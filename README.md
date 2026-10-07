@@ -1,11 +1,11 @@
 # Cascadia Early Warning
 
-What reporting volume should we expect next, and what would justify a closer
+Which product codes are reporting as expected, and which deserve a closer
 look? A public-data module on FDA medical device reports (openFDA
-`/device/event`) for seven Cardiovascular Class III product codes: a
-next-month forecast with ranges, a locked held-out test of whether the
-forecasts earned trust, and a fixed review rule that turns departures from
-expectation into a human review queue. Aggregate only; no firm is named;
+`/device/event`) for seven cardiovascular product codes spanning Classes II
+and III: a forecast of reports received per month with ranges, a locked
+held-out test of whether ranges like them held, and a fixed review rule that
+turns departures from expectation into a human review queue. Aggregate only; no firm is named;
 report counts are not incident rates or measures of device safety.
 
 Page: `docs/index.html`, published to
@@ -25,7 +25,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 all        # v
 `build` does not re-run the engine stages (`build_model`, `forecast`,
 `score`, `review`, `recall_context`): each writes tables the freeze gate
 protects, and the locked forecast stage refuses to run twice. The build
-session ran them directly, and the git log is their record.
+session ran them directly, and the git log is their record. `build` reads the
+gitignored DuckDB record table `data/conformed/early_warning.duckdb` for two
+facts no committed table holds (distinct report totals, summary-report
+composition). A fresh clone lacks it: restore the staged pages with
+`src/acquire.py --restore`, then run `src/build_model.py`, which rebuilds the
+table and rewrites the frozen conformed tables it produces; the freeze gate
+must then show them unchanged.
 
 `run.ps1` names the venv interpreter by path (`.venv\Scripts\python.exe`,
 created from `C:\Users\Ajayr\AppData\Local\Python\pythoncore-3.14-64\python.exe`
@@ -37,7 +43,10 @@ overwrites the freeze; nothing else here makes a network request.
 
 The forecast harness runs in two stages whose order the git log enforces:
 `forecast.py --stage development`, then `score.py --promote` (its own commit),
-then `forecast.py --stage locked`, once.
+then `forecast.py --stage locked`. The locked stage refuses to run a second
+time once locked rows exist; it was run twice before any locked row was
+committed, to repair a harness defect (decision record D17), and the
+committed history carries one result.
 
 ## What is where
 
