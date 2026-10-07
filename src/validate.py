@@ -1026,7 +1026,7 @@ def _sub_once(pattern: str, repl: str):
 
 
 def _move_results_below_first_section(text: str) -> str:
-    m = re.search(r'(?s)<div class="table-wrap"><table id="case-results">.*?</table></div>', text)
+    m = re.search(r'(?s)<div class="table-wrap"><table id="case-results"[^>]*>.*?</table></div>', text)
     if not m:
         raise RuntimeError("no results table; the scenario would prove nothing")
     rest = text[:m.start()] + text[m.end():]

@@ -820,13 +820,19 @@ def chart5(d, code):
 # html helpers
 # ---------------------------------------------------------------------------
 
-def table(tid: str, caption: str, headers: list[str], rows: list[list[str]]) -> str:
-    h = ['<div class="table-wrap"><table id="%s"><caption>%s</caption><thead><tr>' % (tid, html.escape(caption))]
-    h += ['<th scope="col">%s</th>' % html.escape(c) for c in headers]
-    h.append("</tr></thead><tbody>")
+def table(tid: str, caption: str, headers: list[str], rows: list[list[str]], roles: bool = False) -> str:
+    """A data table. With roles=True every element carries its explicit ARIA table role, so a stylesheet
+    that stacks the table at narrow widths (display:block on its parts) does not strip its structure from
+    assistive technology (the case study's results table, Build Brief 2.2 step 5)."""
+    r_ = (lambda role: ' role="%s"' % role) if roles else (lambda role: "")
+    h = ['<div class="table-wrap"><table id="%s"%s><caption>%s</caption><thead%s><tr%s>'
+         % (tid, r_("table"), html.escape(caption), r_("rowgroup"), r_("row"))]
+    h += ['<th scope="col"%s>%s</th>' % (r_("columnheader"), html.escape(c)) for c in headers]
+    h.append("</tr></thead><tbody%s>" % r_("rowgroup"))
     for r in rows:
-        h.append("<tr>" + "".join(
-            '<th scope="row">%s</th>' % html.escape(str(c)) if i == 0 else "<td>%s</td>" % html.escape(str(c))
+        h.append("<tr%s>" % r_("row") + "".join(
+            '<th scope="row"%s>%s</th>' % (r_("rowheader"), html.escape(str(c))) if i == 0
+            else "<td%s>%s</td>" % (r_("cell"), html.escape(str(c)))
             for i, c in enumerate(r)) + "</tr>")
     h.append("</tbody></table></div>")
     return "".join(h)
@@ -865,12 +871,24 @@ def live_edge_line() -> str:
 
 def chart_card(cid: str, index: str, kicker: str, height: int, note_class: str, note: str, tables: list[tuple[str, str]]) -> str:
     tbls = "".join('<details class="data-table rich"><summary>%s</summary>%s</details>' % (html.escape(label), t) for label, t in tables)
+    # A card with no index carries its label alone (the case study's chart 3: no number to compete with its sections).
+    label = ('%s <span class="text-teal-2">%s</span>' % (index, html.escape(kicker)) if index else
+             '<span class="text-teal-2">%s</span>' % html.escape(kicker))
     return ('<div class="chart-card rounded-[1.75rem] bg-white p-5 sm:p-7" id="card-%s">'
-            '<p class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">%s <span class="text-teal-2">%s</span></p>'
+            '<p class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">%s</p>'
             '<p id="sum-%s" class="chart-summary"></p>'
             '<div id="%s" class="chart" style="height:%dpx"></div>'
             '<p id="note-%s" class="chart-note %s" hidden>%s</p>%s</div>'
-            % (cid, index, html.escape(kicker), cid, cid, height, cid, note_class, html.escape(note), tbls))
+            % (cid, label, cid, cid, height, cid, note_class, html.escape(note), tbls))
+
+
+def c3_card(c3: dict, index: str, kicker: str, data_label: str) -> str:
+    """Chart 3's card. The module numbers it; the case study labels it "Coverage by code" with no number
+    (Build Brief 2.2 step 5), and its table labels drop the chart number with it."""
+    return chart_card("c3", index, kicker, 330, "evergreen", c3["annotation"],
+                      [("%s: coverage by code" % data_label,
+                        table("tbl-c3", "%s: 80%% range coverage in the locked test by code, model in use (M-04)" % data_label,
+                              ["Code", "Device", "Model in use", "80% coverage", "Months", "Rule enabled"], c3["table"]))])
 
 
 def stat(index: str, value: str, label: str) -> str:
@@ -1202,10 +1220,8 @@ def main() -> int:
                               [("Chart 2 data: the locked test for %s" % code,
                                 table("tbl-c2", "Chart 2 data: locked-test months for %s, actual against both models and the 80%% range (M-03, M-04)" % code,
                                       ["Month", "Actual", "Candidate point", "Trailing mean point", "80% low", "80% high"], c2["table"]))]),
-        "c3_card": chart_card("c3", "03", "Did the ranges hold", 330, "evergreen", c3["annotation"],
-                              [("Chart 3 data: coverage by code",
-                                table("tbl-c3", "Chart 3 data: 80% range coverage in the locked test by code, model in use (M-04)",
-                                      ["Code", "Device", "Model in use", "80% coverage", "Months", "Rule enabled"], c3["table"]))]),
+        "c3_card": c3_card(c3, "03", "Did the ranges hold", "Chart 3 data"),
+        "c3_card_case": c3_card(c3, "", "Coverage by code", "The data"),
         "c4_card": chart_card("c4", "04", "What deserves review", 420, "madrona", c4["annotation"],
                               [("Chart 4 data: flags, episodes and Class I initiations by code",
                                 table("tbl-c4", "Chart 4 data: flagged months, episodes and Class I recall initiations by code, %s to %s (M-05, M-06)" % (EVAL_START, EVAL_END),
@@ -1246,7 +1262,7 @@ def main() -> int:
         "case_opening": html.escape(case_opening(d, n_dis)),
         "case_description": html.escape(case_description(d)),
         "t_results": table("case-results", "The measured results, each figure generated from the module's frozen tables",
-                           ["Result", "Meaning"], case_results(d, code, c1, c2, n_cand, n_dis, qd, rc)),
+                           ["Result", "Meaning"], case_results(d, code, c1, c2, n_cand, n_dis, qd, rc), roles=True),
         "c2_in": str(c2["inside"]),
         "g5_inside": num_word(g5_in), "g5_above": num_word(g5_above), "g5_below_floor": num_word(n_dis),
         "g5_outside": num_word(len(c3["rows"]) - g5_in),
