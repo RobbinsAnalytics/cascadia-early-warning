@@ -13,37 +13,60 @@
 #                   this file, read by src/validate_freeze.py
 #
 # The record-level payloads are gitignored on purpose (narratives, patient
-# arrays, addresses; hundreds of megabytes), with the reason recorded in
-# .gitignore, CLAUDE.md and governance/source-register.md. That is a
-# deliberate, documented departure from PRINCIPLES rule 1's mechanism.
+# arrays, addresses; 363 MB gzipped across 696 pages), with the reason
+# recorded in .gitignore, CLAUDE.md and governance/source-register.md. That is
+# a deliberate, documented departure from PRINCIPLES rule 1's mechanism.
 #
-# THE PROTECTED LIST GROWS BY PHASE, each addition its own commit:
-#   Phase 1   data/raw/manifest.json, data/raw/counts/*.json
-#   Phase 2   data/conformed/*.csv
-#   Phase 4   docs/index.html
-# At the root commit none of these exist, so the gate FAILS by design until
-# Phase 1's acquisition lands. A pattern matching nothing is a failure, not a
-# pass, and that is the behaviour wanted.
+# THE PROTECTED LIST GROWS BY PHASE, each addition its own commit, and the
+# baseline moves to the commit that last legitimately added a protected
+# artifact, stated here with its reason. Phases 1 and 2 landed together in
+# the freeze commit below. Phase 3 adds the forecast, score, review and
+# recall tables by name; Phase 4 adds docs/index.html.
+#
+# EVERY PATH HERE IS NAMED, NOT GLOBBED, except the count series. A glob over
+# data/conformed/ would fail the gate the moment Phase 3 adds a table that did
+# not exist at the baseline, which is the Revenue Assurance lesson; naming the
+# files makes "which artifacts are frozen" a list a reader can check against
+# the metric register.
 
 [freeze]
 module = "cascadia-early-warning"
 
-# Newest receipt date in the source at retrieval. Claimed on the page.
-# Advancing it is a deliberate act; see CLAUDE.md.
+# Newest receipt date in the source at retrieval (2026-10-06; the API's own
+# meta.last_updated for the event endpoint was 2026-09-29). Claimed on the
+# page. Advancing it is a deliberate act; see CLAUDE.md.
 as_of_date = "2026-08-31"
 
-# "HEAD": unchanged since the last commit. Replaced with the freeze commit's
-# full SHA once acquisition is committed, so the as-of claim is verified
-# across history rather than only since the last commit.
-baseline = "HEAD"
+# The freeze commit: the raw receipts, the count series, the register and the
+# Phase 2 conformed tables all landed here. Strictly stronger than "HEAD": a
+# committed change to any path below is caught, not only an uncommitted one.
+baseline = "777ab234d7de6a6fca51fa38f417d84c6cfc6dc2"
 
-# Globs, repo-relative. EVERY PATH HERE MUST BE GIT-TRACKED. A gitignored path
-# FAILS OPEN: Path.glob matches the filesystem, `git diff --quiet` reports no
-# change on an untracked file, and the path reads as checked and passing
-# forever. The staging files are protected by the hash gate, not by this list.
+# EVERY PATH HERE MUST BE GIT-TRACKED. A gitignored path FAILS OPEN: Path.glob
+# matches the filesystem, `git diff --quiet` reports no change on an untracked
+# file, and the path reads as checked and passing forever. The staging pages
+# and the bulk zips are protected by the hash gate, not by this list.
 protected_paths = [
   "data/raw/manifest.json",
+  "data/raw/extraction_log.json",
+  "data/raw/openfda_download_index.json",
   "data/raw/counts/*.json",
+  "data/raw/vmsr/vmsr_page.html",
+  "data/raw/vmsr/vmsr_eligible_product_codes.zip",
+  "data/reference/excluded_product_codes.csv",
+  "data/reference/product_code_classification.csv",
+  "data/reference/known_events.csv",
+  "data/conformed/monthly_report_count.csv",
+  "data/conformed/monthly_lag_matched.csv",
+  "data/conformed/lag_summary.csv",
+  "data/conformed/quarantine.csv",
+  "data/conformed/exclusion_receipt.csv",
+  "data/conformed/monthly_event_type.csv",
+  "data/conformed/monthly_remedial_recall.csv",
+  "data/conformed/product_code.csv",
+  "data/conformed/cohort_gate.csv",
+  "governance/source-register.md",
+  "governance/exclusion-receipt-records.md",
 ]
 
 # No permitted_edit entries. An exemption is a path that is no longer checked.
