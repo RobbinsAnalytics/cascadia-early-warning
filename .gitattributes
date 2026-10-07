@@ -1,0 +1,38 @@
+# Line endings: normalized to LF in the repository and on checkout.
+#
+# Windows tooling rewrites files with CRLF, which makes them show as modified
+# when nothing changed. In a module repo that churn is worse than cosmetic — it
+# makes "the frozen snapshot is untouched" impossible to assert, and it fails
+# the freeze gate for a reason that has nothing to do with the data.
+#
+# DECLARE THIS BEFORE THE FIRST COMMIT. A repository that acquires it later
+# needs a renormalization commit that rewrites every line of every text file,
+# which buries whatever real change is next to it. Four repos in this estate
+# reached production without it and had to be corrected by hand.
+
+* text=auto eol=lf
+
+# Binaries: never examined for line endings, never normalized.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.woff binary
+*.woff2 binary
+*.zip  binary
+*.gz   binary
+*.skill binary
+
+# Data binaries. A data module is full of these and the list above was silent
+# about them (BF47). `text=auto` already auto-detects every one of them today,
+# so this is a declaration and not a remediation -- it says out loud what the
+# estate already relies on being inferred. One module carries a committed .db
+# and another a .pbix; a 453 KB report normalised as text is not a diff, it is
+# a corrupted file.
+*.db   binary
+*.sqlite binary
+*.duckdb binary
+*.pbix binary
+*.xlsx binary

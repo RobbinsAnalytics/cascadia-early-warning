@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# Cascadia pre-commit hook -- runs two gates, in this order:
+#
+#     1. secret_scan.py            -- the credential gate
+#     2. no_whitespace_commits.py  -- the whitespace check
+#
+#     cascadia-standards template v2.0.0
+#     THIS IS THE CANONICAL COPY. Copied verbatim into each repo's .githooks/.
+#     Do not edit per repo -- fix it here and re-sync outward.
+#
+# ORDER IS LOAD-BEARING.
+#     The credential gate runs FIRST. `set -e` aborts the commit on the first
+#     non-zero exit, so with the whitespace check first a noisy line-ending
+#     diff aborts the commit BEFORE the credential scan ever runs -- and a
+#     staged credential goes unreported behind a complaint about whitespace.
+#     A whitespace complaint must never be the reason a credential refusal
+#     goes unread. The two failures are not comparable: one is cosmetic and
+#     one reaches a remote, and anything that reaches a remote does not stay
+#     on this machine.
+#
+#     Any copy of this file that runs the checks in the other order is wrong
+#     rather than merely divergent, and re-syncing it from this file is the
+#     fix. Recorded as BF53. Deliberately stated as a rule and not as a list
+#     of which repos are currently wrong: this file is copied verbatim into
+#     every repo in the estate, so a dated claim about a named repo is false
+#     in ten places the moment it is fixed in one.
+#
+# NOT `exec` ON THE FIRST GATE.
+#     `exec` replaces the shell, so an `exec`ed first gate means the second
+#     never runs. Only the last line may use it. A single-`exec` pre-commit
+#     cannot chain two gates at all, which is what this file used to be.
+#
+# REGISTRATION
+#     This directory is not consulted by git automatically. It is activated
+#     per clone with:
+#
+#         git config core.hooksPath .githooks
+#
+#     That is deliberate. `.git/hooks/` is not version controlled and does not
+#     survive a clone, so a gate installed there silently disappears the first
+#     time this repo is cloned. A tracked script plus core.hooksPath keeps the
+#     gate itself in history where it can be reviewed, and reduces installing
+#     it to one documented command.
+#
+#     THE ACTIVATION DOES NOT TRAVEL WITH A CLONE. The scripts do; the config
+#     line does not. A fresh clone has no gate until the line above is run.
+#     That is a real, known cost of this shape and is recorded rather than
+#     glossed -- it is why the line is part of the starter kit's setup step.
+#
+# INTERPRETER
+#     A hook runs in its own environment, and "python" vs "python3" vs the
+#     Windows launcher is exactly where hooks die silently. Resolve it here
+#     rather than trusting a shebang, and FAIL CLOSED if none is found. A gate
+#     that opens when it breaks is not a gate.
+
+set -e
+
+PY=""
+for candidate in python3 python py; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        PY="$candidate"
+        break
+    fi
+done
+
+if [ -z "$PY" ]; then
+    echo "" >&2
+    echo "COMMIT BLOCKED -- the pre-commit gates cannot run." >&2
+    echo "No Python interpreter found on PATH (tried python3, python, py)." >&2
+    echo "This blocks rather than passes, by design." >&2
+    echo "" >&2
+    exit 1
+fi
+
+ROOT=$(git rev-parse --show-toplevel)
+
+# Credential gate first. `set -e` aborts here on failure.
+"$PY" "$ROOT/.githooks/secret_scan.py"
+
+# Then the whitespace check. Last gate, so `exec` is safe.
+exec "$PY" "$ROOT/.githooks/no_whitespace_commits.py"

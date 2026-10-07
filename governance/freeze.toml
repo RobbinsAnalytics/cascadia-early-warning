@@ -1,0 +1,49 @@
+# governance/freeze.toml — the module-specific half of the freeze gate.
+#
+# Instantiated from cascadia-standards/templates/freeze.example.toml v1.0.0.
+# `src/validate_freeze.py` is a verbatim copy of the template and is never
+# edited here; everything module-specific is in this file.
+#
+# THIS MODULE'S FREEZE HAS TWO HALVES, as cascadia-matter-ledger's does:
+#
+#   the hash gate   the gitignored staging responses are the same bytes
+#                   src/validate.py, against data/raw/manifest.json
+#
+#   the diff gate   the committed artifacts have not moved
+#                   this file, read by src/validate_freeze.py
+#
+# The record-level payloads are gitignored on purpose (narratives, patient
+# arrays, addresses; hundreds of megabytes), with the reason recorded in
+# .gitignore, CLAUDE.md and governance/source-register.md. That is a
+# deliberate, documented departure from PRINCIPLES rule 1's mechanism.
+#
+# THE PROTECTED LIST GROWS BY PHASE, each addition its own commit:
+#   Phase 1   data/raw/manifest.json, data/raw/counts/*.json
+#   Phase 2   data/conformed/*.csv
+#   Phase 4   docs/index.html
+# At the root commit none of these exist, so the gate FAILS by design until
+# Phase 1's acquisition lands. A pattern matching nothing is a failure, not a
+# pass, and that is the behaviour wanted.
+
+[freeze]
+module = "cascadia-early-warning"
+
+# Newest receipt date in the source at retrieval. Claimed on the page.
+# Advancing it is a deliberate act; see CLAUDE.md.
+as_of_date = "2026-08-31"
+
+# "HEAD": unchanged since the last commit. Replaced with the freeze commit's
+# full SHA once acquisition is committed, so the as-of claim is verified
+# across history rather than only since the last commit.
+baseline = "HEAD"
+
+# Globs, repo-relative. EVERY PATH HERE MUST BE GIT-TRACKED. A gitignored path
+# FAILS OPEN: Path.glob matches the filesystem, `git diff --quiet` reports no
+# change on an untracked file, and the path reads as checked and passing
+# forever. The staging files are protected by the hash gate, not by this list.
+protected_paths = [
+  "data/raw/manifest.json",
+  "data/raw/counts/*.json",
+]
+
+# No permitted_edit entries. An exemption is a path that is no longer checked.

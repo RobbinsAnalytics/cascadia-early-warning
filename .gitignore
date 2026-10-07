@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS noise
+Thumbs.db
+.DS_Store
+
+# ---------------------------------------------------------------------------
+# THE PRIVATE EXCLUSION LIST. Never committed. Its SHA-256 and the product
+# codes derived from it are committed (governance/exclusion-receipt.md,
+# data/reference/excluded_product_codes.csv); the tokens themselves are not.
+# ---------------------------------------------------------------------------
+governance/exclusion-list.local.txt
+governance/exclusion_audit*.csv
+
+# ---------------------------------------------------------------------------
+# THE DATA FREEZE, AND WHY PART OF IT IS NOT COMMITTED
+#
+# The record-level openFDA responses carry narratives, patient arrays and
+# addresses, and run to hundreds of megabytes across the cohort. git is the
+# wrong container for them, and PRINCIPLES rule 1's "commit the raw response"
+# is departed from here deliberately, as cascadia-matter-ledger does for its
+# 314 MB zip. The freeze is asserted by HASH: data/raw/manifest.json is
+# committed with a SHA-256 per staged file, and src/validate.py recomputes
+# every one on every run and exits non-zero if any moved.
+#
+# These paths are deliberately NOT in governance/freeze.toml's protected list.
+# A gitignored path there FAILS OPEN (see that file).
+#
+# The count series (data/raw/counts/) and the classification bulk are small
+# and are committed outright.
+# ---------------------------------------------------------------------------
+data/raw/staging/
+data/raw/bulk/*.zip
+data/raw/bulk/*.json
+data/raw/bulk/*.part
+
+# Derived databases are rebuilt from the freeze; not committed.
+data/conformed/*.duckdb
