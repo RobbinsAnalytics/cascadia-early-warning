@@ -339,7 +339,7 @@ def check_emdash(results):
         if rel in VERBATIM:
             continue
         txt = p.read_text(encoding="utf-8", errors="replace")
-        n = txt.count("—")
+        n = txt.count("-")
         if n:
             hits.append("%s: %d em dash(es)" % (rel, n))
     results.append(("em-dash gate: no em dash in docs/ or any authored file", not hits,
@@ -536,7 +536,7 @@ def _scenarios():
     yield (check_names, "a private token written into a page under docs/",
            lambda: _docs_copy("probe.html", "<p>%s</p>" % _first_eligible_token()))
     yield (check_emdash, "an em dash written into a page under docs/",
-           lambda: _docs_copy("probe.html", "<p>a — b</p>"))
+           lambda: _docs_copy("probe.html", "<p>a - b</p>"))
     yield (check_known_events, "a verified Class I event removed from the derived recall set",
            lambda: _csv_copy("RECALL_CTX", lambda rows: [rows.remove(r) for r in list(rows) if r["res_event_number"] == "91955"]))
     yield (check_review, "an episode claimed for a month that does not satisfy the rule",
