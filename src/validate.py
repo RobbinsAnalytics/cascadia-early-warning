@@ -591,9 +591,117 @@ def check_cohort_facts(results):
                     % (n_pages, n_facts, want, ", ".join(sorted(elig)) or "none"), bad[:20] or ([] if n_pages else ["no pages under docs/"])))
 
 
+WORDS_BEFORE_CHART = 40
+WORDS_GATED = ("s1", "s2", "s3")      # must each hold a chart, and lead with it
+WORDS_GATED_IF_CHART = ("s4",)        # gated only if it holds a chart
+WORDS_EXEMPT = ("s5",)                # method and receipts
+
+
+class _SectionWords(html.parser.HTMLParser):
+    """Visible words between each section's H2 and the start of its first chart card. A word is
+    a whitespace-separated token holding a letter or digit, joined across inline elements and
+    split at blocks. Not counted: script, style, svg, anything under the hidden attribute,
+    aria-hidden or sr-only, and a closed <details> outside its <summary> (the reader sees only
+    the summary line). The count stops at the chart card, not at the canvas inside it: the card
+    is what the reader meets."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.stack, self.sections = [], {}
+        self._cur, self._counting, self._buf = None, False, []
+
+    def _hidden(self):
+        for t, a in self.stack:
+            cls = a.get("class") or ""
+            if t in ("script", "style", "svg", "template", "noscript") or "hidden" in a or a.get("aria-hidden") == "true" \
+                    or "sr-only" in cls.split():
+                return True
+        for i, (t, a) in enumerate(self.stack):
+            if t == "details" and "open" not in a and not any(tt == "summary" for tt, _ in self.stack[i + 1:]):
+                return True
+        return False
+
+    def _flush(self):
+        if self._cur and self._counting:
+            words = [w for w in "".join(self._buf).split() if re.search(r"[A-Za-z0-9]", w)]
+            self.sections[self._cur]["words"] += len(words)
+        self._buf = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag in _BLOCKS:
+            self._flush()
+        if self._cur and self._counting and "chart-card" in (a.get("class") or "").split():
+            self._flush()
+            self._counting = False
+            self.sections[self._cur]["chart"] = True
+        if tag in _VOID:
+            return
+        self.stack.append((tag, a))
+        sid = a.get("id") or ""
+        if tag == "div" and re.fullmatch(r"s\d+", sid) and self._cur is None:
+            self._cur = sid
+            self.sections[sid] = {"h2": False, "chart": False, "words": 0, "depth": len(self.stack)}
+
+    def handle_endtag(self, tag):
+        if tag in _VOID:
+            return
+        if tag in _BLOCKS:
+            self._flush()
+        while self.stack:
+            t, _ = self.stack.pop()
+            if t == tag:
+                break
+        if self._cur:
+            s = self.sections[self._cur]
+            if tag == "h2" and not s["h2"]:
+                s["h2"], self._counting = True, not s["chart"]
+            if len(self.stack) < s["depth"]:
+                self._flush()
+                self._cur, self._counting = None, False
+
+    def handle_data(self, data):
+        if self._cur and self._counting and not self._hidden():
+            self._buf.append(data)
+
+
+def check_words_before_chart(results):
+    """Visuals first: on the module page, at most WORDS_BEFORE_CHART visible words between each
+    section's H2 and its first chart card. Sections 01 to 03 must each hold a chart; 04 is gated
+    if it holds one; 05, the method and receipts, is exempt."""
+    page = DOCS / "index.html"
+    if not page.exists():
+        results.append(("words before the first chart: at most %d visible words between each section's H2 and its chart" % WORDS_BEFORE_CHART,
+                        False, "docs/index.html absent", ["docs/index.html absent"]))
+        return
+    p = _SectionWords()
+    p.feed(page.read_text(encoding="utf-8"))
+    p.close()
+    bad, seen = [], []
+    for sid in WORDS_GATED + WORDS_GATED_IF_CHART:
+        s = p.sections.get(sid)
+        if s is None:
+            if sid in WORDS_GATED:
+                bad.append("%s: section missing" % sid)
+            continue
+        if not s["h2"]:
+            bad.append("%s: no H2" % sid)
+            continue
+        if not s["chart"]:
+            if sid in WORDS_GATED:
+                bad.append("%s: no chart card after its H2" % sid)
+            continue
+        seen.append("%s %d" % (sid, s["words"]))
+        if s["words"] > WORDS_BEFORE_CHART:
+            bad.append("%s: %d visible words between the H2 and the first chart card (limit %d)" % (sid, s["words"], WORDS_BEFORE_CHART))
+    results.append(("words before the first chart: at most %d visible words between each section's H2 and its first chart card "
+                    "on the module page (01 to 03 must hold one, 04 if it does, 05 exempt)" % WORDS_BEFORE_CHART, not bad,
+                    "; ".join(seen) or "no gated section measured", bad))
+
+
 CHECKS = [check_hashes, check_extraction_log, check_m01, check_dates, check_uniqueness, check_exclusion,
           check_chronology, check_locked_once, check_names, check_emdash, check_asof, check_cohort, check_review,
-          check_known_events, check_cohort_facts]
+          check_known_events, check_cohort_facts, check_words_before_chart]
 
 
 # ---------------------------------------------------------------------------
@@ -795,6 +903,11 @@ def _scenarios():
            lambda: _docs_tree_copy({"index.html": _sub_once(r'data-eligible="[^"]*"', 'data-eligible="DSQ"')}))
     yield (check_cohort_facts, "an unmarked sentence calling every code ineligible for summary reporting",
            lambda: _docs_tree_copy({"index.html": _sub_once(r"</main>", "<p>All of these codes are ineligible for malfunction summary reporting.</p></main>")}))
+    yield (check_words_before_chart, "a forty-five-word paragraph written between section 01's H2 and its chart",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(?s)(<div id="s1"[^>]*>.*?</h2>)', r"\1<p>" + "word " * 45 + "</p>")}))
+    yield (check_words_before_chart, "section 02's chart cards removed: a section that leads with no chart",
+           lambda: _docs_tree_copy({"index.html": lambda t: _sub_once(r'(?s)(<div id="s2"[^>]*>.*?)class="chart-card ', r'\1class="was-card ')(
+               _sub_once(r'(?s)(<div id="s2"[^>]*>.*?)class="chart-card ', r'\1class="was-card ')(t))}))
     yield (check_review, "an episode claimed for a month that does not satisfy the rule",
            lambda: _csv_copy("QUEUE", lambda rows: rows.append(dict(rows[0], episode_start="2024-01", episode_end="2024-02", months_in_episode="2"))
                              if rows and rows[0]["product_code"] else rows.append({"product_code": "DSQ", "model_in_use": "baseline_a", "episode_start": "2024-01", "episode_end": "2024-02", "months_in_episode": "2", "max_excess_over_point": "0", "status": "x"})))

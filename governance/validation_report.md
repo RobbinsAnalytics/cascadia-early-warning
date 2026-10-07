@@ -23,12 +23,13 @@
 | 13 | review queue: every episode satisfies the rule on the scored rows | PASS | 1 episodes checked |
 | 14 | known-answer recovery: every verified Class I event is in the derived recall set with its date | PASS | 15 known rows checked against 175 derived events |
 | 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 2 pages, 3 marked statements; cohort Classes II and III, summary-eligible NPT |
+| 16 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | PASS | s1 0; s2 0; s3 0; s4 0 |
 
 ## Proof the checks can fail
 
 *Each check above is re-run against a deliberately corrupted copy of its input and must reject it. A check that passes corrupted input is not testing anything, and reads identically in this report to one that works. The frozen data is never modified: the corruption is applied to a temporary copy and the path is restored after every scenario.*
 
-**21 of 21 scenarios tripped.**
+**23 of 23 scenarios tripped.**
 
 | Check | Corruption fed to it | Tripped? |
 |---|---|---|
@@ -52,6 +53,8 @@
 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | the module page's cohort typed as Class III, as the template once did | tripped |
 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | the summary-eligibility statement re-pointed at a code the source lists as ineligible | tripped |
 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | an unmarked sentence calling every code ineligible for summary reporting | tripped |
+| words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | a forty-five-word paragraph written between section 01's H2 and its chart | tripped |
+| words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | section 02's chart cards removed: a section that leads with no chart | tripped |
 | review queue: every episode satisfies the rule on the scored rows | an episode claimed for a month that does not satisfy the rule | tripped |
 
 ---

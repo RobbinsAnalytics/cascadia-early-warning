@@ -138,7 +138,7 @@
         <ul class="mt-2">
           <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="@@repo_url@@"><span>Build repository</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
           <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="@@repo_url@@/blob/main/governance/pre-registration.md"><span>Pre-registration</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
-          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="#s4"><span>What was checked</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6M3 6l3 3 3-3"/></svg></span></a></li>
+          <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="#s5"><span>Method and receipts</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6M3 6l3 3 3-3"/></svg></span></a></li>
         </ul>
       </aside>
     </div>
@@ -151,7 +151,7 @@
       <span class="pill"><span class="h-1.5 w-1.5 rounded-full bg-teal-3" aria-hidden="true"></span>The question</span>
       <span class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Why it matters</span>
     </div>
-    <div class="mt-6 max-w-4xl font-display text-[clamp(1.15rem,1rem+0.6vw,1.5rem)] leading-[1.5] font-medium tracking-[-0.01em] text-ink"><p>A reporting system is good at looking back. This module asks the forward question of the same data: for each code, how many reports should FDA expect to receive next month, how wide is the honest range, did ranges like it hold on a test the model never saw, and which months, under a rule fixed in advance, would have earned a closer look. For @@headline@@ (@@headline_name@@) the answer for @@o_target@@, @@o_h_word@@ months ahead, is about @@o_point@@ reports, with an 80% range of @@o_lo80@@ to @@o_hi80@@; ranges like it held @@o_cov_in@@ of @@o_cov_n@@ locked-test months at that horizon. The ranges held on the locked test for some codes and not others, and the page says which, because that is the part a reader has to know before trusting any of it.</p></div>
+    <div class="mt-6 max-w-4xl font-display text-[clamp(1.15rem,1rem+0.6vw,1.5rem)] leading-[1.5] font-medium tracking-[-0.01em] text-ink"><p>How many reports should FDA expect for each code, and did ranges like these hold on months the model never saw? For @@headline@@ (@@headline_name@@) the answer for @@o_target@@, @@o_h_word@@ months ahead, is about @@o_point@@ reports, with an 80% range of @@o_lo80@@ to @@o_hi80@@; ranges like it held @@o_cov_in@@ of @@o_cov_n@@ locked-test months at that horizon.</p></div>
   </div>
 </section>
 
@@ -163,6 +163,7 @@
     <div class="bg-white px-6 py-7"><p class="font-mono text-[0.7rem] text-ink-soft">04</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@q_gated@@ / @@q_ungated@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">review episodes with the coverage gate, and without it; a retrospective, filtered demonstration</p></div>
     <div class="col-span-2 bg-white px-6 py-7 sm:col-span-1"><p class="font-mono text-[0.7rem] text-ink-soft">05</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@rc_preceded@@ of @@rc_initiations@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">Class I recall initiations in the span preceded by an episode start; association only</p></div>
   </div>
+  <p class="mt-3 font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Counts of reports, not rates</p>
 </section>
 
 <section class="container-x">
@@ -172,11 +173,11 @@
         <nav aria-label="On this page" class="toc">
           <p class="eyebrow">On this page</p>
           <ul class="mt-4 space-y-1 border-l border-line">
-            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s1">01 The outlook</a></li>
-            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s2">02 The test</a></li>
-            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s3">03 What deserves review</a></li>
-            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s4">04 What was checked</a></li>
-            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s5">05 Limits and transfer</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s1">01 Outlook</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s2">02 Test</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s3">03 Review</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s4">04 Limits</a></li>
+            <li><a class="-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors border-transparent text-ink-soft hover:text-ink" href="#s5">05 Method and receipts</a></li>
           </ul>
         </nav>
       </div>
@@ -184,62 +185,105 @@
 
     <div class="min-w-0">
 
-      <!-- 01 -->
+      <!-- 01 Outlook: the finding, then chart 1, then two lines -->
       <div id="s1" class="scroll-mt-24">
-        <p class="eyebrow">01 / The decision and the outlook</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">What volume to expect next, and how sure to be</h2>
-        <div class="rich prose mt-5 max-w-[46rem]">
-          <p><strong>The decision this page serves</strong> is a quality team's monthly choice of where to look first: which product codes are reporting as expected and which are not. Whose decision: the owner of a post-market review queue. Horizon: one month, with three months as context. Literacy: a reader who works in spreadsheets and reads a trend line, not a statistician. Benchmark: the trailing three-month mean, the figure a spreadsheet would already give. Cadence: monthly as the source loads. Action: open a review or do not.</p>
-          <p>Receipts run through <strong>@@as_of@@</strong> and the source had loaded them as of <strong>@@last_updated@@</strong>; this page was built from a snapshot taken <strong>@@retrieved@@</strong>. So the @@s_target@@ figure, one month ahead, is an <em>elapsed-period estimate</em>: the month had ended when it was issued and the source had not loaded it. It is in none of the locked or recent scores; the live edge scores it, on raw counts, when the source first shows the month. @@o_target@@, @@o_h_word@@ months ahead, is the forecast this page leads with.</p>
-          <p id="live-edge"><strong>Live edge.</strong> @@live_edge@@</p>
-          <p>The headline code is @@headline_rule@@: <strong>@@headline@@, @@headline_name@@</strong>. The candidate model earned use on @@n_cand@@ of @@n_codes@@ codes (@@cand_codes@@); the trailing mean is in use on the rest (@@base_codes@@). Promotion was decided on one-month-ahead errors in the development period. The table under the chart carries every code.</p>
-        </div>
+        <p class="eyebrow">01 / Outlook</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">@@s1_h2@@</h2>
         <div class="mt-8">@@c1_card@@</div>
         <p class="chart-key"><strong>@@o_target@@, @@o_h_word@@ months ahead.</strong> At this horizon the model in use's 80% ranges held @@o_cov_in@@ of @@o_cov_n@@ locked-test months (@@o_cov@@).</p>
         <p class="chart-key"><strong>@@s_target@@, one month ahead.</strong> An elapsed-period estimate, not yet in the source: point @@s_point@@, 80% range @@s_lo80@@ to @@s_hi80@@.</p>
         <details class="data-table rich mt-6"><summary>The outlook for every forecast code, at each horizon</summary>@@t_outlook@@</details>
       </div>
 
-      <!-- 02 -->
+      <!-- 02 Test: chart 2 and chart 3, at most two sentences beneath each -->
       <div id="s2" class="mt-16 border-t border-line pt-10 scroll-mt-24">
-        <p class="eyebrow">02 / The test</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">Whether the forecasts earned trust on months the model never saw</h2>
-        <div class="rich prose mt-5 max-w-[46rem]">
-          <p>@@chronology@@ The selection period's targets were @@dev_span@@; the harness was committed to <code>config/model.json</code> at <code>@@model_first_commit@@</code> and the promotion decision at <code>@@model_commit@@</code>, before any locked-period forecast existed. The locked test is @@locked_n@@ months, @@locked_span@@, from origins at or after @@locked_min_origin@@. @@locked_history@@ The recent check, @@recent_span@@, is reported beside it and was not used for anything. @@issue_dates@@</p>
-          <p>For @@headline@@ the model in use missed by <strong>@@c2_mae_use@@ reports a month</strong> on average over the locked test (candidate @@c2_mae_c@@, trailing mean @@c2_mae_a@@), and its 80% range covered <strong>@@c2_cov@@</strong> of those months. The largest miss, chosen as the largest absolute error and nothing else, was @@c2_miss_month@@: @@c2_miss_actual@@ reports arrived against @@c2_miss_point@@ expected.</p>
-        </div>
+        <p class="eyebrow">02 / Test</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">On months the model never saw, the ranges held for some codes and not others</h2>
         <div class="mt-8">@@c2_card@@</div>
-        <div class="rich prose mt-8 max-w-[46rem]">
-          <p><strong>Did the ranges hold?</strong> An 80% range should contain about four months in five. Across the @@n_codes_word@@ codes the model in use covered between <strong>@@c3_lo@@ and @@c3_hi@@</strong> of locked-test months, and @@c3_disabled@@ code(s) fell below the 70% floor the review rule needs, so their rule is switched off and the queue says so. Ranges too wide and ranges too narrow are both failures of calibration, and both are shown. A code with the rule off is not reviewed by this module, and nothing here stands in for it.</p>
+        <div class="rich prose mt-6 max-w-[46rem]">
+          <p>For @@headline@@ the model in use missed by <strong>@@c2_mae_use@@ reports a month</strong> on average over the @@locked_n@@ locked-test months (candidate @@c2_mae_c@@, trailing mean @@c2_mae_a@@), and its one-month-ahead 80% range covered <strong>@@c2_cov@@</strong> of them. The largest miss, chosen as the largest absolute error and nothing else, was @@c2_miss_month@@: @@c2_miss_actual@@ reports arrived against @@c2_miss_point@@ expected.</p>
         </div>
         <div class="mt-8">@@c3_card@@</div>
+        <div class="rich prose mt-6 max-w-[46rem]">
+          <p>An 80% range should hold about four months in five; across the @@n_codes_word@@ codes the model in use's ranges held between <strong>@@c3_lo@@ and @@c3_hi@@</strong>, and @@c3_disabled_phrase@@ below the @@floor@@ floor, so @@c3_disabled_rule@@ off. Ranges too wide and too narrow are both calibration failures, and a code with the rule off is not reviewed by this module.</p>
+        </div>
         <details class="data-table rich mt-6"><summary>Scores by code, model and period</summary>@@t_scores@@</details>
       </div>
 
-      <!-- 03 -->
+      <!-- 03 Review: chart 4, its one-line label, then the workload as a table -->
       <div id="s3" class="mt-16 border-t border-line pt-10 scroll-mt-24">
-        <p class="eyebrow">03 / What deserves review</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">The rule, every episode, and the workload it implies</h2>
-        <div class="rich prose mt-5 max-w-[46rem]">
-          <p><strong>The rule, registered before the first forecast existed</strong> (<code>governance/pre-registration.md</code>, commit <code>@@prereg_commit@@</code>), under the model in use at one month ahead. @@rule@@ @@rule_episode@@ One run is one episode, and an empty queue is a valid result. @@rule_chance@@</p>
-          <p><strong>A retrospective, filtered demonstration.</strong> Each code's rule was enabled from its 80% coverage in the @@locked_span@@ locked test, the same months the rule is then applied to (the recent months, @@recent_span@@, follow them), so the gate saw the period it filters. With the gate the rule ran on @@q_enabled_codes@@ codes, @@q_enabled_months@@ code-months, and opened <strong>@@q_gated@@ @@q_episodes_word@@</strong>; the same rule with no gate, over all @@q_all_months@@ code-months, opens <strong>@@q_ungated@@</strong> (@@q_ungated_by_code@@). Across all @@q_all_months@@ it flagged @@c4_flagged@@ months. The queue orders attention; a person decides what is in it. A flag is a departure from expected reporting volume and nothing more: it does not say why, and it is not a statement about any device or firm.</p>
-        </div>
+        <p class="eyebrow">03 / Review</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">@@s3_h2@@</h2>
         <div class="mt-8">@@c4_card@@</div>
         <p id="key-c4" class="chart-key"></p>
-        <details class="data-table rich mt-6"><summary>The review queue</summary>@@t_queue@@</details>
-        <details class="data-table rich mt-3"><summary>Workload by code</summary>@@t_work@@</details>
-        <div class="rich prose mt-10 max-w-[46rem]">
-          <h3>Recall events, as retrospective context</h3>
-          <p>FDA's recall record for these codes is shown beside the queue, not as its validation. Over 2016 to 2026-08 the two endpoints hold <strong>@@rc_events@@ recall events</strong> in these codes, @@rc_classI_all@@ of them Class I; only @@rc_k_pct@@ of the in-scope product records carry a 510(k) number, so clearance links are not drawn. In the evaluated span there were <strong>@@rc_initiations@@ Class I initiations</strong> in forecast codes. The one count the pre-registration fixed, episodes whose start falls in the eighteen months before a Class I initiation, is <strong>@@rc_episodes_in_window@@</strong>; <strong>@@rc_preceded@@ of @@rc_initiations@@</strong> initiations were preceded by an episode start. The trivial rule that flags every month would have preceded @@rc_always@@ of them at a cost of one flag per month, which is why "preceded" alone means nothing. Association only; no shuffled-dates null was run, and the page claims no prediction.</p>
+        <p class="chart-key"><strong>A retrospective, filtered demonstration, @@q_ungated@@ episodes ungated against @@q_gated@@ gated:</strong> each code's rule was enabled from its coverage in the same @@locked_span@@ test it is applied to.</p>
+        <div class="rich mt-6 max-w-none">@@t_work@@</div>
+        <div class="rich prose mt-6 max-w-[46rem]">
+          <p>The queue orders attention; a person decides what is in it. A flag is a departure from expected reporting volume and nothing more: it does not say why, and it is not a statement about any device or firm.</p>
         </div>
-        <details class="data-table rich mt-6"><summary>Recall events in these codes, 2016 to 2026-08</summary>@@t_recall@@</details>
+        <details class="data-table rich mt-6"><summary>The review queue</summary>@@t_queue@@</details>
       </div>
 
-      <!-- 04 -->
+      <!-- 04 Limits: chart 5, then short bullets -->
       <div id="s4" class="mt-16 border-t border-line pt-10 scroll-mt-24">
-        <p class="eyebrow">04 / What was checked</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">@@assurance_title@@</h2>
+        <p class="eyebrow">04 / Limits</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">What these counts can and cannot say</h2>
+        <div class="mt-8">@@c5_card@@</div>
+        <div class="rich prose mt-6 max-w-[46rem]">
+          <blockquote><p>@@disclaimer@@</p></blockquote>
+          <ul>
+            <li><strong>Counts, not rates.</strong> In FDA's own words, from the openFDA documentation: MDR data alone cannot be used to establish rates of events; a causal relationship cannot be established between product and the reactions listed in a report; and every API response says to assume all results are unvalidated. Reporting is passive, batched by filers and moved by litigation, media and recalls, and carries no denominator. A quiet code is not a safe code.</li>
+            <li><strong>Summary reports.</strong> One report is one record the source holds, in the month FDA received it. @@what_counted@@</li>
+            <li><strong>The snapshot.</strong> Receipts run through @@as_of@@, as the source had loaded them on @@last_updated@@, in a snapshot taken @@retrieved@@. The test is retrospective on that snapshot and does not reconstruct what was public at each earlier date.</li>
+            <li><strong>Reports without an event date.</strong> @@c5_missing@@ of the headline code's eligible reports carry none; they are counted in charts 1 to 4 by receipt month and left out of chart 5 only.</li>
+            <li><strong>What public data cannot supply.</strong> Exposure (units in use, by lot and by site), design-verification and validation results, the unresolved-defect backlog, supplier and process measures, complaint intake before it becomes a report, and launch milestones. This module forecasts the one public proxy and stops there.</li>
+            <li><strong>What this page refuses to do.</strong> It names no manufacturer or brand; it publishes no rate and no risk; and it does not read the recall timeline as a validation of the rule, because the shuffled-dates test that could make it one has not been run.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 05 Method and receipts: everything that explains how -->
+      <div id="s5" class="mt-16 border-t border-line pt-10 scroll-mt-24">
+        <p class="eyebrow">05 / Method and receipts</p>
+        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">How each figure was made, and what checked it</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
+          <h3>The decision</h3>
+          <p>The decision this page serves is a quality team's monthly choice of where to look first: which product codes are reporting as expected and which are not.</p>
+        </div>
+        <dl class="mt-4 max-w-[46rem] rounded-3xl bg-white px-6 py-3 sm:px-7">
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Whose decision</dt><dd class="text-right text-sm font-semibold">the owner of a post-market review queue</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Horizon</dt><dd class="text-right text-sm font-semibold">one month, with three months as context</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Literacy</dt><dd class="text-right text-sm font-semibold">a reader who works in spreadsheets and reads a trend line, not a statistician</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Benchmark</dt><dd class="text-right text-sm font-semibold">the trailing three-month mean, the figure a spreadsheet would already give</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cadence</dt><dd class="text-right text-sm font-semibold">monthly as the source loads</dd></div>
+          <div class="flex items-baseline justify-between gap-4 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Action</dt><dd class="text-right text-sm font-semibold">open a review or do not</dd></div>
+        </dl>
+        <div class="rich prose mt-10 max-w-[46rem]">
+          <h3>The snapshot and the live edge</h3>
+          <ul>
+            <li><strong>Receipts</strong> run through <strong>@@as_of@@</strong>; the source had loaded them as of <strong>@@last_updated@@</strong>, and this page was built from a snapshot taken <strong>@@retrieved@@</strong>.</li>
+            <li><strong>@@s_target@@</strong>, one month ahead, is an <em>elapsed-period estimate</em>: the month had ended when it was issued and the source had not loaded it. It is in none of the locked or recent scores; the live edge scores it, on raw counts, when the source first shows the month. <strong>@@o_target@@</strong>, @@o_h_word@@ months ahead, is the forecast this page leads with.</li>
+            <li id="live-edge"><strong>Live edge.</strong> @@live_edge@@</li>
+          </ul>
+          <h3>The models and the headline code</h3>
+          <p>The headline code is @@headline_rule@@: <strong>@@headline@@, @@headline_name@@</strong>. The candidate model earned use on @@n_cand@@ of @@n_codes@@ codes (@@cand_codes@@); the trailing mean is in use on the rest (@@base_codes@@). Promotion was decided on one-month-ahead errors in the development period. The outlook table under chart 1 carries every code.</p>
+          <h3>The test's chronology</h3>
+          <p>@@chronology@@</p>
+          <ul>
+            <li><strong>Selection period:</strong> targets @@dev_span@@; the harness was committed to <code>config/model.json</code> at <code>@@model_first_commit@@</code> and the promotion decision at <code>@@model_commit@@</code>, before any locked-period forecast existed.</li>
+            <li><strong>Locked test:</strong> @@locked_n@@ months, @@locked_span@@, from origins at or after @@locked_min_origin@@. @@locked_history@@</li>
+            <li><strong>Recent check:</strong> @@recent_span@@, reported beside the locked test and used for nothing.</li>
+            <li><strong>Issue dates:</strong> @@issue_dates@@</li>
+          </ul>
+          <h3>The review rule</h3>
+          <p><strong>Registered before the first forecast existed</strong> (<code>governance/pre-registration.md</code>, commit <code>@@prereg_commit@@</code>), under the model in use at one month ahead. @@rule@@ @@rule_episode@@ One run is one episode, and an empty queue is a valid result. @@rule_chance@@</p>
+          <p><strong>The coverage gate.</strong> Each code's rule was enabled from its 80% coverage in the @@locked_span@@ locked test, the same months the rule is then applied to (the recent months, @@recent_span@@, follow them), so the gate saw the period it filters. With the gate the rule ran on @@q_enabled_codes@@ codes, @@q_enabled_months@@ code-months, and opened <strong>@@q_gated@@ @@q_episodes_word@@</strong>; the same rule with no gate, over all @@q_all_months@@ code-months, opens <strong>@@q_ungated@@</strong> (@@q_ungated_by_code@@). Across all @@q_all_months@@ it flagged @@c4_flagged@@ months.</p>
+          <h3>Recall events, as retrospective context</h3>
+          <p>FDA's recall record for these codes is shown beside the queue, not as its validation. Over @@recall_span@@ the two endpoints hold <strong>@@rc_events@@ recall events</strong> in these codes, @@rc_classI_all@@ of them Class I; only @@rc_k_pct@@ of the in-scope product records carry a 510(k) number, so clearance links are not drawn. In the evaluated span there were <strong>@@rc_initiations@@ Class I initiations</strong> in forecast codes. The one count the pre-registration fixed, episodes whose start falls in the @@rc_lookback@@ months before a Class I initiation, is <strong>@@rc_episodes_in_window@@</strong>; <strong>@@rc_preceded@@ of @@rc_initiations@@</strong> initiations were preceded by an episode start. The trivial rule that flags every month would have preceded @@rc_always@@ of them at a cost of one flag per month, which is why "preceded" alone means nothing. Association only; no shuffled-dates null was run, and the page claims no prediction.</p>
+        </div>
+        <details class="data-table rich mt-6"><summary>Recall events in these codes, @@recall_span@@</summary>@@t_recall@@</details>
+        <div class="rich prose mt-10 max-w-[46rem]">
+          <h3>@@assurance_title@@</h3>
           <ul>
             <li><strong>The freeze.</strong> @@total_raw@@ distinct reports across the @@n_codes_word@@ codes (@@memberships@@ report-code memberships: @@multi_code@@ @@multi_code_word@@ more than one of the codes), pulled from openFDA in @@n_staged_pages@@ pages whose SHA-256 is recorded in <a href="@@repo_url@@/blob/main/data/raw/manifest.json">the manifest</a> and listed in <a href="@@repo_url@@/blob/main/governance/source-register.md">the source register</a>. The monthly counts reconcile with zero variance, on every one of @@n_code_months@@ code-months, against the source's own daily count series pulled separately.</li>
             <li><strong>The exclusion.</strong> A private token list, kept outside the repository, removed <strong>@@excluded@@</strong> @@excluded_word@@ whole; its SHA-256 (<code>@@sha_local@@</code>) and the counts removed per field are published, and no firm is named anywhere.</li>
@@ -252,22 +296,6 @@
         </div>
         <details class="data-table rich mt-6"><summary>The cohort gate</summary>@@t_gate@@</details>
         <details class="data-table rich mt-3"><summary>The exclusion receipt</summary>@@t_receipt@@</details>
-      </div>
-
-      <!-- 05 -->
-      <div id="s5" class="mt-16 border-t border-line pt-10 scroll-mt-24">
-        <p class="eyebrow">05 / Limits and transfer</p>
-        <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">What these counts can and cannot say</h2>
-        <div class="rich prose mt-5 max-w-[46rem]">
-          <blockquote><p>@@disclaimer@@</p></blockquote>
-          <p>FDA's own words, from the openFDA documentation: MDR data alone cannot be used to establish rates of events; a causal relationship cannot be established between product and the reactions listed in a report; and every API response says to assume all results are unvalidated. Reporting is passive, mixed voluntary and mandatory, batched by filers, moved by litigation and media and by a recall itself, and never carries a denominator. A quiet code is not a safe code.</p>
-          <p><strong>What is counted.</strong> One report is one record the source holds, in the month FDA received it. @@what_counted@@ @@c5_missing@@ of the headline code's eligible reports carry no event date and are counted beside the lag chart, not in it.</p>
-        </div>
-        <div class="mt-8">@@c5_card@@</div>
-        <div class="rich prose mt-8 max-w-[46rem]">
-          <p><strong>What a real new-product quality model needs that public data cannot supply:</strong> exposure (units in use, by lot and by site), design-verification and validation results, the unresolved-defect backlog, supplier and process measures, complaint intake before it becomes a report, and launch milestones. This module forecasts the one public proxy honestly and stops there.</p>
-          <p><strong>Three things this page refuses to do.</strong> It names no manufacturer or brand, by decision, and the exclusion that keeps it at arm's length from any one firm is applied by a private list with a public receipt. It publishes no rate and no risk. And it does not read the recall timeline as a validation of the rule: the shuffled-dates test that could make it one is recorded as the next build, not claimed here.</p>
-        </div>
       </div>
 
     </div>
@@ -321,11 +349,11 @@
     <div>
       <p class="font-mono text-[0.7rem] tracking-[0.16em] text-white/60 uppercase">This module</p>
       <ul class="mt-4 space-y-0.5 text-sm md:mt-5 md:space-y-2.5">
-        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s1">The outlook</a></li>
-        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s2">The test</a></li>
-        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s3">What deserves review</a></li>
-        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s4">What was checked</a></li>
-        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s5">Limits and transfer</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s1">Outlook</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s2">Test</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s3">Review</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s4">Limits</a></li>
+        <li><a class="group inline-flex min-h-10 items-center gap-1.5 py-1 text-white/65 transition-colors hover:text-white md:min-h-0" href="#s5">Method and receipts</a></li>
       </ul>
     </div>
     <div>

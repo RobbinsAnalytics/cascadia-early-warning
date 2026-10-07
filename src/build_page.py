@@ -41,7 +41,7 @@ import numpy as np
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from forecast import add_months, months_between  # noqa: E402
-from review import EVALUATED, flagged as rule_flagged, golden_episodes as rule_episodes  # noqa: E402
+from review import COVERAGE_FLOOR, EVALUATED, flagged as rule_flagged, golden_episodes as rule_episodes  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -824,6 +824,7 @@ def main() -> int:
     queue_rows = [[q["product_code"], model_label(q["model_in_use"]), month_short(q["episode_start"]), month_short(q["episode_end"]),
                    q["months_in_episode"], q["max_excess_over_point"], q["status"]] for q in d["queue"]] or [["none", "", "", "", "", "", "the queue is empty"]]
     qd = c4["diagnostic"]
+    n_dis = sum(1 for r in c3["rows"] if not r["enabled"])
     work_rows = [[w["product_code"], model_label(w["model_in_use"]), "yes" if w["rule_enabled"] == "true" else "no",
                   w["locked_coverage80"], w["evaluated_months"], w["flagged_months"], w["episodes"], w["episodes_per_evaluated_month"],
                   str(qd["perCode"][w["product_code"]]["ungated"])]
@@ -868,6 +869,16 @@ def main() -> int:
         "c2_miss_actual": nf(c2["miss"]["actual"]), "c2_miss_point": nf(c2["miss"]["point"]),
         "c3_lo": pct(min(r["coverage80"] for r in c3["rows"])), "c3_hi": pct(max(r["coverage80"] for r in c3["rows"])),
         "c3_disabled": str(sum(1 for r in c3["rows"] if not r["enabled"])),
+        "c3_disabled_phrase": ("no code fell" if n_dis == 0 else "%s code%s fell" % (num_word(n_dis), "" if n_dis == 1 else "s")),
+        "c3_disabled_rule": ("no review rule is" if n_dis == 0 else ("its review rule is" if n_dis == 1 else "their review rule is")),
+        "floor": pct(COVERAGE_FLOOR),
+        "s1_h2": html.escape("%s: about %s reports expected in %s, %s months ahead"
+                             % (code, nf(c1["outlook"]["point"]), month_name(c1["outlook"]["target"]), num_word(c1["outlook"]["horizon"]))),
+        "s3_h2": html.escape("%s with the coverage gate, %s without it"
+                             % (("%s episode" if qd["gatedEpisodes"] == 1 else "%s episodes") % num_word(qd["gatedEpisodes"]).capitalize(),
+                                num_word(qd["ungatedEpisodes"]))),
+        "recall_span": "%s to %s" % (cfg["history_start"], AS_OF[:7]),
+        "rc_lookback": num_word(int(rc["lookback_months"])),
         "c4_eps": str(c4["episodes"]), "c4_flagged": str(c4["flagged"]), "c4_months": str(c4["evaluatedMonths"]),
         "c4_rate": "%.3f" % c4["rate"], "c4_classI": str(c4["classI"]),
         "q_gated": nf(qd["gatedEpisodes"]), "q_ungated": nf(qd["ungatedEpisodes"]), "q_enabled_months": nf(qd["enabledMonths"]),
