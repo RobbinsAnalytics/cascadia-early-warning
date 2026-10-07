@@ -1167,6 +1167,17 @@ def main() -> int:
                                 num_word(qd["ungatedEpisodes"]))),
         "recall_span": "%s to %s" % (cfg["history_start"], AS_OF[:7]),
         "rc_lookback": num_word(int(rc["lookback_months"])),
+        "o_origin_month": month_name(c1["outlook"]["origin"]).split()[0],
+        # The recall detail the hero's fifth tile no longer carries, in section 03 (Build Brief 2.2 step 6).
+        "rc_detail": html.escape(
+            "Of the %s Class I recall initiations in the evaluated span, %s preceded by the start of a queue episode within the "
+            "%s months before, and %s fall in codes with the rule off, where the queue opens nothing. Association only: no "
+            "recall-prediction result is claimed."
+            % (nf(rc["class_i_initiations_in_evaluated_span_by_forecast_code"]),
+               "none was" if int(rc["class_i_initiations_preceded_by_an_episode_start"]) == 0 else
+               "%s %s" % (num_word(int(rc["class_i_initiations_preceded_by_an_episode_start"])),
+                          "was" if int(rc["class_i_initiations_preceded_by_an_episode_start"]) == 1 else "were"),
+               num_word(int(rc["lookback_months"])), num_word(c4["classIRuleOff"]))),
         "c4_eps": str(c4["episodes"]), "c4_flagged": str(c4["flagged"]), "c4_months": str(c4["evaluatedMonths"]),
         "c4_rate": "%.3f" % c4["rate"], "c4_classI": str(c4["classI"]),
         "q_gated": nf(qd["gatedEpisodes"]), "q_ungated": nf(qd["ungatedEpisodes"]), "q_enabled_months": nf(qd["enabledMonths"]),
