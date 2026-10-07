@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "frozen_on": "2026-10-06",
+  "what_this_is": "The forecast harness, fixed before the first forecast row exists. The git log of this file is the proof: 'promoted' is filled from development scores only, in its own commit, before any locked-period row is written, and the locked test runs once.",
+  "target": "M-01, eligible reports per product code per receipt month",
+  "horizons": [1, 3],
+  "history_start": "2016-01",
+  "periods": {
+    "warmup": {"targets": ["2019-01", "2021-12"], "scored": false, "purpose": "errors that calibrate the first development ranges"},
+    "development": {"targets": ["2022-01", "2023-12"], "scored": true, "purpose": "model selection; promotion is decided here and nowhere else"},
+    "locked": {"targets": ["2024-01", "2025-12"], "min_origin": "2023-12", "scored": true, "purpose": "the held-out test, run once"},
+    "recent": {"targets": ["2026-01", "2026-08"], "min_origin": "2025-12", "scored": true, "purpose": "the recent check"},
+    "outlook": {"origin": "2026-08", "purpose": "the next-month figure; 2026-09 issued in 2026-10 is an elapsed-period estimate"}
+  },
+  "models": {
+    "baseline_a": {"form": "trailing three-month mean of the series at the origin, same point at every horizon"},
+    "baseline_b": {"form": "the series value twelve months before the target"},
+    "candidate": {
+      "form": "ETS with additive error, damped additive trend and additive seasonality of period 12, fitted by maximum likelihood on log1p(count) over the history through the origin, back-transformed with expm1 and floored at zero",
+      "library": "statsmodels 0.15.0 ETSModel(error='add', trend='add', damped_trend=true, seasonal='add', seasonal_periods=12)",
+      "exported_per_origin": "smoothing_level, smoothing_trend, smoothing_seasonal, damping_trend, final level, final trend, the last twelve seasonal states oldest first; the independent path recomputes every point from these"
+    }
+  },
+  "intervals": {
+    "method": "empirical quantiles of the signed errors (actual minus point) of the same model and horizon over the 36 most recent targets elapsed at the origin",
+    "levels": {"50": [0.25, 0.75], "80": [0.10, 0.90]},
+    "quantile": "numpy default, linear interpolation",
+    "min_calibration_n": 12,
+    "fewer_than_min": "no range is drawn and the row says so"
+  },
+  "promotion_rule": {
+    "decided_on": "development targets only, horizon 1",
+    "criterion": "the candidate is promoted for a code when its MAE is at most 0.90 times the better baseline's MAE and its WIS is at most the better baseline's WIS; otherwise the better baseline is the model in use",
+    "ties": "the baseline with the lower MAE; baseline_a if equal"
+  },
+  "review_rule": {
+    "model": "the model in use for the code",
+    "horizon": 1,
+    "flag": "actual above the 80% upper range and at least five reports above the point",
+    "episode": "a run of at least two consecutive flagged target months; one run is one episode; a flagged final month with no successor is pending",
+    "evaluated": "locked and recent targets",
+    "disabled_when": "80% coverage of the model in use in the locked test, horizon 1, is below 0.70 (numbers gate G5)"
+  },
+  "promoted": null
+}

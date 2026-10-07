@@ -89,8 +89,12 @@ COUNT_FIELDS = ["date_received", "date_of_event"]
 
 WINDOW_START = "20160101"
 WINDOW_END = "20260831"
-PAGE = 1000
-WINDOW_MAX = 25000          # records per planned window; last skip <= 24000
+# 999, NOT 1000. Without a key a search request with limit=1000 is refused
+# with HTTP 403 API_KEY_MISSING; 999 is answered. Measured 2026-10-06 after
+# the first extraction attempt failed on every window. The documented limit
+# of 1,000 is the keyed limit.
+PAGE = 999
+WINDOW_MAX = 25000          # records per planned window; last skip <= 24975
 SKIP_MAX = 25000            # the API's documented ceiling
 MIN_INTERVAL = 1.0          # seconds between requests
 DAILY_CAP = 950             # of the 1,000 allowed; leaves room for a probe
@@ -227,6 +231,13 @@ class Client:
                 # body. That is a real answer (an empty window), not a failure.
                 body = exc.read()
                 return body, {"status": 404, "headers": dict(exc.headers)}
+            try:
+                # Print the body: a 403 here is API_KEY_MISSING, which the
+                # status code alone does not say. Learned on 2026-10-06 when
+                # 78 windows failed before anyone read why.
+                print("  HTTP %d: %s" % (exc.code, exc.read()[:200].decode("utf-8", "replace").replace("\n", " ")))
+            except Exception:  # noqa: BLE001
+                pass
             raise
         except (TimeoutError, urllib.error.URLError) as exc:
             ledger_append({"utc": started, "api": self.api,
@@ -422,7 +433,27 @@ def cmd_extract(codes: list[str] | None = None) -> int:
             if log["windows"].get("%s_%s_%s" % (w["code"], w["start"], w["end"]), {}).get("status") != "complete"]
     need = sum(-(-w["expected"] // PAGE) if w["expected"] else 1 for w in todo)
     print("%d windows planned, %d still to fetch, %d requests" % (len(plans), len(todo), need))
-    require_budget(need)
+    # Fit the batch to what is left of the day rather than refusing it whole:
+    # whole windows only, in plan order, so a window is never half-fetched by
+    # design. What does not fit is reported and waits for the next day.
+    used = ledger_last_24h()
+    room = DAILY_CAP - used
+    fitted, spent = [], 0
+    for w in todo:
+        cost = -(-w["expected"] // PAGE) if w["expected"] else 1
+        if spent + cost > room:
+            break
+        fitted.append(w)
+        spent += cost
+    if len(fitted) < len(todo):
+        print("budget: %d used in trailing 24h, cap %d; %d of %d windows fit (%d requests); "
+              "%d wait for the next day" % (used, DAILY_CAP, len(fitted), len(todo), spent,
+                                             len(todo) - len(fitted)))
+    else:
+        print("budget: %d requested, %d used in trailing 24h, cap %d" % (spent, used, DAILY_CAP))
+    todo = fitted
+    if not todo:
+        raise Budget("no window fits the remaining budget (%d used, cap %d)" % (used, DAILY_CAP))
     manifest = load_manifest()
     client = Client()
     # The datum: the count series' last_updated, so the extraction is refused
@@ -436,7 +467,16 @@ def cmd_extract(codes: list[str] | None = None) -> int:
     elif len(lu_counts) > 1:
         sys.exit("the S-02 count series carry more than one last_updated: %s" % sorted(lu_counts))
 
+    consecutive_failures = 0
     for w in todo:
+        if consecutive_failures >= 3:
+            # CIRCUIT BREAKER. On 2026-10-06 a wrong page size made every
+            # request fail with 403 and the loop spent 78 requests learning
+            # that one fact. Three failures in a row is a broken request
+            # shape, not three unlucky windows; stop and let a human read.
+            print("ABORT: three consecutive windows failed; the request shape is "
+                  "wrong and the budget is not spent finding out 78 times")
+            break
         code, start, end = w["code"], w["start"], w["end"]
         key = "%s_%s_%s" % (code, start, end)
         keys: set[str] = set()
@@ -489,6 +529,7 @@ def cmd_extract(codes: list[str] | None = None) -> int:
         flag = "" if status == "complete" and api_total == w["expected"] else "   ** CHECK **"
         print("  %-24s expected %6d  api %6s  keys %6d  pages %3d  %s%s"
               % (key, w["expected"], api_total, len(keys), pages, status, flag))
+        consecutive_failures = consecutive_failures + 1 if status.startswith("failed") else 0
     print("requests made: %d" % client.requests_made)
     incomplete = [k for k, v in log["windows"].items() if v["status"] != "complete"]
     if incomplete:
@@ -564,10 +605,24 @@ def cmd_vmsr() -> int:
     (VMSR / "vmsr_page.html").write_bytes(html)
     record(manifest, "data/raw/vmsr/vmsr_page.html", html, "S-06", VMSR_PAGE, None)
     text = html.decode("utf-8", errors="replace")
-    links = re.findall(r'href="([^"]+)"[^>]*>([^<]*(?:eligible|product code)[^<]*)</a>', text, flags=re.I)
+    # The page carries one attachment link, /media/<id>/download, and its
+    # anchor text ("Comprehensive List of Eligible Product Codes") sits on a
+    # different line from the href, so match the href and keep the text as
+    # the label if it is nearby.
+    links = []
+    # The list itself is a zip on accessdata.fda.gov, linked from the
+    # "Comprehensive List of Eligible Product Codes" button; the page's one
+    # /media/ link is the MDUFA IV commitment letter, which a first pass
+    # mistook for the list.
+    for m in re.finditer(r'href="(https://www\.accessdata\.fda\.gov/premarket/ftparea/VMSR[^"]*)"', text):
+        links.append((m.group(1), "Comprehensive List of Eligible Product Codes (zip)"))
+    for m in re.finditer(r'href="(/media/\d+/download[^"]*)"', text):
+        after = text[m.end():m.end() + 400]
+        t = re.search(r">([^<]{4,120})<", after)
+        links.append((m.group(1).replace("&amp;", "&"), t.group(1).strip() if t else "media attachment"))
     print("candidate links:")
     for href, label in links:
-        print("  %s  %s" % (label.strip(), href))
+        print("  %s  %s" % (label, href))
     for href, label in links:
         if "media" in href or href.lower().endswith((".xlsx", ".pdf", ".csv")):
             url = href if href.startswith("http") else "https://www.fda.gov" + href
@@ -581,7 +636,14 @@ def cmd_vmsr() -> int:
             except (urllib.error.HTTPError, urllib.error.URLError) as exc:
                 print("  could not fetch %s: %s" % (url, exc))
                 continue
-            ext = ".xlsx" if "spreadsheet" in ctype or ".xlsx" in cd else (".pdf" if "pdf" in ctype else ".bin")
+            if url.lower().endswith(".zip") or "zip" in ctype:
+                ext = ".zip"
+            elif "spreadsheet" in ctype or ".xlsx" in cd:
+                ext = ".xlsx"
+            elif "pdf" in ctype:
+                ext = ".pdf"
+            else:
+                ext = ".bin"
             name = "vmsr_eligible_product_codes" + ext
             (VMSR / name).write_bytes(body)
             record(manifest, "data/raw/vmsr/" + name, body, "S-06", url, None,
@@ -596,7 +658,7 @@ def cmd_vmsr() -> int:
 # source register
 # ---------------------------------------------------------------------------
 
-REGISTER_HEAD = """# Source register — Cascadia Early Warning
+REGISTER_HEAD = """# Source register - Cascadia Early Warning
 
 *Phase 1 artifact. Owner: Aaron Robbins. Established 2026-10-06. Generated by
 `src/acquire.py register` from `data/raw/manifest.json`; the narrative below
