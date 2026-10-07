@@ -41,7 +41,7 @@ above this line changed.*
 | G3 | Share of in-window reports removed by the private list | 1 report of 649,083 (DSP, 0.00%) | yes |
 | G4 | Eligible training reports per code, 2016-01 to 2023-12 | DSQ 108,175; OZD 5,875; PYX 138; NPT 40,110; NIK 87,420; LWS 157,218; DSP 29,297; all at or above 120 | yes |
 | G5 | 80% coverage, locked test, horizon 1, model in use | DSP 70.8% (trailing mean); DSQ 91.7% (candidate); LWS 95.8% (trailing mean); NIK 100.0% (trailing mean); NPT 58.3% (candidate); OZD 41.7% (trailing mean); PYX 33.3% (trailing mean) | **no: 2 of 7 inside; LWS and NIK above 95%; NPT, OZD and PYX below 60% and below the 70% disabling line, so their review rule is disabled. See D16** |
-| G6 | Review episodes per evaluated month, all codes | 1 episode (DSP, 2025-12 to 2026-01) in 224 evaluated code-months, 0.0045 | yes |
+| G6 | Review episodes per evaluated month, all codes | **With the coverage gate:** 1 episode (DSP, 2025-12 to 2026-01) in the 128 code-months of the four codes whose rule is enabled, 0.0078. **Without it:** the same rule opens 7 (DSP 1, OZD 2, PYX 4) in all 224 evaluated code-months, 0.031. *(Both figures added 2026-10-07, D19; this row first read "1 episode in 224 evaluated code-months, 0.0045", dividing the gated count by every code's months.)* | yes, both |
 | G7 | Next-month point of the model in use against baseline A, origin 2026-08 | DSP 1.00; DSQ 0.85; LWS 1.00; NIK 1.00; NPT 0.79; OZD 1.00; PYX 1.00 | yes |
 | G8 | Candidate scaled MAE on the development period, horizon 1 | DSP 1.38; DSQ 0.88; LWS 1.22; NIK 1.04; NPT 0.76; OZD 1.10; PYX 1.05 | yes |
 

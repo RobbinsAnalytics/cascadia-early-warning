@@ -1,0 +1,462 @@
+{
+ "artifact": "Cascadia Early Warning, revision of charts 1 and 4",
+ "date": "2026-10-07",
+ "seats": 4,
+ "nature": "simulated",
+ "charts": 2,
+ "pre_panel_notes_recorded": true,
+ "findings": [
+  {
+   "quote": "The label says \"point 736 is the tick\", but I couldn't find a tick among the dots on the desktop version.",
+   "seats": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "3.4",
+   "note": "the tick runs past the widest row of dots on both sides"
+  },
+  {
+   "quote": "they say the three-month ranges held 20 of 22 test months, but the band they drew is the one-month band, so I never saw the test the headline is selling.",
+   "seats": [
+    2,
+    3,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": false,
+   "disposition": "fixed",
+   "rule": "3.2",
+   "note": "the title states only what the picture carries; the coverage is the subtitle's basis and a second table lists the 22 months"
+  },
+  {
+   "quote": "The September 2026 estimate (672, 329 to 838) is described in the text, but I couldn't find it on the chart.",
+   "seats": [
+    2,
+    3,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": false,
+   "disposition": "fixed",
+   "rule": "3.2",
+   "note": "September leaves the chart's subtitle and strip; it stays beside the card and in the table, undrawn"
+  },
+  {
+   "quote": "The phone also has a thin vertical line labelled \"80% range\" sitting right by the \"May '24\" tick. On first glance it looked like an event marker, or like the band starts in May 2024.",
+   "seats": [
+    1,
+    3,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "3.6",
+   "note": "the narrow label names its month: 80% range from Jan '24"
+  },
+  {
+   "quote": "the firm-list exclusion of 1 of 649,080 reports. DSQ alone can't be 649,080 reports, so I don't know what population that number refers to.",
+   "seats": [
+    1,
+    3
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "4.2",
+   "note": "the strip says across the seven codes; the subtitle says after the firm-list exclusion, not eligible"
+  },
+  {
+   "quote": "I also didn't follow some of the wording: \"eligible\" reports (eligible for what?), \"ETS candidate\", \"locked-test months\"",
+   "seats": [
+    1,
+    3,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "accepted",
+   "rule": "4.3",
+   "note": "eligible is replaced and locked-test leaves the title; ETS candidate is the model's name and the method section explains it"
+  },
+  {
+   "quote": "The main chart on the phone is cramped: three date labels, \"exp.\"/\"rec.\" as labels, and I couldn't tell where the green line leaves the band.",
+   "seats": [
+    2,
+    3,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "accepted",
+   "rule": "5.5",
+   "note": "56 months in 280 CSS px; stacking grew the plot from 110 to 158 px; table and navigator carry the values"
+  },
+  {
+   "quote": "the phone's dots sit in about the first fifth of a 0–3K axis, which makes them tiny and uncountable.",
+   "seats": [
+    1,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": false,
+   "disposition": "accepted",
+   "rule": "5.5",
+   "note": "the strip shares the history's value scale so it reads against it"
+  },
+  {
+   "quote": "the November dots are a vertical column next to the series with no axis of their own. I assumed they share the left axis, but nothing says so",
+   "seats": [
+    2,
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": false,
+   "disposition": "accepted",
+   "rule": "3.5",
+   "note": "the column is labelled with its month and horizon; empty September and October slots would draw a gap as data"
+  },
+  {
+   "quote": "the 20 dots are tightly packed. I could not get a confident count, or a clean filled/hollow split, at desktop size.",
+   "seats": [
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "accepted",
+   "rule": "4.5",
+   "note": "the count is in the subtitle and summary; the dots carry the spread"
+  },
+  {
+   "quote": "the end labels (\"Jan '22\", \"Aug '26\") seem to be aligned to their outer edges rather than centred. Their midpoints therefore sit a few months inside the dates they mark.",
+   "seats": [
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "accepted",
+   "rule": "K4",
+   "note": "declared narrow rule (first panel F-5): edge labels pulled inside the plot so they are not clipped; also chart 4"
+  },
+  {
+   "quote": "in 2024–26 the dashed blue and green lines cross constantly, and the dashed line is often hidden.",
+   "seats": [
+    4
+   ],
+   "chart": 1,
+   "defect": true,
+   "novel": true,
+   "disposition": "accepted",
+   "rule": "2.3",
+   "note": "received is drawn on top by design; the table carries both"
+  },
+  {
+   "quote": "There's no split for deaths, injuries and malfunctions, none for initial versus supplemental reports",
+   "seats": [
+    1
+   ],
+   "chart": 1,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "the module publishes counts by design; the strip says counts, not rates"
+  },
+  {
+   "quote": "It's 91%, which tells me the range is wider than it claims, or there are too few months to say.",
+   "seats": [
+    2
+   ],
+   "chart": 1,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "a correct reading, not a misreading; chart 3 reports above-nominal coverage as a calibration finding"
+  },
+  {
+   "quote": "It's called the ETS \"candidate\", so what was it up against, and was it picked using the same 22 locked-test months it's now being scored on?",
+   "seats": [
+    2
+   ],
+   "chart": 1,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "a question chart 2's subtitle and the chronology answer: selection used targets through 2023-12"
+  },
+  {
+   "quote": "are that 2022 spike and the drop since then mostly one manufacturer's filing behaviour?",
+   "seats": [
+    3
+   ],
+   "chart": 1,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "the module names no firm and attributes no count, by decision"
+  },
+  {
+   "quote": "I didn't understand what \"coverage\" means in \"where coverage enabled it.\"",
+   "seats": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "3.1",
+   "note": "title, subtitle, H2 and KPI use the lanes' own words: where the rule is on, if it ran in every code"
+  },
+  {
+   "quote": "The red note about the one episode moves below the chart, away from the DSP lane, so I had to hunt for which mark it meant",
+   "seats": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "3.4",
+   "note": "at the narrow width a short label stands at the episode in reserved headroom"
+  },
+  {
+   "quote": "On the phone the shapes run together. The OZD lane in particular is a string of squares and diamonds I couldn't separate or count",
+   "seats": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": false,
+   "disposition": "accepted",
+   "rule": "5.5",
+   "note": "32 months by 7 lanes in 280 CSS px (first panel finding 18); diamonds raised further"
+  },
+  {
+   "quote": "The seven ungated episodes aren't drawn as bars in the \"rule off\" lanes, so I'd have to pair up the hollow squares myself.",
+   "seats": [
+    2,
+    4
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": false,
+   "disposition": "fixed",
+   "rule": "3.2",
+   "note": "outlined bars in rule-off lanes: one filled and six outlined are the title's seven"
+  },
+  {
+   "quote": "Diamonds collide with squares. The \"raised\" offset is smaller than the glyph, so they merge",
+   "seats": [
+    3,
+    4
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "5.3",
+   "note": "diamonds raised to -14 px (-11 narrow) and same-month diamonds stepped 12 px (9 narrow)"
+  },
+  {
+   "quote": "I looked for what \"preceded\" means, meaning what lead time counts.",
+   "seats": [
+    1,
+    2
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "4.3",
+   "note": "the subtitle: preceded by the start of a queue episode within the eighteen months before"
+  },
+  {
+   "quote": "\"1,751 arrived against 678 expected\" ... It reads like two months added together against two months expected, but it doesn't say so",
+   "seats": [
+    1,
+    3
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "3.4",
+   "note": "the annotation says peak month"
+  },
+  {
+   "quote": "The codes have no names except DSQ, which I only know from the first chart.",
+   "seats": [
+    1,
+    3
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "accepted",
+   "rule": "4.3",
+   "note": "seven device names do not fit lane labels (first panel finding 4); tooltip and table carry them"
+  },
+  {
+   "quote": "The phone subtitle is also a full screen of text before you reach the chart.",
+   "seats": [
+    1,
+    3
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": false,
+   "disposition": "accepted",
+   "rule": "3.1",
+   "note": "the subtitle carries the mark key and the gate's basis, which must travel with the chart (4.3)"
+  },
+  {
+   "quote": "\"128 code-months\" / \"all 224\": Not drawn. You can only rebuild them from structure",
+   "seats": [
+    4
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": false,
+   "disposition": "fixed",
+   "rule": "3.2",
+   "note": "the counts leave the title for the subtitle"
+  },
+  {
+   "quote": "If you freeze the gate at the end of 2025 and score only Jan to Aug 2026, the months it never saw, what does the rule do?",
+   "seats": [
+    2,
+    3
+   ],
+   "chart": 4,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "a chronological test of the queue, out of scope by Aaron's decision (D19); the subtitle names the locked span"
+  },
+  {
+   "quote": "If Class I is the only yardstick, \"zero of 24\" tells me less than it sounds like it does.",
+   "seats": [
+    3
+   ],
+   "chart": 4,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "the one pre-registered count; association only, as the subtitle says"
+  },
+  {
+   "quote": "A one-sided 80% bound should be beaten about one month in ten, so roughly 22 of 224, and 30 isn't far off that.",
+   "seats": [
+    2
+   ],
+   "chart": 4,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "a correct reading; the chance illustration is in the method section"
+  },
+  {
+   "quote": "No divider between the rule-on and rule-off groups.",
+   "seats": [
+    4
+   ],
+   "chart": 4,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "a preference: the lane labels say rule off and the marks are hollow"
+  },
+  {
+   "quote": "The one risk is the pale highlight around the gated episode. In grey it nearly matches the background",
+   "seats": [
+    4
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "fixed",
+   "rule": "5.4",
+   "note": "the filled bar carries an outline"
+  },
+  {
+   "quote": "\"Rule off\" is shortened to \"off\", so \"PYX off\" read to me like the code was discontinued.",
+   "seats": [
+    1
+   ],
+   "chart": 4,
+   "defect": true,
+   "novel": true,
+   "disposition": "accepted",
+   "rule": "5.5",
+   "note": "declared narrow abbreviation (first panel finding 17)"
+  },
+  {
+   "quote": "I also can't tell from the title whether one episode is the rule working or failing.",
+   "seats": [
+    2
+   ],
+   "chart": 4,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "interpretation; the page says an empty queue is a valid result"
+  },
+  {
+   "quote": "what anyone did with the one DSP episode: was it looked into, and was a cause found",
+   "seats": [
+    3
+   ],
+   "chart": 4,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "dispositions are the reader's act; the case study's next test describes it"
+  },
+  {
+   "quote": "there's no sense of how many reports one episode would put in front of my team.",
+   "seats": [
+    1
+   ],
+   "chart": 4,
+   "defect": false,
+   "novel": null,
+   "disposition": "rejected",
+   "rule": "-",
+   "note": "the queue's unit is the episode, by the registered rule"
+  }
+ ]
+}

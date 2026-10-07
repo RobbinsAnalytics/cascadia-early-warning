@@ -532,3 +532,474 @@ only once the site repository builds it. Chart 4 at 280 CSS px cannot show
 abbreviations at the narrow width (finding 41, accepted) are declared and
 not loved; a future revision could trade the dot column's width for full
 words.
+
+---
+
+## 6 · Revision of 2026-10-07: charts 1 and 4 (Build Brief 2.1, D19)
+
+*Charts 1 and 4 changed in content; charts 2, 3 and 5 did not (below). The
+review runs again for the two that did, in the order this document's opening
+gives: the reading panel first, then Checklist A, then the verdicts. The
+brief for this round asked for a Rule 7.4 panel on both charts, so this
+revision gets a panel and not only the gate and a link.*
+
+**What changed in content.**
+- **Chart 1** leads with November 2026 at three months ahead (the
+  origin-2026-08 horizon-three row and its twenty outcomes from the 36 latest
+  three-month-ahead errors) in place of September at one month ahead. Below
+  the 560 px host breakpoint it stacks: the history above at full width, the
+  twenty outcomes as a horizontal strip beneath on the history's value scale,
+  and the "80% range" label in a row reserved above the plot. September stays
+  as the elapsed-period estimate beside the card and in the table, undrawn.
+- **Chart 4**'s title and subtitle carry the queue with and without its
+  coverage gate (one episode where the rule is on, seven if it ran in every
+  code), and, after the panel, the rule-off lanes draw those episodes as
+  outlined bars.
+- **Every chart's subtitle** now draws at the 18 px per line `page.js`
+  budgets for it, with 30 px below it for the value axis's name. That is
+  layout, not content, and is the only change to charts 2, 3 and 5.
+
+**Widths reached (K6):** 320, 655, 656 and 1040 px viewports, derived again by
+`src/render_charts.py`; all five charts still cross the 560 px host
+breakpoint between 655 and 656. Recorded in `docs/renders/k6-ladder.json`.
+Renders are now captured with the sticky site header made static for the
+shot, so a card taller than the viewport is no longer captured under it.
+
+**K7, re-run: PASS.** The page's asset URLs carry the md5 of the bytes they
+point at, re-read from the rebuilt page and checked against the files:
+`felix.css` 2be13f8f4a, `page.js` bf5c86ff10, `cascadia-echarts-theme.js`
+fe48511d43, `echarts.min.js` 334d8b37c4, `favicon.svg` 9f2fe5d980. *Correction
+to section 1:* the `page.js` 7e74d35316 and `felix.css` 2676472309 recorded
+there match no committed version of either file; the committed page at
+0a4482c carried `felix.css` 8ed7ac94bf. Section 1 is left as written, as the
+record of what that review said. **K8:** unchanged, PASS, with the same open
+item (the card image exists once the site publishes).
+
+### 6.0 · READING PANEL (Rule 7.4), revision - 2026-10-07
+
+```
+READING PANEL - Cascadia Early Warning, charts 1 and 4 as revised - 2026-10-07
+Decision served (Rule 0.1): unchanged from section 0; the owner of a
+  post-market device review queue choosing, monthly, which product codes are
+  reporting as expected and which deserve a closer look.
+Charts panelled: 2 (module charts 1 and 4, given to the seats as "Chart 1"
+  and "Chart 2")   States: default only (no reader controls)
+Nature: simulated
+
+  Seat 1  Post-market surveillance manager at a manufacturer of Class III
+          cardiovascular devices, 14 years; owns the complaint-handling and
+          MDR review queue - simulated - why this seat: the owner of the
+          decision; she opens the review or does not, on whether a jump is a
+          product signal or a reporting artefact and whether the team can
+          clear the queue this month.
+  Seat 2  Senior demand-planning analyst at a medical device distributor,
+          11 years; signs off on whether a model's back-test is honest before
+          the business may use its numbers - simulated - why this seat: the
+          decision rests on trusting a forecast, and the revision changes
+          which horizon the page leads with; he is the reader who asks
+          whether the stated range was tested at that horizon.
+  Seat 3  Director of Quality Systems at a mid-sized device maker, 20 years
+          in QA and RA; not an analyst; presents at management review and sits
+          across from auditors - simulated - why this seat: the revision
+          rewords what the queue demonstrates, and she is the one who must
+          defend that wording to an auditor.
+  Seat 4  visualization reader - simulated - canvas only; the text under
+          each plot excluded by instruction
+
+The same three domain seats as section 0, re-cast: the decision did not
+change, only what the two charts say about it.
+
+Blindness asserted: design system [x] · review and build notes [x] ·
+                    source data [x] · intended finding from outside the
+                    artifact [x] · other seats' output [x]
+Blind: NOT CERTIFIED, and stronger than section 0's run in one respect. The
+  four seats were spawned together by one workflow (run wf_f9821072-2e2),
+  each as a separate agent of the built-in Explore type, which receives no
+  CLAUDE.md, so no seat had this repository's project file in its context.
+  Each was given four PNG paths under neutral names in a scratch folder and
+  told to open nothing else. Transport was not measured: blindness and
+  parallelism remain self-attestation, as Rule 7.4 says they always are.
+Run: parallel [x]   Author's pre-panel notes recorded: [x]
+                    (governance/pre-panel-notes.md, second section, 17
+                     suspicions, committed at 19578d5 before any seat
+                     existed)
+
+Widths given to every seat: 1040 px viewport (chart element 1000 CSS px)
+                       AND   320 px viewport (chart element 280 CSS px),
+labelled "as it appears on a desktop screen" and "as it appears on a phone",
+and seats were asked where the two differed. The 655 and 656 px renders were
+not given. The renders given were those of 7d275ce, before the fixes below.
+```
+
+### Per-seat returns, verbatim
+
+Not tidied. The seats wrote no em dashes, so no character was changed. The
+seats' "Chart 2" is module chart 4.
+
+
+#### Seat 1 · post-market surveillance manager
+
+````text
+CHART 1: "DSQ: expect about 736 reports in November 2026"
+
+1. The sentence
+They've got a forecast saying the VAD code will see something like 700-odd MAUDE reports in November, give or take a few hundred, and volume has been drifting down since early 2024. Nothing on it tells me whether any of that is a signal.
+
+2. The number
+736 for November, with a range of 376 to 906. I took that from the headline and from the blue label beside the dot column. On the chart itself the dot cluster sits at roughly 750 on the left axis. The label says "point 736 is the tick", but I couldn't find a tick among the dots on the desktop version.
+
+3. The question
+Is this our reports, or every manufacturer under DSQ? It's openFDA, so I assume it's the whole code, but the chart doesn't say. If it's the whole code it tells me nothing about my own queue for November.
+
+4. The gap
+I looked for a breakdown of what's in the count and didn't find one. There's no split for deaths, injuries and malfunctions, none for initial versus supplemental reports, and nothing that would tell me whether a spike like the one in early 2022 (about 2,800) was events or a batch of late or summary reports arriving at once. That's the first thing I'd want to know about any jump. There's also no denominator, so I can't tell whether the drift down is fewer events or fewer devices in the field. The source line even says "counts, not rates". I also didn't follow some of the wording: "eligible" reports (eligible for what?), "ETS candidate", "locked-test months", and the firm-list exclusion that removed 1 of 649,080 reports, which is a far bigger total than this code alone. I'd have to ask about all of those.
+
+Desktop vs phone
+On the desktop the November dots sit right next to the history on the same vertical axis, so I can compare them with recent months by eye. That's the better read. On the phone the forecast moves into its own strip below the chart, with a horizontal 0 to 3K axis, and I lost that comparison. The phone also has a thin vertical line labelled "80% range" sitting right by the "May '24" tick. On first glance it looked like an event marker, or like the band starts in May 2024. The desktop label says the band runs from January 2024. The labels shrink to "exp." and "rec." on the phone, which is fine once you've seen the desktop version.
+
+
+CHART 2: "A retrospective, filtered demonstration..."
+
+1. The sentence
+They ran an alert rule over seven product codes for two and a half years. With their filter on, it fired once, on DSP over last winter, and it didn't go off ahead of any of the 24 Class I recalls.
+
+2. The number
+"1,751 arrived against 678 expected" for DSP, December 2025 to January 2026. That's from the orange annotation above the DSP lane on the desktop version. I can't tell whether 1,751 is a two-month total or one month. If I were repeating the bottom line I'd use "0 of 24 Class I initiations preceded by an episode start", but that comes from the paragraph above the chart, not from the chart itself.
+
+3. The question
+That DSP jump in December and January: was it a real cluster of events, or a pile of late, summary or remediation reports landing in the same window?
+
+4. The gap
+I looked for anything showing whether the flags were product or paperwork, and there's nothing. There's no report type and no event type, only squares. The codes have no names except DSQ, which I only know from the first chart. I also couldn't tell whether "0 of 24 preceded by an episode" counts only the one gated episode or all seven. It matters, because the gate switches the rule off for OZD, the lane with most of the recall diamonds. "Coverage" threw me on first read too. To me that means field population, not whether a forecast range held, and I only half-worked out the gate from the paragraph. For the queue question there's no sense of how many reports one episode would put in front of my team.
+
+Desktop vs phone
+The desktop version is readable. I could count the squares and diamonds month by month and match the annotation to the DSP lane. On the phone the diamonds in the OZD and DSQ lanes run together into a chain I couldn't count. The x-axis drops to three labels, so I couldn't place anything by month. The "one episode" annotation moves below the chart, away from the DSP lane, and the highlighted episode is just a blob. "Rule off" is shortened to "off", so "PYX off" read to me like the code was discontinued. The explanatory paragraph is also a long scroll on the phone before you reach the chart.
+````
+
+#### Seat 2 · demand-planning analyst
+
+````text
+CHART 1: "DSQ: expect about 736 reports in November 2026, 80% range 376 to 906; three-month-ahead ranges held 20 of 22 locked-test months"
+
+1. The sentence.
+"They're forecasting about 736 DSQ reports for November with a range of 376 to 906, and they say the three-month ranges held 20 of 22 test months, but the band they drew is the one-month band, so I never saw the test the headline is selling."
+
+2. The number.
+736, with the 80% range of 376 to 906. I got it from the headline, and the blue note next to the dot column on the right says the same thing. I couldn't read it off the plot on the desktop version. The note says "point 736 is the tick" and I couldn't find a tick among the dots. On the phone the dots sit on their own 0 to 3K axis, and there's a vertical mark around 750 that I took to be it. The "20 of 22" appears only in the headline and the paragraph under the chart. Nothing on the plot lets me count it.
+
+3. The question.
+It's called the ETS "candidate", so what was it up against, and was it picked using the same 22 locked-test months it's now being scored on?
+
+4. The gap.
+I looked for the three-month-ahead back-test itself: which 22 months, where they fall on the timeline, and which two missed. Nothing marks where the locked test starts or stops. I also looked for a hit count on the one-month band they did draw. The May 2024 spike to about 2.2K looks like it goes over the top of the band, but nobody has counted the misses for me. In early 2024 that band runs from near zero to about 2,400, and a range that wide is easy to hold. That's also how I read 20 of 22 on an 80% range. It's 91%, which tells me the range is wider than it claims, or there are too few months to say. It doesn't read as a win. I didn't see a naive benchmark anywhere. The September 2026 estimate (672, 329 to 838) is described in the text, but I couldn't find it on the chart.
+
+Desktop vs phone: On the desktop, the November dots are a vertical column next to the series with no axis of their own. I assumed they share the left axis, but nothing says so, and I couldn't find the 736 tick. The phone puts them on their own horizontal axis with a visible mark, so the forecast is actually easier to read on the phone. The main chart on the phone is cramped: three date labels, "exp."/"rec." as labels, and I couldn't tell where the green line leaves the band.
+
+---
+
+CHART 2: "A retrospective, filtered demonstration: the rule opened one episode in the 128 code-months where coverage enabled it, and seven in all 224 without that gate"
+
+1. The sentence.
+"It's their alert rule replayed over seven codes. With the gate it opened one episode (DSP, Dec 2025 to Jan 2026), without it seven, and none of them came before any of the 24 Class I recalls. The paragraph above the chart says the gate was set on the same months it's being judged on, so I wouldn't call it a test."
+
+2. The number.
+"1,751 arrived against 678 expected". That's the red note above the DSP lane, pointing at the shaded pair of squares at Dec 2025 and Jan 2026. On the phone that note has moved below the chart, away from the lane it describes. I'd also repeat "0 of 24 Class I initiations preceded by an episode", but that comes from the paragraph above the chart. You can't count it off the plot.
+
+3. The question.
+If you freeze the gate at the end of 2025 and score only Jan to Aug 2026, the months it never saw, what does the rule do?
+
+4. The gap.
+I looked for a line where the locked test (2024-01 to 2025-12) ends and didn't find one. 2026 is the only honest stretch here, and the one episode sits right across that boundary. I looked for what "preceded" means, meaning what lead time counts. In DSQ May 2024 and LWS Jul 2025, a flagged month sits directly under a recall diamond, and I can't tell whether those count. I looked for how many flags you'd expect from noise alone. A one-sided 80% bound should be beaten about one month in ten, so roughly 22 of 224, and 30 isn't far off that. The seven ungated episodes aren't drawn as bars in the "rule off" lanes, so I'd have to pair up the hollow squares myself. One thing is simply unclear to me: "where coverage enabled it". I don't know whether coverage means the band hit its stated rate or how complete the data is. I also can't tell from the title whether one episode is the rule working or failing.
+
+Desktop vs phone: The desktop version is countable. On the phone the lanes are squeezed, "rule off" becomes "off", and the OZD lane in 2025 to 2026 is a pile of overlapping diamonds and squares I couldn't count. The episode note under the chart is cut off from the DSP lane.
+````
+
+#### Seat 3 · Director of Quality Systems
+
+````text
+CHART 1: "DSQ: expect about 736 reports in November 2026, 80% range 376 to 906; three-month-ahead ranges held 20 of 22 locked-test months"
+
+1. The sentence.
+Someone is forecasting monthly MAUDE report counts for DSQ, which is the VAD code. They expect about 736 reports in November, somewhere between roughly 400 and 900, and the series has come down a long way from a spike near 2,800 in early 2022.
+
+2. The number.
+736, with a range of 376 to 906. I took that from the headline, not from the plot. On the desktop version I couldn't find the "tick" the annotation says marks 736. What I see is a stack of dots sitting around 700 to 800 on the left axis, plus a few hollow ones, one of them up near 1,250. The other number I'd repeat is the early-2022 peak, just under the 3K gridline. The paragraph under the chart puts it at 2,798.
+
+3. The question.
+Is this counted by FDA receipt date, and are that 2022 spike and the drop since then mostly one manufacturer's filing behaviour? If so, I'm forecasting a reporting process, not how the devices are doing in the field, and I'd have to say that in the room.
+
+4. The gap.
+I looked for a denominator and a split by manufacturer and found neither. The chart says "counts, not rates," which is honest, but without implants in service I can't tell a falling count from a shrinking installed base. I also looked for where the "20 of 22" shows up on the chart. As far as I can tell the shaded band is the one-month-ahead range, so the three-month-ahead track record in the headline is stated, not something I can see or check here. The September estimate of 672 is in the subtitle but I didn't see it plotted. On first read I couldn't place "ETS candidate," "locked-test months," "eligible reports," or the firm-list exclusion of 1 of 649,080 reports. DSQ alone can't be 649,080 reports, so I don't know what population that number refers to.
+
+Desktop vs phone: On the phone, the November forecast moves out of the main chart into its own horizontal strip on a 0 to 3K scale. There I could see a tick at roughly 750 and how the dots spread, so that part was clearer than on desktop. But on the phone the main line from 2024 on is squeezed into a tangle. I couldn't read the line against the band, and the axis has only three dates. The "80% range" label points to a spot near "May '24" while the text says the band starts in Jan 2024, which made me unsure when it starts. "exp./rec." was fine because I'd seen the desktop version. Cold, I'd have had to guess.
+
+CHART 2: "A retrospective, filtered demonstration: the rule opened one episode in the 128 code-months where coverage enabled it, and seven in all 224 without that gate"
+
+1. The sentence.
+They built a flag for unusual jumps in MAUDE counts across seven product codes. In two and a half years it opened one episode where they let it run, on DSP last winter, and it didn't come before any of the 24 Class I recalls. To their credit, they say outright that this is association only, not validation.
+
+2. The number.
+"1,751 arrived against 678 expected," from the red note above the DSP lane, pointing at the shaded pair of squares around Dec 2025 and Jan 2026. It reads like two months added together against two months expected, but it doesn't say so, and I'd want that confirmed before I repeated it. The other number I'd repeat is that 0 of the 24 Class I recall starts had an episode before them. That is only in the subtitle text. The plot doesn't show it to me directly.
+
+3. The question.
+The gate that turns the rule on or off for each code was set using the same 2024 to 2025 months it's being shown on. What does this look like on months the gate never saw? An auditor asks that first about any trending threshold, and I couldn't answer it from this.
+
+4. The gap.
+Any outcome other than the start date of a Class I recall. In my experience, most signals that turn into something become a Class II recall, a field correction or a customer letter. If Class I is the only yardstick, "zero of 24" tells me less than it sounds like it does. I also looked for:
+- what anyone did with the one DSP episode: was it looked into, and was a cause found;
+- names for the codes: chart 1 told me DSQ was the VAD code, but here I get seven three-letter codes with no names.
+
+On first read I didn't understand what "coverage" means in "where coverage enabled it." I also couldn't see why the three lanes holding most of the flags are the ones with the rule turned off.
+
+Desktop vs phone: On the phone the shapes run together. The OZD lane in particular is a string of squares and diamonds I couldn't separate or count, and the PYX diamond sits on top of a square. The red note about the one episode moves below the chart, away from the DSP lane, so I had to hunt for which mark it meant; the shaded block on DSP helped. There are only three dates on the axis, so I couldn't tie anything to a month. On desktop I could count the diamonds and match them to the list underneath. On the phone I'd be relying on that text. The phone subtitle is also a full screen of text before you reach the chart.
+````
+
+#### Seat 4 · visualization reader
+
+````text
+# Reading panel: Chart 1 (DSQ outlook) and Chart 2 (what deserves review)
+
+## Chart 1: "01 The Outlook"
+
+**1. What it's about.** Before reading the title, I saw a monthly count history from Jan 2022 to Aug 2026 (solid green). From early 2024 it has a dashed blue "expected" line and a pale blue band. Off to the right is a separate column of dots for a future month. My read: a series drifting down from a spiky 2022, a one-step-ahead model tracking it, and a forecast for Nov 2026. The title is about something different. Its claim is about one future month plus a back-test hit rate. Most of the ink is history, which the title barely mentions.
+
+**2. Does the picture support the title?**
+- **"Expect about 736 in Nov 2026":** Partly visible. The Nov 2026 dot column sits roughly between 500 and 1,000 on the left axis, with its densest rows around 750–880. The annotation says "point 736 is the tick", but on desktop I could not find a tick separate from the dots; if it is there, the dots cover it. On phone a vertical tick is visible, about three-quarters of the way from 0 to 1K. The exact 736 is taken on faith.
+- **"80% range 376 to 906":** Partly visible. The filled dots run from roughly 400 to roughly 900. The axis is labelled only every 500, with no gridlines, and the column is about 1,100 px from the labels. You can see "roughly 400–900" but not 376 or 906. Those two numbers live only in the annotation.
+- **"Three-month-ahead ranges held 20 of 22 locked-test months":** Not drawn. The band on the chart is the one-month-ahead 80% range (per the subtitle), not the three-month-ahead ranges being scored. The locked-test months are not marked, and nothing shows 22 months or 20 hits. This half is entirely on faith.
+  - There is a trap here. A reader who scores the band that is drawn will see the green line escape it. The mid-2024 spike, about 2.2K, clearly clears the band top of about 2.0K. That is not the test the title is reporting.
+- **Not plotted:** the September 2026 estimate the subtitle describes (point 672) has no mark. Sep and Oct 2026 are both skipped between the Aug 2026 line end and the Nov column.
+
+**3. Right kind of chart?**
+- The history works well as a line with a band.
+- A quantile dot plot is a good form for the Nov 2026 spread.
+- Nothing on the chart has the form a coverage claim needs: past three-month-ahead ranges against outcomes, hit or miss, over the test window. The title's second half and the chart's form don't match.
+
+**4. Hard to read:**
+- **Desktop forecast tick:** no tick I could find in the Nov 2026 column.
+- **Desktop dot column:** it borrows the left axis from across a wide gap, and there are no gridlines.
+- **Counting dots:** the 20 dots are tightly packed. I could not get a confident count, or a clean filled/hollow split, at desktop size.
+- **Overlapping lines:** in 2024–26 the dashed blue and green lines cross constantly, and the dashed line is often hidden.
+- **The band is very pale.**
+- **Uneven x-ticks:** the axis steps every 9 months (Jan 2022, Oct 2022, Jul 2023 …), so months are hard to locate. The last gap (Oct 2025 to Aug 2026) is 10 months, not 9.
+- **"Locked-test":** the term appears in the title but nowhere on the plot.
+
+**5. Without colour.** It survives. Solid versus dashed separates received from expected, and filled versus hollow carries the forecast range. The pale band turns light grey and gets fainter but stays visible. The coloured end labels "expected" and "received" sit next to their line ends in the right order.
+
+**6. The number.** About 750 reports forecast for Nov 2026.
+- On desktop I read it from the densest filled rows of the dot column against the left axis's 500 and 1K labels.
+- On phone I read it from the tick in the Nov '26 panel, about three-quarters of the way from 0 to 1K.
+- The cleanest single read on the chart is the early-2022 peak: about 2.8K, the green line's highest point in its second month, just under the 3K label.
+
+**Desktop vs phone:**
+- **Different layout for the forecast:** the phone moves Nov 2026 into its own panel with a horizontal 0–3K axis. The desktop places it as a column sharing the vertical axis, so the reader has to switch orientation between versions.
+- **Tick visible only on phone.** On the other hand, the phone's dots sit in about the first fifth of a 0–3K axis, which makes them tiny and uncountable.
+- **Main plot crushed:** 56 months fit in about 200 px. Dashed and solid lines merge after 2024.
+- **Shorter labels:** "exp." / "rec.", and "80% range" without "from Jan 2024". Its leader line sits at Jan 2024, which has no tick label.
+- **Edge tick labels shifted:** the end labels ("Jan '22", "Aug '26") seem to be aligned to their outer edges rather than centred. Their midpoints therefore sit a few months inside the dates they mark.
+
+## Chart 2: "04 What Deserves Review"
+
+**1. What it's about.** Before reading the title, I saw a lane timeline: 7 product codes, Jan 2024 to Aug 2026, one hue. The marks are filled squares, hollow squares, diamonds, and one shaded box. My read: a record of when each code was flagged and when recalls happened, with one highlighted event. The title is a count comparison instead: 1 episode with the gate against 7 without. The plot mostly shows timing, and the diamonds (recalls) take up the most ink while the title never mentions them.
+
+**2. Does the picture support the title?**
+- **"Opened one episode … where coverage enabled it":** Visible. There is exactly one shaded box in the four lanes not marked "rule off": DSP, two filled squares just left of the Feb 2026 tick.
+- **"128 code-months" / "all 224":** Not drawn. You can only rebuild them from structure (4 or 7 lanes × 32 months).
+- **"Seven … without that gate":** Not drawn as episodes. In rule-off lanes the would-be episodes are only runs of adjacent hollow squares. No mark sets a run apart from scattered single months. On desktop you can find candidate runs if you hunt (for example, the four adjacent squares at the start of the OZD lane). The chart itself never shows "7".
+- **Terminology mismatch:** the title says "coverage" and "gate", while the lanes say "rule off". The reader has to connect them.
+
+**3. Right kind of chart?** Only partly. A timeline shows the single gated episode and its date well. But the title's point is 1 versus 7, and half of that comparison is never drawn. Marking the ungated runs (a hollow bar, say), or drawing the two counts directly, would match the claim.
+
+**4. Hard to read:**
+- **Diamonds collide with squares.** The "raised" offset is smaller than the glyph, so they merge at:
+  - DSQ May 2024
+  - LWS Jul 2025
+  - PYX Jan 2026
+  - OZD Sep 2025 and Feb 2026
+- **Same-month diamonds overlap each other** at DSP Aug 2024 and OZD Feb 2026 / May 2026.
+- **Ticks every 5 months:** the episode's months (Dec 2025, Jan 2026) have to be counted back from the Feb 2026 tick. The last interval is 6 months.
+- **No divider** between the rule-on and rule-off groups.
+
+**5. Without colour.** It mostly survives, because the chart already uses one hue and relies on shape and fill. The one risk is the pale highlight around the gated episode. In grey it nearly matches the background, which leaves only the two adjacent filled squares to signal it.
+
+**6. The number.** One episode under the gate. It is the single shaded box in the DSP lane, covering the filled squares one and two months left of the Feb 2026 tick (Dec 2025–Jan 2026). The "1,751 arrived against 678 expected" exists only in the annotation, since the chart has no value axis.
+
+**Desktop vs phone:**
+- **Too compressed:** on phone, about 6 px per month means adjacent and one-apart squares look the same. That makes the "seven" runs impossible to count. Diamond runs become chains, for example DSQ early 2024 and OZD 2026.
+- **Annotation detached:** the "one episode" note moves below the plot, away from its mark, with no leader line.
+- **Edge tick labels shifted:** "Jan '24" and "Aug '26" again appear aligned to their outer edges. Read by their midpoints, the episode looks about four months before Aug '26 rather than at Dec 2025–Jan 2026.
+- **Shorter lane labels:** "PYX off" rather than "PYX rule off".
+````
+
+### Disposition
+
+Pooled and deduplicated; sorted by seat count, then chart. The chart column uses the
+module's numbering (the seats' "Chart 2" is chart 4). "Novel" means absent from the second section of
+`governance/pre-panel-notes.md`, committed before any seat existed. The machine-readable record is
+`governance/panel/findings-2026-10-07.json`.
+
+| # | Finding, in the reviewer's words | Seats | n | Chart | Defect? | Novel? | Disposition | Rule |
+|---|---|---|---|---|---|---|---|---|
+| 1 | *"The label says "point 736 is the tick", but I couldn't find a tick among the dots on the desktop version."* | 1, 2, 3, 4 | **4** | 1 | yes | yes | **fixed**: the tick runs past the widest row of dots on both sides | 3.4 |
+| 17 | *"I didn't understand what "coverage" means in "where coverage enabled it.""* | 1, 2, 3, 4 | **4** | 4 | yes | yes | **fixed**: title, subtitle, H2 and KPI use the lanes' own words: where the rule is on, if it ran in every code | 3.1 |
+| 18 | *"The red note about the one episode moves below the chart, away from the DSP lane, so I had to hunt for which mark it meant"* | 1, 2, 3, 4 | **4** | 4 | yes | yes | **fixed**: at the narrow width a short label stands at the episode in reserved headroom | 3.4 |
+| 19 | *"On the phone the shapes run together. The OZD lane in particular is a string of squares and diamonds I couldn't separate or count"* | 1, 2, 3, 4 | **4** | 4 | yes | no | **accepted**: 32 months by 7 lanes in 280 CSS px (first panel finding 18); diamonds raised further | 5.5 |
+| 2 | *"they say the three-month ranges held 20 of 22 test months, but the band they drew is the one-month band, so I never saw the test the headline is selling."* | 2, 3, 4 | **3** | 1 | yes | no | **fixed**: the title states only what the picture carries; the coverage is the subtitle's basis and a second table lists the 22 months | 3.2 |
+| 3 | *"The September 2026 estimate (672, 329 to 838) is described in the text, but I couldn't find it on the chart."* | 2, 3, 4 | **3** | 1 | yes | no | **fixed**: September leaves the chart's subtitle and strip; it stays beside the card and in the table, undrawn | 3.2 |
+| 4 | *"The phone also has a thin vertical line labelled "80% range" sitting right by the "May '24" tick. On first glance it looked like an event marker, or like the band starts in May 2024."* | 1, 3, 4 | **3** | 1 | yes | yes | **fixed**: the narrow label names its month: 80% range from Jan '24 | 3.6 |
+| 6 | *"I also didn't follow some of the wording: "eligible" reports (eligible for what?), "ETS candidate", "locked-test months""* | 1, 3, 4 | **3** | 1 | yes | yes | **accepted**: eligible is replaced and locked-test leaves the title; ETS candidate is the model's name and the method section explains it | 4.3 |
+| 7 | *"The main chart on the phone is cramped: three date labels, "exp."/"rec." as labels, and I couldn't tell where the green line leaves the band."* | 2, 3, 4 | **3** | 1 | yes | yes | **accepted**: 56 months in 280 CSS px; stacking grew the plot from 110 to 158 px; table and navigator carry the values | 5.5 |
+| 5 | *"the firm-list exclusion of 1 of 649,080 reports. DSQ alone can't be 649,080 reports, so I don't know what population that number refers to."* | 1, 3 | **2** | 1 | yes | yes | **fixed**: the strip says across the seven codes; the subtitle says after the firm-list exclusion, not eligible | 4.2 |
+| 8 | *"the phone's dots sit in about the first fifth of a 0–3K axis, which makes them tiny and uncountable."* | 1, 4 | **2** | 1 | yes | no | **accepted**: the strip shares the history's value scale so it reads against it | 5.5 |
+| 9 | *"the November dots are a vertical column next to the series with no axis of their own. I assumed they share the left axis, but nothing says so"* | 2, 4 | **2** | 1 | yes | no | **accepted**: the column is labelled with its month and horizon; empty September and October slots would draw a gap as data | 3.5 |
+| 20 | *"The seven ungated episodes aren't drawn as bars in the "rule off" lanes, so I'd have to pair up the hollow squares myself."* | 2, 4 | **2** | 4 | yes | no | **fixed**: outlined bars in rule-off lanes: one filled and six outlined are the title's seven | 3.2 |
+| 21 | *"Diamonds collide with squares. The "raised" offset is smaller than the glyph, so they merge"* | 3, 4 | **2** | 4 | yes | yes | **fixed**: diamonds raised to -14 px (-11 narrow) and same-month diamonds stepped 12 px (9 narrow) | 5.3 |
+| 22 | *"I looked for what "preceded" means, meaning what lead time counts."* | 1, 2 | **2** | 4 | yes | yes | **fixed**: the subtitle: preceded by the start of a queue episode within the eighteen months before | 4.3 |
+| 23 | *""1,751 arrived against 678 expected" ... It reads like two months added together against two months expected, but it doesn't say so"* | 1, 3 | **2** | 4 | yes | yes | **fixed**: the annotation says peak month | 3.4 |
+| 24 | *"The codes have no names except DSQ, which I only know from the first chart."* | 1, 3 | **2** | 4 | yes | yes | **accepted**: seven device names do not fit lane labels (first panel finding 4); tooltip and table carry them | 4.3 |
+| 25 | *"The phone subtitle is also a full screen of text before you reach the chart."* | 1, 3 | **2** | 4 | yes | no | **accepted**: the subtitle carries the mark key and the gate's basis, which must travel with the chart (4.3) | 3.1 |
+| 27 | *"If you freeze the gate at the end of 2025 and score only Jan to Aug 2026, the months it never saw, what does the rule do?"* | 2, 3 | **2** | 4 | no | - | **rejected**: a chronological test of the queue, out of scope by Aaron's decision (D19); the subtitle names the locked span | - |
+| 10 | *"the 20 dots are tightly packed. I could not get a confident count, or a clean filled/hollow split, at desktop size."* | 4 | 1 | 1 | yes | yes | **accepted**: the count is in the subtitle and summary; the dots carry the spread | 4.5 |
+| 11 | *"the end labels ("Jan '22", "Aug '26") seem to be aligned to their outer edges rather than centred. Their midpoints therefore sit a few months inside the dates they mark."* | 4 | 1 | 1 | yes | yes | **accepted**: declared narrow rule (first panel F-5): edge labels pulled inside the plot so they are not clipped; also chart 4 | K4 |
+| 12 | *"in 2024–26 the dashed blue and green lines cross constantly, and the dashed line is often hidden."* | 4 | 1 | 1 | yes | yes | **accepted**: received is drawn on top by design; the table carries both | 2.3 |
+| 13 | *"There's no split for deaths, injuries and malfunctions, none for initial versus supplemental reports"* | 1 | 1 | 1 | no | - | **rejected**: the module publishes counts by design; the strip says counts, not rates | - |
+| 14 | *"It's 91%, which tells me the range is wider than it claims, or there are too few months to say."* | 2 | 1 | 1 | no | - | **rejected**: a correct reading, not a misreading; chart 3 reports above-nominal coverage as a calibration finding | - |
+| 15 | *"It's called the ETS "candidate", so what was it up against, and was it picked using the same 22 locked-test months it's now being scored on?"* | 2 | 1 | 1 | no | - | **rejected**: a question chart 2's subtitle and the chronology answer: selection used targets through 2023-12 | - |
+| 16 | *"are that 2022 spike and the drop since then mostly one manufacturer's filing behaviour?"* | 3 | 1 | 1 | no | - | **rejected**: the module names no firm and attributes no count, by decision | - |
+| 26 | *""128 code-months" / "all 224": Not drawn. You can only rebuild them from structure"* | 4 | 1 | 4 | yes | no | **fixed**: the counts leave the title for the subtitle | 3.2 |
+| 28 | *"If Class I is the only yardstick, "zero of 24" tells me less than it sounds like it does."* | 3 | 1 | 4 | no | - | **rejected**: the one pre-registered count; association only, as the subtitle says | - |
+| 29 | *"A one-sided 80% bound should be beaten about one month in ten, so roughly 22 of 224, and 30 isn't far off that."* | 2 | 1 | 4 | no | - | **rejected**: a correct reading; the chance illustration is in the method section | - |
+| 30 | *"No divider between the rule-on and rule-off groups."* | 4 | 1 | 4 | no | - | **rejected**: a preference: the lane labels say rule off and the marks are hollow | - |
+| 31 | *"The one risk is the pale highlight around the gated episode. In grey it nearly matches the background"* | 4 | 1 | 4 | yes | yes | **fixed**: the filled bar carries an outline | 5.4 |
+| 32 | *""Rule off" is shortened to "off", so "PYX off" read to me like the code was discontinued."* | 1 | 1 | 4 | yes | yes | **accepted**: declared narrow abbreviation (first panel finding 17) | 5.5 |
+| 33 | *"I also can't tell from the title whether one episode is the rule working or failing."* | 2 | 1 | 4 | no | - | **rejected**: interpretation; the page says an empty queue is a valid result | - |
+| 34 | *"what anyone did with the one DSP episode: was it looked into, and was a cause found"* | 3 | 1 | 4 | no | - | **rejected**: dispositions are the reader's act; the case study's next test describes it | - |
+| 35 | *"there's no sense of how many reports one episode would put in front of my team."* | 1 | 1 | 4 | no | - | **rejected**: the queue's unit is the episode, by the registered rule | - |
+
+### Summary
+
+```
+PANEL: 4 seats, simulated · 2 charts · findings 35 · defects 24 · novel 16
+       fixed 13 · accepted 11 · rejected 11 · multi-seat defects 18
+       D = 12.00 defects/chart · N = 0.67 novel share · R = 0.31 rejected share
+```
+
+Computed by the reading-panel skill's `panel_metrics.py` from
+`governance/panel/findings-2026-10-07.json`.
+
+**Reading these numbers honestly.** D = 12.00 is twice section 0's 6.00, and
+the denominator explains part of it: two charts, each the densest on the page,
+each changed in what it claims. The rest is real. The revision put a second
+horizon on chart 1 (a one-month band beside a three-month column) and a
+counterfactual on chart 4 (seven episodes that were not drawn), and both
+invited exactly the misreadings the seats made. N = 0.67 is above section 0's
+0.40: the author's notes had the horizon pairing, the undrawn seven and the
+missing September, but not the hidden tick, the phone's band label, the
+"coverage" vocabulary or the detached phone annotation, which were the four
+four-seat and three-seat novel findings. R = 0.31 is in the range of section
+0 (0.27).
+
+**The convergence.** Four of four seats fell into the same holes on four
+findings: the point tick that the dots covered on desktop (1), the word
+"coverage" against lanes labelled "rule off" (17), the episode note that
+left its lane on the phone (18) and the phone's merged marks (19, accepted as
+in section 0). Three seats reached the horizon mismatch on chart 1 from three
+directions, and seat 2 put it most plainly: "the band they drew is the
+one-month band, so I never saw the test the headline is selling." That one
+drove the largest change: chart 1's title now states only what its picture
+carries, and the three-month coverage moved to the subtitle with its own
+table of the 22 months.
+
+**The visualization-seat ratio.** Seat 4 was on 19 of the 35 findings and
+18 of the 24 defects; the domain seats raised 6 defects that seat 4 did not,
+including the population behind "1 of 649,080" and what "preceded" counts.
+By the two findings files, seat 4 is on 38 of the 54 defects across both
+panels (the first file gives 20 of 30, where section 0's summary says 17;
+the file is what is counted here). The skill's three-module trigger for
+cutting the domain floor needs more modules than one.
+
+**On the sentence returns.** Six domain-seat sentences, six carried the
+title's claim; none was bland, and two were sharper than the title ("I never
+saw the test the headline is selling"; "so I wouldn't call it a test"). Seat
+4's chart 1 reading split the title into its two claims and passed only the
+first, which is the finding the retitle answers.
+
+**Scope.** Static renders at two widths; tooltips, the keyboard navigator and
+the table disclosures are outside what a seat could see (CHART-REVIEW v2.8,
+7.4 scope clause).
+
+### 6.1 · Checklist A for the revised charts
+
+Only the rows whose result or evidence changed are shown; every other row
+stands as section 2 records it.
+
+| Check | C1 outlook (revised) | C4 review timeline (revised) |
+|---|---|---|
+| 1.1 relationship, matches title | change over time, with a quantile dotplot for one month three ahead; the title claims the forecast and its range, which the column draws | timeline (events over time, one lane per code); the title counts episodes with the rule on and if it ran everywhere, which the filled and outlined bars draw |
+| K1 extent contains series | axis max derived by `niceAxis` over actuals, upper ranges and the twenty dots, at both layouts (the strip shares it) | categorical lanes; no value axis |
+| 2.3.5 categories | 3 | 3 mark types (square, bar, diamond), each filled where the rule is on and hollow or outlined where it is off |
+| 3.2 title readable from the plot | "736": the point tick across the column, now running past the dots (panel 1); "376 to 906": the filled dots and the range rule; "three months ahead": the column's own label. **PASS-BY-EXCEPTION** for the exact figures, computed aggregates carried by the outlook table and the second table, basis in the subtitle ("20 outcomes from its own 36 latest three-month-ahead errors ... with the point as the tick"). The three-month coverage is no longer a title claim | **PASS**: "one episode in the four codes where it is on" is the one filled bar among the four lanes without "rule off"; "seven if it ran in all seven" is that bar plus six outlined bars in the rule-off lanes. 128 and 224 left the title for the subtitle |
+| 3.4 annotation | one, 13 words, above the top dot (wide); in reserved space between the history and the strip (narrow) | one, 14 words, in reserved headroom (wide), now naming the peak month; at the narrow width a 3-word label at the episode in reserved headroom, the full note under the plot |
+| K3 no annotation over a mark | the narrow "80% range from Jan '24" sits in a reserved row with a leader down to the band | the narrow label sits in 24 px reserved above the first lane; diamonds raised to clear squares and bars (panel 21) |
+| 3.6 direct labels | end labels at every width; "exp." and "rec." at 320 | lane labels; one flat key line under the plot, now naming five marks |
+| 4.2 / K5 strip | 3 segments at every width | 3 at every width |
+| 4.3 travels alone | flags: "counts, not rates; the firm-list exclusion removed 1 of 649,080 reports across the seven codes; Nov 2026 is three months ahead"; the subtitle states the horizon of the band and of the column | the subtitle states the rule, the gate's basis and period, both episode counts' marks and the look-back behind "preceded" |
+| 4.5 uncertainty | quantile dotplot of 20 outcomes three months ahead, plus the one-month band over the history | n/a |
+| 5.1 three layers | summary, two tables (the series; the 22 locked-test months at three months ahead), **L3 navigator at both layouts** (the stacked layout keeps it) | summary, table, navigator; each rule-off lane's summary names its episodes if the rule were on |
+| K2 every figure from a query | `forecast.csv` outlook rows selected by origin, `forecast_scored.csv` errors, `monthly_report_count.csv`, `forecast_score.csv` (horizon three); the build fails if the evidence rows disagree with the score cell | `forecast_scored.csv` through `review.py`'s `flagged()` and `golden_episodes()`, `review_queue.csv`, `recall_context.csv`, `recall_count.json`; Path 2 re-derives the flagged months and every drawn episode |
+| 5.4 monochrome | solid against dashed; filled against hollow dots | filled against hollow and outlined; the filled bar carries an outline so it survives grayscale (panel 31) |
+| 5.5 responsive | **FAIL (5)**: below the breakpoint the dotplot turns from a column into a horizontal strip beneath the history. Marks, encodings and value scale are unchanged; the orientation is not, and the exception covers categorical bars only. Done at Aaron's direction (D19) because the side-by-side form gave the history a 110 px plot at 320; recorded as a preference failure, not argued away | form constant; lane labels abbreviate to "off" at 320 (declared) |
+| K6 widths | 320, 655, 656, 1040 | same |
+| 7.1 adversarial read | the panel above; every domain sentence carried the title's claim | same |
+| 7.4 panel as specified | the panel above, at both widths | same |
+
+### Per-chart verdicts, revised
+
+```
+CASCADIA CHART REVIEW v2.8 - C1 the outlook (docs/index.html #c1) - 2026-10-07
+Class: detailed        Quadrant: explanatory
+Relationship: change over time, with a distribution for one month three ahead
+States reached: default only (no controls); tooltips are not a state
+Widths reached (K6): 320, 655, 656, 1040 (crossing at 656, host 560)
+Once per publish (K7, K8): PASS - 2026-10-07
+Reading panel (7.4): section 6.0, 2026-10-07, simulated
+INVARIANTS: all PASS; 3.2 PASS-BY-EXCEPTION (computed aggregates, tables + basis)
+PREFERENCES: 5.5 failed (5): the dotplot changes orientation below the breakpoint (D19)
+N/A: 1.4, 2.6
+INVARIANT FAILURES: 0    PREFERENCE SCORE: 5
+```
+
+```
+CASCADIA CHART REVIEW v2.8 - C4 what deserves review (docs/index.html #c4) - 2026-10-07
+Class: detailed        Quadrant: explanatory
+Relationship: timeline, one lane per code
+States reached: default only (no controls); tooltips are not a state
+Widths reached (K6): 320, 655, 656, 1040 (crossing at 656, host 560)
+Once per publish (K7, K8): PASS - 2026-10-07
+Reading panel (7.4): section 6.0, 2026-10-07, simulated
+INVARIANTS: all PASS
+PREFERENCES: none failed
+N/A: 1.3, 2.1, 2.6, 4.5
+INVARIANT FAILURES: 0    PREFERENCE SCORE: 0
+```
+
+### 6.2 · Charts 2, 3 and 5: unchanged in content
+
+Their data, marks, titles' claims, annotations, strips and summaries are as
+section 2 records them, apart from chart 2's subtitle and strip, which now
+carry the corrected chronology and the review rule's registered wording
+(Steps 3 and 5; the claims the title makes did not change). The only other
+change is the subtitle line height and the 30 px below it, applied to every
+chart. Their verdicts in section 2 stand, with K6 and K7 re-run above. No
+panel was run on them.
+
+### 6.3 · After the panel: the fixes, re-rendered and re-gated
+
+The fixes in the disposition table were made in `src/build_page.py` and
+`docs/assets/page.js`, the page rebuilt, and the K6 ladder re-run: no
+horizontal overflow at any width, every chart drawn, three strip segments
+everywhere. The renders under `docs/renders/` are the fixed ones; the panel
+read the earlier ones, which are in the git history at 7d275ce. Path 2
+(`src/validate_measures.py`) now also compares every episode chart 4 draws
+in a rule-off lane with its own re-derivation; a page copy with PYX's
+outlined episodes removed fails it.

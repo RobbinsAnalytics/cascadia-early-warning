@@ -154,6 +154,10 @@
     }
     return lab;
   }
+  function alpha(hex, a) {
+    var h = hex.replace('#', '');
+    return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
+  }
   function lastIndex(arr) { for (var i = arr.length - 1; i >= 0; i--) if (arr[i] != null) return i; return -1; }
 
   /**
@@ -279,7 +283,9 @@
     ];
     if (iBand >= 0) {
       var bx = ch.convertToPixel({ seriesIndex: 3 }, [iBand, d.hi80[iBand]]);
-      g.push({ type: 'text', x: Math.round(bx[0]), y: gTop - 15, style: { text: '80% range', fill: INK.glacier, font: '12px ' + SANS } });
+      // The label names the month the band begins: at this width the leader stands between tick labels and was
+      // read as the band starting at the nearest one (panel 2026-10-07).
+      g.push({ type: 'text', x: Math.round(bx[0]), y: gTop - 15, style: { text: '80% range from ' + monthTick(d.months[iBand], true), fill: INK.glacier, font: '12px ' + SANS } });
       g.push({ type: 'line', shape: { x1: Math.round(bx[0]) + 0.5, y1: gTop - 2, x2: Math.round(bx[0]) + 0.5, y2: Math.round(bx[1]) },
                style: { stroke: INK.glacier, lineWidth: 1, opacity: 0.6 } });
     }
@@ -325,11 +331,16 @@
     var binStep = ax.interval / 4, bins = {};
     O.dots.forEach(function (v) { var b = Math.round(v / binStep); (bins[b] = bins[b] || []).push(v); });
     function columnX(xLast) { return xLast + endLabelW + dotColW / 2 + 4; }
+    // The point's tick runs past the widest row of dots on both sides, so it shows beside the dots instead of
+    // being covered by them (panel 2026-10-07: no seat could find it at the desktop width).
+    var maxRow = 1;
+    Object.keys(bins).forEach(function (b) { maxRow = Math.max(maxRow, bins[b].length); });
+    var tickHalf = Math.round((maxRow - 1) / 2 * 7 + 3 + 8);
     function dotColumn(params, api) {
       var base = api.coord([n - 1, 0]), cx = columnX(base[0]), kids = [];
       function y(v) { return api.coord([n - 1, v])[1]; }
       kids.push({ type: 'line', shape: { x1: cx, y1: y(O.lo80), x2: cx, y2: y(O.hi80) }, style: { stroke: INK.glacier, lineWidth: 1 }, z2: 1 });
-      kids.push({ type: 'line', shape: { x1: cx - 9, y1: y(O.point), x2: cx + 9, y2: y(O.point) }, style: { stroke: INK.glacier, lineWidth: 2 }, z2: 3 });
+      kids.push({ type: 'line', shape: { x1: cx - tickHalf, y1: y(O.point), x2: cx + tickHalf, y2: y(O.point) }, style: { stroke: INK.glacier, lineWidth: 2 }, z2: 3 });
       Object.keys(bins).forEach(function (b) {
         var vs = bins[b], cy = y(parseInt(b, 10) * binStep);
         vs.forEach(function (v, k) {
@@ -552,16 +563,23 @@
     var d = D.c4, months = d.months, lanes = d.lanes, n = months.length;
     var tb = titleBlock(L, d.finding, d.subtitle), top = tb.top;
     var laneH = L.narrow ? 34 : 40, labelW = L.narrow ? 58 : 150;
-    var headTop = L.narrow ? 0 : 52;
+    // Headroom reserved above the first lane for the episode's label (K3); at the narrow width a short label
+    // stands at the episode itself, because the full note under the plot was read as detached from it.
+    var headTop = L.narrow ? 24 : 52;
     host.style.height = (top + headTop + lanes.length * laneH + 60) + 'px';
     var idx = {}; months.forEach(function (m, i) { idx[m] = i; });
     var flagData = [], epData = [], recData = [];
-    var dx = L.narrow ? 5 : 7, dy = L.narrow ? -5 : -7;
+    // Diamonds are raised clear of the squares and same-month diamonds stepped a full glyph apart (panel
+    // 2026-10-07: at the old offsets they touched the squares beneath them and each other).
+    var dx = L.narrow ? 9 : 12, dy = L.narrow ? -11 : -14;
     lanes.forEach(function (l, li) {
       // A flagged month in a lane with the rule off is drawn hollow: real, and counting for nothing (panel finding 11).
       l.flagged.forEach(function (m) { flagData.push({ value: [idx[m], li], month: m, code: l.code,
         itemStyle: l.enabled ? { color: C.madrona } : { color: C.paper, borderColor: INK.madrona, borderWidth: 1.5 } }); });
       l.episodes.forEach(function (e) { epData.push({ value: [idx[e.start], li, idx[e.end], e.months, e.excess], code: l.code, e: e }); });
+      // In a lane with the rule off, each episode the rule would open if it were on is drawn outlined: it opens
+      // nothing, and it is what the title's second count counts.
+      if (!l.enabled) l.ungated.forEach(function (e) { epData.push({ value: [idx[e.start], li, idx[e.end], e.months, 0], code: l.code, e: e, u: true }); });
       // Diamonds sit above the lane's centre line; same-month events step sideways so each is visible (panel finding 12).
       var seen = {};
       l.classI.forEach(function (r) { var k = seen[r.month] || 0; seen[r.month] = k + 1;
@@ -579,6 +597,7 @@
       tooltip: tip(L, { trigger: 'item', formatter: function (q) {
         var v = q.data;
         if (v.r) return v.code + ': Class I recall event ' + v.r.event + ' initiated ' + v.r.date + '<br>root cause as recorded: ' + (v.r.rootCause || 'not recorded');
+        if (v.e && v.u) return v.code + ': ' + monthShort(v.e.start) + ' to ' + monthShort(v.e.end) + ' (' + v.e.months + ' months) would be an episode if the rule were on; it opens nothing';
         if (v.e) return v.code + ': episode ' + monthShort(v.e.start) + ' to ' + monthShort(v.e.end) + ' (' + v.e.months + ' months), largest excess ' + nf(v.e.excess) + ' reports';
         return v.code + ': ' + monthShort(v.month) + ' flagged: above the 80% upper bound and at least five reports above the point forecast';
       } }),
@@ -588,18 +607,27 @@
           renderItem: function (params, api) {
             var s = api.coord([api.value(0), api.value(1)]), e = api.coord([api.value(2), api.value(1)]);
             var half = api.size([1, 1])[0] / 2, h = Math.max(10, api.size([1, 1])[1] * 0.42);
+            var u = epData[params.dataIndex].u;
+            // Filled with an outline for an episode in the queue (the outline keeps it in grayscale); outline only
+            // for one the rule would open if it were on.
             return { type: 'rect', shape: { x: s[0] - half, y: s[1] - h / 2, width: (e[0] - s[0]) + 2 * half, height: h },
-                     style: { fill: C.madrona, opacity: 0.35 } };
+                     style: u ? { fill: 'rgba(0,0,0,0)', stroke: INK.madrona, lineWidth: 1.5 }
+                              : { fill: alpha(C.madrona, 0.35), stroke: INK.madrona, lineWidth: 1 } };
           } },
         { name: 'Flagged months', type: 'scatter', data: flagData, symbolSize: L.narrow ? 6 : 9, symbol: 'rect', itemStyle: { color: C.madrona }, z: 3 },
         { name: 'Class I recall initiations', type: 'scatter', data: recData, symbolSize: L.narrow ? 8 : 11, symbol: 'diamond',
           itemStyle: { color: C.paper, borderColor: INK.madrona, borderWidth: 1.5 }, z: 4 }
       ]
     };
+    var ep = d.episodeNote, ix = ep ? idx[ep.end] : n - 1;
+    if (L.narrow && ep) {
+      option.series[1].markPoint = { symbol: 'circle', symbolSize: 0, data: [{ coord: [ix, lanes.findIndex(function (l) { return l.code === ep.code; })],
+        label: { show: true, formatter: ep.label, position: 'top', distance: Math.round(laneH / 2 + 2), color: INK.madrona,
+                 fontFamily: SERIF, fontSize: 12, align: ix > n / 2 ? 'right' : 'left' } }] };
+    }
     if (!L.narrow) {
       // The annotation names the episode the title counts (or the absence of one). It sits in headroom reserved
       // above the first lane (K3) and is aligned to the episode's last month; the text names the lane.
-      var ep = d.episodeNote, ix = ep ? idx[ep.end] : n - 1;
       option.series[1].markPoint = annotation(d.annotation, {
         color: ep ? C.madrona : C.slateMoss, coord: [ix, 0], position: 'top', distance: Math.round(laneH / 2 + 6),
         align: ix > n / 2 ? 'right' : 'left', width: Math.min(340, Math.round(L.w * 0.5)), container: L.w, fontSize: 12
@@ -608,7 +636,7 @@
     ch.setOption(option);
     // Key as flat text under the plot (3.6: a legend only where direct labels cannot sit; three mark types in one lane).
     var key = el('key-c4');
-    if (key) key.textContent = 'filled square: flagged month; hollow square: flagged month in a lane with the rule off; bar: episode; diamond, raised: Class I recall initiation';
+    if (key) key.textContent = 'filled square: flagged month; filled bar: episode; hollow square: flagged month in a lane with the rule off; outlined bar: an episode the rule would open if it were on; diamond, raised: Class I recall initiation';
     return finish(host, ch, {
       provenance: d.provenance, summary: d.summary, ariaLabel: d.ariaLabel, noteVisible: L.narrow,
       nav: { chart: ch, label: d.ariaLabel, series: lanes.map(function (l, li) {
@@ -616,7 +644,8 @@
         l.flagged.forEach(function (m) { pts.push({ label: monthShort(m), value: 'flagged', seriesIndex: 1, dataIndex: flagData.findIndex(function (f) { return f.code === l.code && f.month === m; }) }); });
         l.classI.forEach(function (r) { pts.push({ label: r.date, value: 'Class I recall initiated, event ' + r.event, seriesIndex: 2, dataIndex: recData.findIndex(function (f) { return f.code === l.code && f.r.event === r.event; }) }); });
         return { name: l.code + (l.enabled ? '' : ' (rule disabled)'),
-                 summary: l.flagged.length + ' flagged months, ' + l.episodes.length + ' episodes, ' + l.classI.length + ' Class I initiations',
+                 summary: l.flagged.length + ' flagged months, ' + l.episodes.length + ' episodes' +
+                          (l.enabled ? '' : ' (' + l.ungated.length + ' if the rule were on)') + ', ' + l.classI.length + ' Class I initiations',
                  points: pts.length ? pts : [{ label: 'none', value: 'no flags, no episodes, no Class I initiation', seriesIndex: 1, dataIndex: 0 }] };
       }) }
     }, L);

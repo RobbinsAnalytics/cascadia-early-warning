@@ -42,6 +42,10 @@ Diabetes codes are high-volume, summary-eligible and near-firm series.
 **Carried by:** `src/acquire.py` (`COHORT`); `data/conformed/cohort_gate.csv`;
 `governance/numbers-gate.md`.
 
+**Corrected 2026-10-07 (D19).** DSP is Class II, not Class III, and NPT is
+eligible for malfunction summary reporting, not ineligible; both facts are in
+`data/conformed/product_code.csv`. The cohort is unchanged.
+
 ## D3 · Exclusion by a private token list, with a public receipt
 
 A list of firm-name tokens lives at `governance/exclusion-list.local.txt`,
@@ -130,6 +134,9 @@ recorded in `config/model.json`.
 
 **Carried by:** `src/score.py`; `src/validate_measures.py` (independent
 recomputation); `config/model.json` (`promoted`).
+
+**Corrected 2026-10-07 (D19).** The independent recomputation covers the
+scores; no second path re-applies the promotion rule to them.
 
 ## D9 · The review rule
 
@@ -389,3 +396,87 @@ comes off the freeze gate's protected list. The tables it is computed from
 stay frozen, so no frozen figure can move without the gate failing, and the
 weekly rebuild no longer reads as a breach. Carried by
 `governance/freeze.toml`.
+
+---
+
+*Layer 3, 2026-10-07: two external reviews, Build Brief 2.1.*
+
+## D19 · Two external reviews corrected; the page leads with November and shows its charts first; the case study moves into this repository
+
+Two external reviews, one of the module page and one of the site's case
+study, found claims that ran ahead of the evidence. Cowork checked each
+finding against disk and every one held. **Aaron's decisions, 2026-10-07:**
+make every correction from both reviews; lead with the November 2026 outlook
+at horizon three, carrying its own horizon-three evidence; visuals first, with
+the method and receipts at the end and walls of text broken into lists; fix
+the mobile reading order, stack chart 1 at narrow widths and capture renders
+without the sticky header; close with "Check the forecast and the evidence.";
+make the case study a Felix page in this repository beside the module, in the
+review's five sections with an authorship paragraph; describe the live edge
+from its run history, with the weekly schedule registered by Aaron at
+publication; and leave a chronological test of the review queue out of scope.
+
+**Nothing the build computed changed.** The frozen tables, the locked test,
+the promotion, the review rule (`src/review.py`, `MIN_EXCESS`,
+`COVERAGE_FLOOR`), the G5 band, the cohort and the pre-registration are as
+committed, and `git diff --stat 0a4482c -- data/` prints nothing. What changed
+is what the pages say, how they are laid out, and what the gates check.
+
+**What each step changed.**
+- `200ba12` The runner. `Step`'s parameter was named `$args`, PowerShell's
+  empty automatic variable inside the body, so no stage had ever run through
+  `run.ps1`. Renamed; a failing stage's own exit code reaches the caller;
+  `build` runs `build_page.py` only, because the engine stages write frozen
+  tables.
+- `e14c01f` Cohort facts. The cohort label ("seven cardiovascular product
+  codes spanning Classes II and III") and the summary-eligibility statement
+  are generated from `product_code.csv`, NPT's summary composition from the
+  record table, and `check_cohort_facts` fails a page that disagrees.
+- `cd82530` The review rule in the review's words everywhere it is stated;
+  the chance rate as an illustration under stated conditions.
+- `950876c` The queue as a retrospective, filtered demonstration: 1 episode
+  in the 128 code-months of the four enabled codes against 7 in all 224
+  without the gate, computed at build by `review.py`'s own functions and
+  re-derived by Path 2 from the page's data block.
+- `2a03574` Chronology in the review's words; the harness-assigned issue
+  dates disclosed.
+- `7b80d74` Assurance stated to its evidence (a boundary statement in place of
+  "every number was re-derived"); "one corrected result" in place of "ran
+  once"; scenarios for the four checks that had none.
+- `0aac59b` Distinct report totals (649,080; 649,079 eligible), with the sum
+  labelled as 649,083 report-code memberships, re-derived by Path 2.
+- `f08d65e` November 2026 at horizon three leads, beside its own coverage
+  (20 of 22 locked-test months); September stays as the elapsed-period
+  estimate; promotion on horizon one stated once.
+- `14c99ff` Visuals first: five sections, each leading with its chart, the
+  method and receipts at the end; `check_words_before_chart` holds the first
+  four sections to 40 words between H2 and chart.
+- `7d275ce` Chart 1 stacks below the breakpoint; the hero lede is 35 words;
+  renders are captured with the sticky header static.
+- `143f497` The closing block.
+
+**Corrections to this record.** D2 says the seven codes are "Cardiovascular
+Class III" and "ineligible for malfunction summary reporting": DSP is Class II
+and NPT is summary-eligible, with 4,179 summary reports standing for 149,569
+events. The cohort is unchanged; the statement was wrong, and the page and the
+metric register now say what `product_code.csv` says. D8's "Carried by"
+credits `src/validate_measures.py` with independent recomputation; it
+recomputes the scores, not the promotion judgement, which no second path
+re-applies. D9 was committed at 17:20, two minutes after the first count
+series was retrieved, so the rule is described as registered before the
+first forecast existed, not as fixed before the data was pulled. And the
+live edge scores the frozen outlook rows when their month first appears, so
+the page no longer says September's estimate is never scored.
+
+*Counterfactual:* correcting only the case study and leaving the module page's
+claims for a later build, which would have published two pages that disagree;
+or recomputing the coverage gate from the development period to make the
+queue a chronological test, which Aaron has ruled out of scope and which would
+be a new result, not a correction.
+
+**Carried by:** `run.ps1`; `src/build_page.py`; `src/validate.py`
+(`check_cohort_facts`, `check_words_before_chart`, the scenarios);
+`src/validate_measures.py` (the page's own figures); `src/render_charts.py`;
+`docs/template.html`; `docs/assets/page.js`; `governance/metric_register.md`;
+`governance/numbers-gate.md` (G6); `governance/chart-review.md` and
+`governance/pre-panel-notes.md` (the revision panel of 2026-10-07).

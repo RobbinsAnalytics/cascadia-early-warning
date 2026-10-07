@@ -453,15 +453,27 @@ def chart1(d, code):
     s_point, s_lo80, s_hi80 = float(sep["point"]), float(sep["lower80"]), float(sep["upper80"])
     h_word = num_word(LEAD_H)
     last_actual = actual[-1]
-    finding = ("%s: expect about %s reports in %s, 80%% range %s to %s; %s-month-ahead ranges held %d of %d locked-test months"
-               % (code, nf(o_point), month_name(o_target), nf(o_lo80), nf(o_hi80), h_word, cov_in, cov_n))
-    subtitle = ("Eligible reports received per month for %s (%s), %s to %s, with the %s's one-month-ahead points and 80%% range over the "
-                "evaluated months. The column is %s, forecast %s months ahead from %s by the same model: %d outcomes from its own %d latest "
-                "%s-month-ahead errors, filled inside the 80%% range. %s, one month ahead (point %s, 80%% range %s to %s), is an "
-                "elapsed-period estimate: the month had ended when it was issued on %s, and it is not yet in the source."
+    # The evidence for the horizon the column is drawn at: every locked-test target at that horizon, its range
+    # and whether the actual fell inside (inclusive at the bound, as M-04 scores it). The title states only what
+    # the picture carries (panel 2026-10-07); this coverage is the subtitle's basis and the second table's rows.
+    ev = [r for r in fc_rows(d, code, use, LEAD_H, "locked") if r["lower80"] != ""]
+    ev_rows = []
+    for r in ev:
+        y = d["eligible"][(code, r["target"])]
+        ev_rows.append([month_short(r["target"]), month_short(r["origin"]), nf(y), nf(r["point"]), nf(r["lower80"]), nf(r["upper80"]),
+                        "yes" if float(r["lower80"]) <= y <= float(r["upper80"]) else "no"])
+    if (len(ev_rows), sum(1 for x in ev_rows if x[-1] == "yes")) != (cov_n, cov_in):
+        raise SystemExit("chart 1 evidence: %d rows, %d inside; the score cell says %d and %d"
+                         % (len(ev_rows), sum(1 for x in ev_rows if x[-1] == "yes"), cov_n, cov_in))
+    finding = ("%s: expect about %s reports in %s, %s months ahead, with an 80%% range of %s to %s"
+               % (code, nf(o_point), month_name(o_target), h_word, nf(o_lo80), nf(o_hi80)))
+    subtitle = ("Reports received per month for %s (%s) after the firm-list exclusion, %s to %s, with the %s's one-month-ahead points "
+                "and 80%% range over the evaluated months. The column is %s, forecast %s months ahead from %s by the same model: %d "
+                "outcomes from its own %d latest %s-month-ahead errors, filled inside the 80%% range, with the point as the tick across "
+                "them. At %s months ahead its 80%% ranges held %d of the %d locked-test months, %s to %s, which the second table lists."
                 % (code, d["names"].get(code, ""), month_short(months[0]), month_short(months[-1]), model_label(use),
-                   month_name(o_target), h_word, month_name(origin), DOT_N, n_err, h_word,
-                   month_name(sep["target"]), nf(s_point), nf(s_lo80), nf(s_hi80), sep["issue_date"]))
+                   month_name(o_target), h_word, month_name(origin), DOT_N, n_err, h_word, h_word, cov_in, cov_n,
+                   month_short(ev[0]["target"]), month_short(ev[-1]["target"])))
     annotation = "point %s is the tick; filled dots span the 80%% range, %s to %s" % (nf(o_point), nf(o_lo80), nf(o_hi80))
     rep = d["rf"]["reports"]
     removed, countable = rep["distinctRaw"] - rep["distinctEligible"], rep["distinctRaw"]
@@ -492,9 +504,9 @@ def chart1(d, code):
         "finding": finding, "subtitle": subtitle, "annotation": annotation, "summary": summary,
         "ariaLabel": summary,
         "provenance": {"source": no_sep(SOURCE, "source"), "asOf": no_sep("receipts through " + AS_OF, "asOf"),
-                       "flags": no_sep("counts, not rates; the firm-list exclusion removed %s of %s reports; %s is %s months ahead; %s is an elapsed-period estimate"
-                                       % (nf(removed), nf(countable), month_short(o_target), h_word, month_short(sep["target"])), "flags")},
-        "table": table,
+                       "flags": no_sep("counts, not rates; the firm-list exclusion removed %s of %s reports across the %s codes; %s is %s months ahead"
+                                       % (nf(removed), nf(countable), num_word(len(d["forecast_codes"])), month_short(o_target), h_word), "flags")},
+        "table": table, "evidence": ev_rows,
     }
 
 
@@ -593,11 +605,16 @@ def chart4(d):
     lanes = []
     for code in d["forecast_codes"]:
         use = d["in_use"][code]
-        flagged = []
+        flagged, rule_rows = [], []
         for r in d["scored"]:
             if r["product_code"] == code and r["model"] == use and r["horizon"] == "1" and r["period"] in EVALUATED:
-                if rule_flagged({"actual": float(r["actual"]), "point": float(r["point"]), "upper80": float(r["upper80"])}):
+                row = {"target": r["target"], "actual": float(r["actual"]), "point": float(r["point"]), "upper80": float(r["upper80"])}
+                rule_rows.append(row)
+                if rule_flagged(row):
                     flagged.append(r["target"])
+        # Every episode the rule opens with no gate, by review.py's own golden_episodes(): in a lane with the rule on
+        # these are the queue's episodes; in a lane with it off they are drawn outlined and open nothing.
+        ungated = [{"start": s, "end": e, "months": k} for s, e, k in rule_episodes(rule_rows)]
         eps = [{"start": q["episode_start"], "end": q["episode_end"], "months": int(q["months_in_episode"]),
                 "excess": float(q["max_excess_over_point"]), "status": q["status"]}
                for q in d["queue"] if q["product_code"] == code]
@@ -608,7 +625,7 @@ def chart4(d):
                             "rootCause": r["root_cause"]})
         w = next(x for x in d["work"] if x["product_code"] == code)
         lanes.append({"code": code, "name": d["names"].get(code, ""), "model": use, "enabled": w["rule_enabled"] == "true",
-                      "flagged": sorted(flagged), "episodes": eps, "classI": sorted(rec, key=lambda r: r["date"])})
+                      "flagged": sorted(flagged), "episodes": eps, "ungated": ungated, "classI": sorted(rec, key=lambda r: r["date"])})
     # Lanes with the rule on first, each group by flagged months (Rule 2.7: a declared order, stated in the subtitle).
     lanes.sort(key=lambda l: (not l["enabled"], -len(l["flagged"]), l["code"]))
     n_off = sum(1 for l in lanes if not l["enabled"])
@@ -627,21 +644,23 @@ def chart4(d):
         raise SystemExit("chart 4 draws %d flagged months; the rule re-run gives %d" % (n_fl, sum(p["flagged"] for p in qd["perCode"].values())))
     rate = n_ep / qd["enabledMonths"] if qd["enabledMonths"] else 0.0
     ep_word = lambda n: "%s episode%s" % (num_word(n), "" if n == 1 else "s")  # noqa: E731
-    finding = ("A retrospective, filtered demonstration: the rule opened %s in the %d code-months where coverage enabled it, "
-               "and %s in all %d without that gate"
-               % (ep_word(qd["gatedEpisodes"]) if qd["gatedEpisodes"] else "no episode", qd["enabledMonths"],
-                  num_word(qd["ungatedEpisodes"]) if qd["ungatedEpisodes"] else "none", qd["evaluatedMonths"]))
+    n_on = len(lanes) - n_off
+    finding = ("A retrospective, filtered demonstration: the rule opened %s in the %s codes where it is on, and would open %s "
+               "if it ran in all %s"
+               % (ep_word(qd["gatedEpisodes"]) if qd["gatedEpisodes"] else "no episode", num_word(n_on),
+                  num_word(qd["ungatedEpisodes"]) if qd["ungatedEpisodes"] else "none", num_word(len(lanes))))
     off_ungated = sum(p["ungated"] for p in qd["perCode"].values() if not p["enabled"])
     subtitle = ("One lane per code, %s to %s; lanes with the rule on come first, each group ordered by flagged months. %s "
-                "A filled square is a flagged month (the rule is one-sided by design); a hollow square is the "
-                "same in a lane with the rule off, where it opens no episode; a bar is an episode of two or more consecutive filled squares; "
-                "a diamond, raised above the lane, is the firm-initiated date of a Class I recall event in that code, same-month events side "
-                "by side. Each code's rule was enabled from its coverage in the %s locked test, the same months it is then applied to, so the "
-                "gate saw the period it filters; %d of the %d flagged months, and %d of the %d episodes the ungated rule would open, fall in the "
-                "%d lanes with the rule off. Of the %d Class I initiations, %d were preceded by an episode start. Association only: the "
-                "timeline is context, not validation."
-                % (month_short(EVAL_START), month_short(EVAL_END), RULE, period_span(d, "locked"), n_off_flags, n_fl,
-                   off_ungated, qd["ungatedEpisodes"], n_off, rc_init, rc_prec))
+                "A filled square is a flagged month (the rule is one-sided by design) and a filled bar an episode, two or more in a row; "
+                "in a lane with the rule off a hollow square is a flagged month and an outlined bar an episode the rule would open if it "
+                "were on, and neither opens anything. A diamond, raised above the lane, is the firm-initiated date of a Class I recall event "
+                "in that code. The rule is on for a code only where its 80%% ranges held at least %s of the %s locked-test months, the same "
+                "months it is then applied to (%d code-months with the rule on, %d in all); %d of the %d flagged months and %d of the %d "
+                "episodes fall in the %d lanes with the rule off. Of the %d Class I initiations, %d were preceded by the start of a queue "
+                "episode within the %s months before. Association only: the timeline is context, not validation."
+                % (month_short(EVAL_START), month_short(EVAL_END), RULE, pct(COVERAGE_FLOOR), period_span(d, "locked"),
+                   qd["enabledMonths"], qd["evaluatedMonths"], n_off_flags, n_fl, off_ungated, qd["ungatedEpisodes"], n_off,
+                   rc_init, rc_prec, num_word(int(rc["lookback_months"]))))
     # The annotation names the episode the title counts; with none, it says so (Rule 3.4: at the mark the claim depends on).
     ep_note, best = None, None
     for l in lanes:
@@ -653,13 +672,16 @@ def chart4(d):
         peak = max((r for r in d["scored"] if r["product_code"] == l["code"] and r["model"] == l["model"] and r["horizon"] == "1"
                     and e["start"] <= r["target"] <= e["end"]), key=lambda r: float(r["actual"]) - float(r["point"]))
         ep_note = {"code": l["code"], "start": e["start"], "end": e["end"], "actual": float(peak["actual"]), "point": float(peak["point"])}
-        annotation = ("%s episode: %s, %s to %s, %s arrived against %s expected"
-                      % ("the one" if n_ep == 1 else "largest", l["code"], month_short(e["start"]), month_short(e["end"]),
+        # The figures are the episode's peak month, and the annotation says so (panel 2026-10-07: two seats read
+        # them as the two months added together).
+        annotation = ("%s episode, %s %s to %s: peak month %s against %s expected"
+                      % ("one" if n_ep == 1 else "largest", l["code"], month_short(e["start"]), month_short(e["end"]),
                          nf(ep_note["actual"]), nf(ep_note["point"])))
+        ep_note["label"] = "the one episode" if n_ep == 1 else "largest episode"
     else:
         annotation = "no two consecutive flagged months in any lane; the review queue is empty"
     summary = ("Timeline chart with %d lanes, one per product code, over %d months from %s to %s. Flagged months: %d in total (%s). "
-               "Episodes with the coverage gate: %d. Episodes the same rule opens without the gate: %d (%s). "
+               "Episodes where the rule is on: %d. Episodes if the rule ran in every code: %d (%s). "
                "Class I recall initiations in the span: %d (%s)."
                % (len(lanes), len(months), month_short(EVAL_START), month_short(EVAL_END), n_fl,
                   "; ".join("%s %d" % (l["code"], len(l["flagged"])) for l in lanes) or "none", n_ep, qd["ungatedEpisodes"],
@@ -876,7 +898,7 @@ def main() -> int:
         "floor": pct(COVERAGE_FLOOR),
         "s1_h2": html.escape("%s: about %s reports expected in %s, %s months ahead"
                              % (code, nf(c1["outlook"]["point"]), month_name(c1["outlook"]["target"]), num_word(c1["outlook"]["horizon"]))),
-        "s3_h2": html.escape("%s with the coverage gate, %s without it"
+        "s3_h2": html.escape("%s where the rule is on, %s if it ran in every code"
                              % (("%s episode" if qd["gatedEpisodes"] == 1 else "%s episodes") % num_word(qd["gatedEpisodes"]).capitalize(),
                                 num_word(qd["ungatedEpisodes"]))),
         "recall_span": "%s to %s" % (cfg["history_start"], AS_OF[:7]),
@@ -921,7 +943,13 @@ def main() -> int:
         "c1_card": chart_card("c1", "01", "The outlook", 480, "glacier", c1["annotation"],
                               [("Chart 1 data: %s by month with the one-month-ahead point and 80%% range, then %s and %s" % (code, month_short(c1["elapsed"]["target"]), month_short(c1["outlook"]["target"])),
                                 table("tbl-c1", "Chart 1 data: eligible reports per month for %s, the model in use's one-month-ahead point and 80%% range, then the outlook at one and %s months ahead (M-01, M-03)" % (code, num_word(c1["outlook"]["horizon"])),
-                                      ["Month", "Reports received", "Point", "80% low", "80% high"], c1["table"]))]),
+                                      ["Month", "Reports received", "Point", "80% low", "80% high"], c1["table"])),
+                               ("Chart 1 evidence: %s's %s-month-ahead forecasts in the locked test, %d of %d inside the 80%% range"
+                                % (code, num_word(c1["outlook"]["horizon"]), c1["outlook"]["coverageIn"], c1["outlook"]["coverageN"]),
+                                table("tbl-c1-evidence", "Chart 1 evidence: every locked-test month %s was forecast %s months ahead, the 80%% range "
+                                      "issued for it and whether the reports received fell inside (M-03, M-04)" % (code, num_word(c1["outlook"]["horizon"])),
+                                      ["Target month", "Issued from", "Reports received", "Point", "80% low", "80% high", "Inside the range"],
+                                      c1["evidence"]))]),
         "c2_card": chart_card("c2", "02", "The locked test", 460, "madrona", c2["annotation"],
                               [("Chart 2 data: the locked test for %s" % code,
                                 table("tbl-c2", "Chart 2 data: locked-test months for %s, actual against both models and the 80%% range (M-03, M-04)" % code,
@@ -933,7 +961,7 @@ def main() -> int:
         "c4_card": chart_card("c4", "04", "What deserves review", 420, "madrona", c4["annotation"],
                               [("Chart 4 data: flags, episodes and Class I initiations by code",
                                 table("tbl-c4", "Chart 4 data: flagged months, episodes and Class I recall initiations by code, 2024-01 to 2026-08 (M-05, M-06)",
-                                      ["Code", "Device", "Model in use", "Rule enabled", "Flagged months", "Which", "Episodes", "Episodes without the gate", "Class I initiations"], c4["table"]))]),
+                                      ["Code", "Device", "Model in use", "Rule on", "Flagged months", "Which", "Episodes", "Episodes if the rule ran in every code", "Class I initiations"], c4["table"]))]),
         "c5_card": chart_card("c5", "05", "How complete is the recent record", 420, "evergreen", c5["annotation"],
                               [("Chart 5 data: %s by event month and receipt lag" % code,
                                 table("tbl-c5", "Chart 5 data: %s reports by event month, received within 3, 6 and 12 months (M-02)" % code,
@@ -945,7 +973,7 @@ def main() -> int:
         "t_queue": table("tbl-queue", "The review queue: every episode under the fixed rule (M-05)",
                          ["Code", "Model in use", "Start", "End", "Months", "Largest excess over point", "Status"], queue_rows),
         "t_work": table("tbl-work", "Workload: evaluated months, flagged months and episodes by code (M-05)",
-                        ["Code", "Model in use", "Rule enabled", "Locked 80% coverage", "Evaluated months", "Flagged months", "Episodes", "Episodes per month", "Episodes without the gate"], work_rows),
+                        ["Code", "Model in use", "Rule on", "Locked 80% coverage", "Evaluated months", "Flagged months", "Episodes", "Episodes per month", "Episodes if the rule ran in every code"], work_rows),
         "t_recall": table("tbl-recall", "Recall events in these codes initiated 2016-01-01 to 2026-08-31, deduplicated on event number (M-06)",
                           ["Initiated", "Codes", "Class", "Classified", "Root cause as recorded", "Product records", "Reason cites reports", "Event"], recall_rows),
         "t_gate": table("tbl-gate", "The cohort gate: 36 complete months and 120 eligible training reports (D2)",

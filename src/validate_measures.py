@@ -471,7 +471,7 @@ def main() -> int:
             fail("M-05 %s: published episodes %s, re-derived %s" % (code, pub, eps))
         if int(w["evaluated_months"]) != len(rows) or int(w["episodes"]) != len(eps):
             fail("M-05 %s: workload evaluated/episodes %s/%s, re-derived %d/%d" % (code, w["evaluated_months"], w["episodes"], len(rows), len(eps)))
-        q2[code] = {"enabled": enabled, "months": len(rows), "ungated": len(ungated), "gated": len(eps),
+        q2[code] = {"enabled": enabled, "months": len(rows), "ungated": len(ungated), "gated": len(eps), "ungated_eps": sorted(ungated),
                     "flagged": sorted(r["target"] for r in rows if r["actual"] > r["upper80"] and r["actual"] - r["point"] >= 5)}
     print("M-05: %d codes compared, %d published episodes" % (len(work), len(queue)))
 
@@ -517,13 +517,16 @@ def main() -> int:
                     fail("page %s queue %s: published ungated/flagged %s/%s, re-derived %d/%d"
                          % (page.name, code, pc.get("ungated"), pc.get("flagged"), v["ungated"], len(v["flagged"])))
         for lane in (data.get("c4") or {}).get("lanes", []):
-            checked += 1
+            checked += 2
             if sorted(lane["flagged"]) != q2.get(lane["code"], {}).get("flagged"):
                 fail("page %s chart 4 %s: draws flagged months %s, re-derived %s" % (page.name, lane["code"], lane["flagged"], q2.get(lane["code"], {}).get("flagged")))
+            drawn = sorted((e["start"], e["end"], int(e["months"])) for e in lane.get("ungated", []))
+            if drawn != q2.get(lane["code"], {}).get("ungated_eps"):
+                fail("page %s chart 4 %s: carries episodes-if-on %s, re-derived %s" % (page.name, lane["code"], drawn, q2.get(lane["code"], {}).get("ungated_eps")))
         n_page += 1
     if not n_page:
         fail("no built page under docs/ to compare")
-    print("page: %d page(s) compared (distinct report totals, queue with and without the gate, chart 4's flagged months)" % n_page)
+    print("page: %d page(s) compared (distinct report totals, queue with and without the gate, chart 4's flagged months and episodes)" % n_page)
 
     return report(checked, failures)
 
