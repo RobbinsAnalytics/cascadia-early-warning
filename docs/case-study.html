@@ -65,6 +65,15 @@
   .table-expand:focus-visible, .table-dialog-close:focus-visible { outline:2px solid var(--color-teal); outline-offset:2px; }
   .table-wrap th:first-child, .table-wrap td:first-child { position:sticky; left:0; z-index:1; background:#fff; box-shadow:1px 0 0 var(--color-line); }
   .table-wrap thead th:first-child { background:var(--color-mist-2); z-index:2; }
+  /* Below 640 px the pinned column may wrap, capped, so a long row label cannot take the width the other columns
+     need (one-pass review, Build Brief 2.3: tbl-c1's two long labels pinned 216 of 234 px at 320). */
+  @media (max-width: 639.98px) {
+    .table-wrap th:first-child, .table-wrap td:first-child { white-space:normal; min-width:0; max-width:6.5rem; }
+  }
+  @media (max-width: 639.98px) {
+    /* The results table stacks here, so it is not pinned (and draws no hairline beside its row labels). */
+    #case-results th, #case-results td { position:static; box-shadow:none; max-width:none; }
+  }
   html.table-dialog-open, html.table-dialog-open body { overflow:hidden; }
   .table-dialog { width:100vw; height:100dvh; max-width:100vw; max-height:100dvh; margin:0; padding:0; border:0;
                   background:var(--color-paper); color:var(--color-ink); overflow:hidden; }

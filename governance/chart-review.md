@@ -1194,3 +1194,64 @@ C5  INVARIANTS: all PASS; 2.3.6 PASS-BY-EXCEPTION, as section 2
     PREFERENCES: none failed                 INVARIANT FAILURES: 0    PREFERENCE SCORE: 0
 VERDICT: SHIP, each chart as its previous verdict stands, with the two judgments above for Aaron
 ```
+
+---
+
+## 9 · Revision of 2026-10-07: collapsed descriptions and full-screen tables (Build Brief 2.3, D21)
+
+*No mark, no data, no title, subtitle, bullet or annotation changed. A
+revision gets the gate and a link, not a new panel (`CLAUDE.md`). The links
+are commits `2a13793` (contrast and descriptions) and `9f538b7` (tables and
+gates), and the commit that carries this note.*
+
+**What changed around the charts.**
+- Each chart's description (Rule 5.1 layer 1) sits in a closed disclosure,
+  "Chart description: ...", first in the DOM and above the canvas, as 5.1
+  requires.
+- The canvas's `aria-describedby` points at a hidden copy of the same text,
+  because Chromium does not read text inside a closed `<details>`.
+- Every data table (layer 2) opens full screen, and its row-label column is
+  pinned. That is the "sticky row-label column" 5.1 names as the scroll
+  affordance, beside the scroll cue already there.
+
+**Checklist A, the rows that moved.**
+- **5.1 three layers:** PASS on all six charts. The summary is in the DOM
+  before the chart. Collapsed, it is still announced, as the chart's
+  description (CDP accessibility tree, every chart, closed and open). The
+  table, and the navigator where there is one, are unchanged.
+- **5.3 WCAG 2.2 AA:** the row labels around the charts now measure 5.96:1
+  on lime and 7.43:1 on white. A scan of all visible text on both pages
+  finds nothing else under 4.5:1 but the Felix wordmark (D21).
+- **K6:** both ladders re-derived: 320, 655, 656 and 1040, crossing at 656.
+  At every width there is no overflow, every chart is drawn, the strip has
+  three segments and there is no console error. `render_charts.py --dialog`
+  passed at 320 and 1040 for tbl-outlook and tbl-work on the module and for
+  tbl-c3 and case-results on the case study.
+
+**Verdicts:** unchanged from section 8 (C1 preference score 5; the rest 0;
+no invariant failures). **VERDICT: SHIP.**
+
+### 9.1 · One reviewer pass, 2026-10-07
+
+One reviewer, one pass, the brief's fixed checklist, in the browser at 320
+and 1040 on both pages.
+
+**Passed:**
+- (a) keyboard: every "Expand table" control is reached by Tab once its
+  disclosure is open, Enter opens the dialog, and Esc closes it for all 16
+  tables. The X and an outside click also close it for tbl-outlook, tbl-work
+  and case-results. Focus returns to the control every time.
+- (b) the dialog's accessible name equals the table's title in all 32
+  openings.
+- (c) every description is closed on load, opens on click, equals the data
+  block's summary, and is announced while closed.
+- (d) the row labels measure 5.96:1 on lime and 7.43:1 on white.
+- (e) the pinned column is opaque at every scroll position and never shows
+  another column through it.
+
+**One failure, fixed.** At 320 px, chart 1's table pinned a 216 px first
+column in a 234 px wrapper, because two long no-wrap row labels set its
+width: 18 px was left for the data inline, 62 px in the dialog. Below 640
+px the pinned column now wraps, capped at 6.5rem. It is 74 px, leaving 160
+px. **One note, fixed:** a 1 px rule beside the stacked results table's row
+labels at 320; that table is no longer pinned where it stacks.

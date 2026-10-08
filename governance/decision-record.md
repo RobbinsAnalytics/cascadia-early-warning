@@ -626,3 +626,120 @@ removed the blank block but let a wide table's title scroll away with it.
   controls.
 - `src/render_charts.py`: the card and table renders.
 - `governance/chart-review.md`: section 8.
+
+---
+
+*Layer 5, 2026-10-07: contrast, collapsed descriptions, full-screen tables (Build Brief 2.3).*
+
+## D21 · Row labels pass contrast, chart descriptions are collapsed, every table opens full screen
+
+**Aaron's notes on the Build 2.2 pages, 2026-10-07.**
+1. Row labels must pass contrast. `text-ink/60` at 0.7rem measured 4.16:1 on
+   lime and 4.49:1 on white, both under 4.5:1.
+2. The summary under each chart must not show in full. It is collapsed,
+   like "The data: coverage by code", and the reader can open it. The same
+   design applies to every chart on both pages.
+3. The device names stay beside the codes in the tables. Every table
+   instead gets a full-screen view: a control opens it, and an X, a click
+   outside the table, or Esc closes it. Cowork's addition, accepted: the
+   Code column stays pinned while the other columns scroll, inline and full
+   screen.
+
+Wording is unchanged throughout. **Nothing the build computed changed**, and
+`git diff --stat e41c3aa -- data/` prints nothing.
+
+**What changed.**
+- **6a widened.** For text below 0.875rem the page now uses `ink-soft`
+  where Felix shows `ink/60`, as it already did where Felix shows `muted`.
+  The row labels are `text-ink-soft`: 5.96:1 on lime, 7.43:1 on white,
+  6.40:1 on paper.
+  - A scan of every visible text element on both pages at 320 and 1040
+    finds no other string under the threshold except Felix's wordmark: the
+    teal full stop after "Analytics" in the header (3.30:1 on paper) and
+    "Analytics" in the footer (4.44:1 on ink).
+  - WCAG exempts text that is part of a logo, and D14 keeps the wordmark
+    as Felix draws it, so neither changes.
+- **Descriptions.** Each chart's summary sits in a closed `<details>`,
+  styled as the data disclosure and named "Chart description:" with the
+  data disclosure's own short name.
+  - It stays first in the DOM and above the canvas. VIZ-PRINCIPLES 5.1, an
+    INVARIANT, requires "A short text summary in the DOM before the chart".
+    A focusable disclosure below the canvas would also put focus order out
+    of step with what a reader sees.
+  - Chromium drops `aria-describedby` text inside a closed `<details>`.
+    This was observed in its accessibility tree: no description while
+    closed, the summary once opened. The canvas therefore points at a
+    hidden copy of the same text, which page.js writes; Chromium reads a
+    hidden node referenced directly. The description is announced while
+    the disclosure is closed.
+  - The bullets stay visible.
+- **Full-screen tables.** Each table's title row carries "Expand table".
+  - It opens one native `<dialog>` per page, shown modal at full viewport
+    and titled with the table's title. Page.js moves the table's wrapper
+    into the dialog and back, so the page never holds two copies.
+  - The X ("Close table"), a click outside the table, or Esc closes it.
+    Focus returns to the control, and background scroll is locked while it
+    is open.
+  - The first column is sticky on an opaque background, inline and in the
+    dialog, where the header row is sticky too.
+  - With JavaScript off, or without `<dialog>` support, the controls stay
+    hidden and the tables read inline.
+- **Gates.** Three new checks in `src/validate.py`, each with
+  prove-failable scenarios and an unmutated control:
+  - `check_chart_descriptions`: a closed `<details>`, before the canvas;
+  - `check_table_expand`: a control on every title row, and one labelled
+    dialog per page;
+  - `check_low_contrast_class`: `text-ink/60` in no template and no page.
+
+  `src/render_charts.py --dialog` drives the dialog in Chromium at 320 and
+  1040 as a reader would, and fails the render if any step fails.
+
+**The one-pass review (Build Brief 2.3 step 5).** One reviewer checked five
+items, at 320 and 1040 on both pages, in the browser:
+- (a) every "Expand table" control is reached by Tab, opens on Enter, and
+  closes on Esc, the X and an outside click, with focus returned;
+- (b) the dialog's accessible name equals the table's title, in all 32
+  openings;
+- (c) every description is closed on load, opens on click, keeps its text,
+  and is announced while closed;
+- (d) the row labels measure 5.96:1 on lime and 7.43:1 on white;
+- (e) the pinned column is opaque and covers no data.
+
+It found one failure. At 320 px, chart 1's table pinned a 216 px first
+column in a 234 px wrapper, because two long no-wrap row labels set its
+width. Below 640 px the pinned column may now wrap, capped at 6.5rem:
+tbl-c1's pinned column is 74 px and leaves 160 px for the data. It also
+noted a 1 px rule beside the stacked results table's row labels; that table
+is no longer pinned where it stacks.
+
+**What the brief got wrong.**
+- **B1's premise.** The Build 2.1 summary was first in the DOM but drawn
+  below the canvas (flex order). Rule 5.1 does require the DOM position, so
+  the disclosure now sits above the canvas in both orders.
+- **Step 2's "the canvas keeps aria-describedby pointing at the text, so a
+  screen reader still announces it while it is collapsed".** False in
+  Chromium for text inside a closed `<details>`; a hidden copy was needed.
+  The same holds for the data table the canvas also names in
+  `aria-describedby`. That table has sat in a closed disclosure since Build
+  2.1, so that half of the description has never been announced while
+  closed. This is recorded, not changed here.
+- **A4's "no dialog exists yet" and step 3's single source.** One dialog per
+  page holds whichever table is open, rather than one per table.
+- **Step 5's "a click outside the table".** The dialog fills the viewport,
+  so its backdrop is never exposed; outside clicks land on the dialog's own
+  empty area, which closes it.
+
+*Counterfactual:* a description collapsed below the canvas, as the earlier
+visual order had it, would have kept the DOM order but put a focusable
+control out of step with the page. Duplicating each table into the dialog
+in the HTML would have doubled every table for screen readers, the names
+gate and Path 2.
+
+**Carried by:**
+- `docs/template.html` and `docs/case-study-template.html`: the label
+  class, the dialog and the CSS.
+- `src/build_page.py`: `chart_card` and `table`.
+- `docs/assets/page.js`: the hidden description copy, the dialog and the
+  scroll cues.
+- `src/validate.py`; `src/render_charts.py`.
+- `governance/chart-review.md`: section 9.
