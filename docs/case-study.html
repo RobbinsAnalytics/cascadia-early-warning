@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=Fraunces:ital,wght@1,400&family=JetBrains+Mono:wght@400&display=swap">
-<link rel="stylesheet" href="assets/felix.css?v=993a3ad896">
+<link rel="stylesheet" href="assets/felix.css?v=6b1ee5dc9b">
 <style>
   /* Chart cards: module-specific internals that Felix does not describe. The
      canvas keeps the Cascadia theme (D15); the card around it is Felix's
@@ -56,6 +56,7 @@
   .table-block .table-wrap { margin-block:.5rem 0; }
   details.data-table th, details.data-table td { text-align:right; white-space:nowrap; min-width:0; }
   details.data-table th[scope="row"] { text-align:left; font-weight:400; }
+  details.data-table thead th:first-child, details.data-table th.t, details.data-table td.t { text-align:left; }
   .answers { }
   .toc a[data-active="true"] { border-color: var(--color-teal); color: var(--color-teal); font-weight:500; }
   /* The results table reads as two columns of prose: left-aligned, top-aligned. */
@@ -105,12 +106,8 @@
         <a class="rounded-full px-4 py-2 text-sm font-medium transition-colors bg-ink text-white" href="#top" aria-current="page">Case study</a>
         <a class="rounded-full px-4 py-2 text-sm font-medium transition-colors text-ink-soft hover:bg-paper hover:text-ink" href="index.html">Module</a>
       </div>
-      <a class="group btn bg-ink !py-1.5 !pr-1.5 !pl-5 text-sm text-white hover:bg-teal" href="https://github.com/RobbinsAnalytics/cascadia-early-warning">
-        Repository
-        <span class="grid h-7 w-7 place-items-center rounded-full bg-lime text-ink transition-transform group-hover:-rotate-12" aria-hidden="true">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg>
-        </span>
-      </a>
+      <!-- No repository button here on the case study: its one primary action is the card's (Build Brief 2.2,
+           Aaron's decision: no method or repository links at the top). The repository is in section 04's links and the footer. -->
     </nav>
     <button id="menu-btn" class="-mr-2 grid h-11 w-11 place-items-center rounded-full text-ink md:hidden" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
       <svg class="menu-bars" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
@@ -122,9 +119,6 @@
       <a class="rounded-xl px-3 py-3 font-medium" href="https://www.robbinsanalytics.com/">Home</a>
       <a class="rounded-xl px-3 py-3 font-medium bg-white" href="#top" aria-current="page">Case study</a>
       <a class="rounded-xl px-3 py-3 font-medium" href="index.html">Module</a>
-      <a class="btn btn-dark mt-4 justify-center !py-3.5" href="https://github.com/RobbinsAnalytics/cascadia-early-warning">Repository
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5"/></svg>
-      </a>
     </nav>
   </div>
 </header>
@@ -157,17 +151,19 @@
           <p id="card-title" class="font-display text-lg leading-tight font-bold tracking-tight uppercase">Forecast module</p>
           <span class="h-2.5 w-2.5 rounded-full bg-ink" aria-hidden="true"></span>
         </div>
-        <p class="mt-4 text-sm leading-relaxed text-ink/75">Explore the outlook, the test and the review queue</p>
-        <a class="group btn mt-4 bg-ink !py-1.5 !pr-1.5 !pl-5 text-sm text-white hover:bg-teal" href="index.html">
+        <p class="mt-4 text-sm leading-relaxed text-balance text-ink/75">Explore the outlook, the test and the review queue</p>
+        <!-- Felix 6.3 "Disc CTA, dark", plus min-h-11 (Felix rule 10: 44 px tap targets) and shrink-0 on the disc, so
+             it stays round when the label wraps at 320 px. -->
+        <a class="group btn mt-4 min-h-11 bg-ink !py-1.5 !pr-1.5 !pl-5 text-sm text-white hover:bg-teal" href="index.html">
           Open forecast module
-          <span class="grid h-7 w-7 place-items-center rounded-full bg-lime text-ink transition-transform group-hover:-rotate-12" aria-hidden="true">
+          <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-lime text-ink transition-transform group-hover:-rotate-12" aria-hidden="true">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg>
           </span>
         </a>
-        <dl class="mt-5 border-t border-ink/25">
+        <dl class="mt-5">
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Receipts through</dt><dd class="text-right text-sm font-semibold whitespace-nowrap">2026-08-31</dd></div>
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Horizons</dt><dd class="text-right text-sm font-semibold">one and three months ahead</dd></div>
-          <div class="flex items-baseline justify-between gap-4 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">7 codes, <span data-cohort-fact="classes">Classes II and III</span></dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">7 codes, <span data-cohort-fact="classes">Classes II and III</span></dd></div>
         </dl>
       </aside>
     </div>
@@ -180,9 +176,9 @@
       <span class="pill"><span class="h-1.5 w-1.5 rounded-full bg-teal-3" aria-hidden="true"></span>The results</span>
       <span class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Counts of reports, not rates</span>
     </div>
-    <div class="rich mt-6 max-w-none"><div class="table-block" data-table-block="case-results"><div class="table-title" id="case-results-title">The measured results, each figure generated from the module&#x27;s frozen tables</div><p class="scroll-cue" data-scroll-cue="case-results" aria-hidden="true" hidden>Scroll sideways for more columns →</p><div class="table-wrap" data-scroll-for="case-results"><table id="case-results" role="table" aria-labelledby="case-results-title"><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Result</th><th scope="col" role="columnheader">Meaning</th></tr></thead><tbody role="rowgroup"><tr role="row"><th scope="row" role="rowheader">DSQ November 2026 outlook: about 736 reports, 80% range 376 to 906, three months ahead</th><td role="cell">At three months ahead, ranges like it held 20 of 22 locked-test months; a forecast, not yet scored</td></tr><tr role="row"><th scope="row" role="rowheader">Candidate selected for 2 of 7 codes</th><td role="cell">Added model complexity earned use selectively on the development test</td></tr><tr role="row"><th scope="row" role="rowheader">DSQ average miss about 246 versus 265 reports</th><td role="cell">The 2024 to 2025 test showed a modest improvement over the trailing mean</td></tr><tr role="row"><th scope="row" role="rowheader">Three codes below the 70% coverage floor</th><td role="cell">The demonstration disables their review rules rather than presenting all lanes as usable</td></tr><tr role="row"><th scope="row" role="rowheader">One retained episode after retrospective filtering</th><td role="cell">Illustrative queue output, with seven ungated episodes disclosed separately</td></tr><tr role="row"><th scope="row" role="rowheader">None of 24 Class I recall initiations preceded by an episode start</th><td role="cell">No demonstrated recall-prediction result</td></tr></tbody></table></div></div></div>
+    <div class="rich mt-6 max-w-none"><div class="table-block" data-table-block="case-results"><div class="table-title" id="case-results-title">The measured results, each figure generated from the module&#x27;s frozen tables</div><p class="scroll-cue" data-scroll-cue="case-results" aria-hidden="true" hidden>Scroll sideways for more columns →</p><div class="table-wrap" data-scroll-for="case-results"><table id="case-results" role="table" aria-labelledby="case-results-title"><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Result</th><th scope="col" role="columnheader" class="t">Meaning</th></tr></thead><tbody role="rowgroup"><tr role="row"><th scope="row" role="rowheader">DSQ November 2026 outlook: about 736 reports, 80% range 376 to 906, three months ahead</th><td role="cell" class="t">At three months ahead, ranges like it held 20 of 22 locked-test months; a forecast, not yet scored</td></tr><tr role="row"><th scope="row" role="rowheader">Candidate selected for 2 of 7 codes</th><td role="cell" class="t">Added model complexity earned use selectively on the development test</td></tr><tr role="row"><th scope="row" role="rowheader">DSQ average miss about 246 versus 265 reports</th><td role="cell" class="t">The 2024 to 2025 test showed a modest improvement over the trailing mean</td></tr><tr role="row"><th scope="row" role="rowheader">Three codes below the 70% coverage floor</th><td role="cell" class="t">The demonstration disables their review rules rather than presenting all lanes as usable</td></tr><tr role="row"><th scope="row" role="rowheader">One retained episode after retrospective filtering</th><td role="cell" class="t">Illustrative queue output, with seven ungated episodes disclosed separately</td></tr><tr role="row"><th scope="row" role="rowheader">None of 24 Class I recall initiations preceded by a queue episode start</th><td role="cell" class="t">No demonstrated recall-prediction result</td></tr></tbody></table></div></div></div>
   </div>
-  <div class="mt-8"><div class="chart-card rounded-[1.75rem] bg-white p-5 sm:p-7" id="card-c3"><p class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase"><span class="text-teal-2">Coverage by code</span></p><p id="sum-c3" class="chart-summary"></p><div id="c3" class="chart" style="height:330px"></div><p id="note-c3" class="chart-note evergreen" hidden>dashed: 80% nominal and 70% disable; shaded: gate band; orange: rule off</p><ul id="pts-c3" class="chart-points"><li>Coverage: The share of 24 test months inside each model&#x27;s 80% range.</li><li>Thresholds: The shaded band is 60% to 95%; review is disabled below 70%; both were specified before the test.</li><li>Models: Row labels identify the candidate or trailing mean used for each code.</li></ul><details class="data-table rich"><summary>The data: coverage by code</summary><div class="table-block" data-table-block="tbl-c3"><div class="table-title" id="tbl-c3-title">The data: 80% range coverage in the locked test by code, model in use (M-04)</div><p class="scroll-cue" data-scroll-cue="tbl-c3" aria-hidden="true" hidden>Scroll sideways for more columns →</p><div class="table-wrap" data-scroll-for="tbl-c3"><table id="tbl-c3" aria-labelledby="tbl-c3-title"><thead><tr><th scope="col">Code</th><th scope="col">Device</th><th scope="col">Model in use</th><th scope="col">80% coverage</th><th scope="col">Months</th><th scope="col">Rule enabled</th></tr></thead><tbody><tr><th scope="row">NIK</th><td>Defibrillator, Automatic Implantable Cardioverter, With Cardiac Resynchronization (Crt-D)</td><td>trailing three-month mean</td><td>100.0%</td><td>24</td><td>yes</td></tr><tr><th scope="row">LWS</th><td>Implantable Cardioverter Defibrillator (Non-Crt)</td><td>trailing three-month mean</td><td>95.8%</td><td>24</td><td>yes</td></tr><tr><th scope="row">DSQ</th><td>Ventricular (Assist) Bypass</td><td>ETS candidate</td><td>91.7%</td><td>24</td><td>yes</td></tr><tr><th scope="row">DSP</th><td>System, Balloon, Intra-Aortic And Control</td><td>trailing three-month mean</td><td>70.8%</td><td>24</td><td>yes</td></tr><tr><th scope="row">NPT</th><td>Aortic Valve, Prosthesis, Percutaneously Delivered</td><td>ETS candidate</td><td>58.3%</td><td>24</td><td>no</td></tr><tr><th scope="row">OZD</th><td>Temporary Non-Roller Type Left Heart Support Blood Pump</td><td>trailing three-month mean</td><td>41.7%</td><td>24</td><td>no</td></tr><tr><th scope="row">PYX</th><td>Temporary Non-Roller Type Right Heart Support Blood Pump</td><td>trailing three-month mean</td><td>33.3%</td><td>24</td><td>no</td></tr></tbody></table></div></div></details></div></div>
+  <div class="mt-8"><div class="chart-card rounded-[1.75rem] bg-white p-5 sm:p-7" id="card-c3"><p class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase"><span class="text-teal-2">Coverage by code</span></p><p id="sum-c3" class="chart-summary"></p><div id="c3" class="chart" style="height:330px"></div><p id="note-c3" class="chart-note evergreen" hidden>dashed: 80% nominal and 70% disable; shaded: gate band; orange: rule off</p><ul id="pts-c3" class="chart-points"><li>Coverage: The share of 24 test months inside each model&#x27;s 80% range.</li><li>Thresholds: The shaded band is 60% to 95%; review is disabled below 70%; both were specified before the test.</li><li>Models: Row labels identify the candidate or trailing mean used for each code.</li></ul><details class="data-table rich"><summary>The data: coverage by code</summary><div class="table-block" data-table-block="tbl-c3"><div class="table-title" id="tbl-c3-title">The data: 80% range coverage in the locked test by code, model in use (M-04)</div><p class="scroll-cue" data-scroll-cue="tbl-c3" aria-hidden="true" hidden>Scroll sideways for more columns →</p><div class="table-wrap" data-scroll-for="tbl-c3"><table id="tbl-c3" aria-labelledby="tbl-c3-title"><thead><tr><th scope="col">Code</th><th scope="col" class="t">Device</th><th scope="col" class="t">Model in use</th><th scope="col">80% coverage</th><th scope="col">Months</th><th scope="col" class="t">Rule enabled</th></tr></thead><tbody><tr><th scope="row">NIK</th><td class="t">Defibrillator, Automatic Implantable Cardioverter, With Cardiac Resynchronization (Crt-D)</td><td class="t">trailing three-month mean</td><td>100.0%</td><td>24</td><td class="t">yes</td></tr><tr><th scope="row">LWS</th><td class="t">Implantable Cardioverter Defibrillator (Non-Crt)</td><td class="t">trailing three-month mean</td><td>95.8%</td><td>24</td><td class="t">yes</td></tr><tr><th scope="row">DSQ</th><td class="t">Ventricular (Assist) Bypass</td><td class="t">ETS candidate</td><td>91.7%</td><td>24</td><td class="t">yes</td></tr><tr><th scope="row">DSP</th><td class="t">System, Balloon, Intra-Aortic And Control</td><td class="t">trailing three-month mean</td><td>70.8%</td><td>24</td><td class="t">yes</td></tr><tr><th scope="row">NPT</th><td class="t">Aortic Valve, Prosthesis, Percutaneously Delivered</td><td class="t">ETS candidate</td><td>58.3%</td><td>24</td><td class="t">no</td></tr><tr><th scope="row">OZD</th><td class="t">Temporary Non-Roller Type Left Heart Support Blood Pump</td><td class="t">trailing three-month mean</td><td>41.7%</td><td>24</td><td class="t">no</td></tr><tr><th scope="row">PYX</th><td class="t">Temporary Non-Roller Type Right Heart Support Blood Pump</td><td class="t">trailing three-month mean</td><td>33.3%</td><td>24</td><td class="t">no</td></tr></tbody></table></div></div></details></div></div>
 </section>
 
 <section class="container-x">
@@ -238,13 +234,13 @@
         <p class="eyebrow">03 / Decisions and trade-offs</p>
         <h2 class="mt-3 font-display text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-tight text-ink">The choices that shaped the result, and what each one cost</h2>
         <div class="rich prose mt-5 max-w-[46rem]">
-          <p>Claude Code implemented the approved plan, and AI agents ran the simulated chart reviews. Each choice below is recorded with its counterfactual in the <a href="https://github.com/RobbinsAnalytics/cascadia-early-warning/blob/main/governance/decision-record.md">decision record</a>.</p>
+          <p>Claude Code implemented the approved plan, and AI agents ran the simulated chart reviews. Each choice below is recorded in the <a href="https://github.com/RobbinsAnalytics/cascadia-early-warning/blob/main/governance/decision-record.md">decision record</a>, most with its counterfactual.</p>
           <ul>
-            <li><strong>Counting reports, not events or rates.</strong> The target is distinct reports per code per receipt month, the one figure the source can certify; it says nothing about events, which summary reports and missing event dates blur, or about rates, which need a denominator the source does not carry (D1).</li>
+            <li><strong>Counting reports, not events or rates.</strong> The target is distinct reports per code per receipt month, the only number here that can be certified; it says nothing about events, which summary reports and missing event dates blur, or about rates, which need a denominator the source does not carry (D1).</li>
             <li><strong>A fixed candidate and a promotion bar.</strong> One ETS form was fixed before any test and replaced the better of two simple baselines only where its development-period error was at least 10% lower without a worse interval score; it earned use on two of seven codes, and the trailing three-month mean runs the rest (D6, D8).</li>
             <li><strong>Ranges from the model&#x27;s own errors.</strong> Each 80% range comes from the 36 latest errors of the same model and horizon, not from the model&#x27;s assumptions; it is honest about past misses and slow to follow a series that changes level, which is how three codes&#x27; ranges fell short (D7, D16).</li>
             <li><strong>Keeping the band where it was registered.</strong> When five of seven codes landed outside the 60% to 95% band written before the test, neither the band nor the ranges were moved; the three codes below 70% stay on the page with their review rule off (D16).</li>
-            <li><strong>A two-month trigger with a five-report floor.</strong> A month is flagged only above its 80% range and at least five reports over the point, and an episode needs two flagged months in a row, so a single receipt pile-up does not open one; the cost is a flag that arrives a month later (D9).</li>
+            <li><strong>A two-month trigger with a five-report floor.</strong> A month is flagged only above its 80% range and at least five reports over the point, and an episode needs two flagged months in a row, so a single receipt pile-up does not open one; the cost is that an episode opens a month after its first flagged month at the earliest, and a one-month departure opens none (D9).</li>
             <li><strong>Leading with three months ahead.</strong> The page leads with November 2026 at three months ahead because September 2026, one month ahead, had already ended when the forecast was issued; promotion was judged at one month ahead, and at three months ranges like November&#x27;s held 20 of 22 locked-test months (D10, D19).</li>
             <li><strong>A private exclusion with a public receipt.</strong> Reports whose manufacturer or brand fields match a private list are removed whole, 1 of 649,080 here, and the count and the list&#x27;s hash are published; a reader can check the receipt but not the list (D3).</li>
           </ul>
@@ -257,7 +253,7 @@
         <div class="rich prose mt-5 max-w-[46rem]">
           <ul>
             <li><strong>Two paths.</strong> A separately written path, DuckDB SQL over the staged FDA pages plus its own Python arithmetic, recomputes the monthly and lag-matched counts, the distinct report totals, every forecast point and range, the scores, the review episodes, and the queue with and without its coverage gate as this page publishes it, and they must agree before anything is published. It does not refit the ETS model: candidate points are recomputed from the model&#x27;s exported states, and ranges and scores from the published points. The recall timeline is checked only against fourteen independently verified Class I events, and the cohort gate, the exclusion receipt, the reports without an event date, the promotion decision, the pre-registered recall count, the summary-report composition, the remedial-recall counts and the outlook&#x27;s twenty dots are carried from the build without a second derivation.</li>
-            <li><strong>Checks that can fail.</strong> The domain gate runs 21 checks and re-runs them against deliberately corrupted copies of their input in 39 scenarios; the validation report records that every one tripped. Golden fixtures, computed outside both engines and committed before either existed, pass on both paths.</li>
+            <li><strong>Checks that can fail.</strong> The domain gate runs 21 checks and re-runs them against deliberately corrupted copies of their input in 46 scenarios; the validation report records that every one tripped. Golden fixtures, computed outside both engines and committed before either existed, pass on both paths.</li>
             <li><strong>The chart review.</strong> Four AI agents reviewed rendered charts using simulated reviewer personas. They were instructed to use only the supplied images; reviewer isolation was not independently verified. Their findings exposed a concrete ambiguity: disabled review lanes still appeared to contain active episodes.</li>
           </ul>
         </div>
@@ -282,7 +278,7 @@
             <li>Do not read an episode as a device-safety conclusion. It is a departure from expected reporting volume, and nothing more.</li>
           </ol>
           <p><strong>The live edge.</strong> A live-edge pipeline is implemented and passed a manual run. Weekly runs begin at publication. It stores source vintages and is designed to score a forecast when the target month first appears in the source. Live months are counted on a different basis from the frozen ones: raw count by receipt date as seen at the vintage, with no exclusion applied.</p>
-          <p><strong>What is tested next.</strong> Two separate steps. The shuffled-dates reference tests whether the observed timing of episodes before Class I recall initiations differs from a chance reference, the same count recomputed with the dates shuffled; until it runs, the pre-registered recall count means association only. Prospective scoring is a separate next step: each frozen forecast is scored as its month first appears in the source, beginning with September 2026 and November 2026.</p>
+          <p><strong>What is tested next.</strong> Two separate steps. The shuffled-dates reference tests whether the observed timing of queue episodes before Class I recall initiations differs from a chance reference, the same count recomputed over many random shufflings of the dates; until it runs, the pre-registered recall count means association only, and even then it would test timing, not prediction. Prospective scoring is a separate next step: each frozen forecast is scored as its month first appears in the source, beginning with September 2026 and November 2026.</p>
         </div>
         <div class="mt-16 border-t border-line pt-10">
           <p class="eyebrow">Tech stack</p>
@@ -392,6 +388,6 @@
   }
 })();
 </script>
-<script src="assets/page.js?v=4d4d9144d0"></script>
+<script src="assets/page.js?v=54dab665d8"></script>
 </body>
 </html>

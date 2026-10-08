@@ -882,20 +882,62 @@ def check_case_study(results):
 
 SUBTITLE_MAX_WORDS = 15
 BULLETS_MIN, BULLETS_MAX = 2, 3
-_SENTENCE_END = re.compile(r"[.!?](?=\s|$)")
+# A sentence ends at a terminal mark, after any closing quote or bracket, followed by a space or the end; or at a
+# terminal mark run straight into a capital ("done.Then"). Abbreviations lose their points before counting.
+_SENTENCE_END = re.compile("[.!?][\"'’”)\\]]*(?=\\s|$)|[.!?](?=[A-Z])")
+_ABBREV = re.compile(r"\b(?:e\.g|i\.e|vs|etc|approx|cf|U\.S)\.", re.I)
 _MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-# A date in any form the pages write one: 2024-03-14, 2024-03, Mar 2024, March 2024, Mar '24.
-_DATE_RX = re.compile(r"\b(\d{4})-(\d{2})(?:-(\d{2}))?\b|\b(%s)[a-z]*\.? (?:(\d{4})|'(\d{2}))\b"
-                      % "|".join(m[:3] for m in _MONTHS))
+# A date in any form a page might write one: 2024-03-14, 2024-03, 20240314, 3/14/2024, 2024/03, Mar 2024, March 2024,
+# March 14, 2024, Mar '24 (straight or curly apostrophe), any case, any whitespace including a no-break space.
+_DATE_RX = re.compile(
+    r"\b(?P<iy>\d{4})-(?P<im>\d{2})(?:-(?P<id>\d{2}))?\b"
+    r"|\b(?P<cy>\d{4})(?P<cm>\d{2})(?P<cd>\d{2})\b"
+    r"|\b(?P<sm>\d{1,2})/(?P<sd>\d{1,2})/(?P<sy>\d{4}|\d{2})\b"
+    r"|\b(?P<yy>\d{4})/(?P<ym>\d{1,2})\b"
+    r"|\b(?P<mon>%s)[a-z]*\.?(?:\s+(?P<md>\d{1,2}),?)?\s+(?:(?P<my>\d{4})|['’](?P<m2>\d{2}))\b"
+    % "|".join(m[:3] for m in _MONTHS), re.I)
 
 
 def _sentences(s: str) -> int:
-    """Sentences in a string: terminal marks followed by a space or the end. A string with none is not a sentence."""
-    return len(_SENTENCE_END.findall(s.strip()))
+    """Sentences in a string. A string with no terminal mark is not a sentence and counts zero."""
+    return len(_SENTENCE_END.findall(_ABBREV.sub(lambda m: m.group(0).replace(".", ""), s.strip())))
 
 
 def _words(s: str) -> int:
     return len([w for w in s.split() if re.search(r"[A-Za-z0-9]", w)])
+
+
+def _dates(text: str):
+    """Every date in a string as (start, end, 'YYYY-MM', has_day)."""
+    out = []
+    for m in _DATE_RX.finditer(text):
+        g = m.groupdict()
+        if g["iy"]:
+            ym, day = "%s-%s" % (g["iy"], g["im"]), bool(g["id"])
+        elif g["cy"]:
+            ym, day = "%s-%s" % (g["cy"], g["cm"]), True
+        elif g["sm"]:
+            ym, day = "%s-%02d" % (g["sy"] if len(g["sy"]) == 4 else "20" + g["sy"], int(g["sm"])), True
+        elif g["yy"]:
+            ym, day = "%s-%02d" % (g["yy"], int(g["ym"])), False
+        else:
+            ym = "%s-%02d" % (g["my"] or "20" + g["m2"], [x[:3].lower() for x in _MONTHS].index(g["mon"][:3].lower()) + 1)
+            day = bool(g["md"])
+        out.append((m.start(), m.end(), ym, day))
+    return out
+
+
+def _dates_outside_span(text: str, first: str, last: str):
+    """The dates in a string other than one "<first> to <last>" span phrase, in any written form; a full date never
+    counts as a span end."""
+    ds = _dates(text)
+    keep = list(ds)
+    for a, b in zip(ds, ds[1:]):
+        if (a[2], b[2]) == (first, last) and not a[3] and not b[3] and re.fullmatch(r"\s+to\s+", text[a[1]:b[0]]):
+            keep.remove(a)
+            keep.remove(b)
+            break
+    return keep
 
 
 def _data_block(path: pathlib.Path):
@@ -908,12 +950,15 @@ def _built_pages():
 
 
 class _ChartCards(html.parser.HTMLParser):
-    """Each chart card on a page: its canvas host, its bullets (ul.chart-points) and its key (p.chart-key)."""
+    """Each chart card on a page: its canvas host, every list in it (and whether a list nests inside another), the
+    bullets of its ul.chart-points, every p.chart-key in it, its narrow-width note; and any ul.chart-points or
+    p.chart-key standing outside a card, which counts as stray."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.cards, self._card, self._depth, self._li, self._key, self._pts = {}, None, 0, None, None, None
-        self.stack = []
+        self.cards, self.stray, self.stack = {}, [], []
+        self._card, self._depth, self._li, self._key, self._note, self._pts = None, 0, None, None, None, None
+        self._lists = 0
 
     def handle_starttag(self, tag, attrs):
         if tag in _VOID:
@@ -923,45 +968,64 @@ class _ChartCards(html.parser.HTMLParser):
         self.stack.append(tag)
         if "chart-card" in cls and re.fullmatch(r"card-c\d+", a.get("id") or ""):
             self._card, self._depth = a["id"][5:], len(self.stack)
-            self.cards[self._card] = {"host": False, "lists": 0, "bullets": [], "key": None}
+            self.cards[self._card] = {"host": False, "lists": 0, "points": 0, "nested": 0, "bullets": [], "keys": [], "note": ""}
         if self._card is None:
+            if (tag == "ul" and "chart-points" in cls) or (tag == "p" and "chart-key" in cls):
+                self.stray.append("%s.%s" % (tag, "chart-points" if tag == "ul" else "chart-key"))
             return
         c = self.cards[self._card]
         if "chart" in cls and tag == "div":
             c["host"] = True
-        if tag == "ul" and "chart-points" in cls:
+        if tag in ("ul", "ol"):
             c["lists"] += 1
-            self._pts = len(self.stack)
+            if self._lists:
+                c["nested"] += 1
+            self._lists += 1
+            if tag == "ul" and "chart-points" in cls:
+                c["points"] += 1
+                self._pts = len(self.stack)
         if tag == "li" and self._pts is not None and len(self.stack) == self._pts + 1:
             self._li = []
         if tag == "p" and "chart-key" in cls:
             self._key = []
+        if tag == "p" and "chart-note" in cls:
+            self._note = []
 
     def handle_endtag(self, tag):
         if tag in _VOID:
             return
         if self._card is not None:
             c = self.cards[self._card]
-            if tag == "li" and self._li is not None:
+            if tag == "li" and self._li is not None and self._pts is not None and len(self.stack) == self._pts + 1:
                 c["bullets"].append(" ".join("".join(self._li).split()))
                 self._li = None
             if tag == "p" and self._key is not None:
-                c["key"] = " ".join("".join(self._key).split())
+                c["keys"].append(" ".join("".join(self._key).split()))
                 self._key = None
+            if tag == "p" and self._note is not None:
+                c["note"] = " ".join("".join(self._note).split())
+                self._note = None
+            if tag in ("ul", "ol"):
+                self._lists = max(0, self._lists - 1)
         while self.stack:
-            t = self.stack.pop()
-            if t == tag:
+            if self.stack.pop() == tag:
                 break
         if self._pts is not None and len(self.stack) < self._pts:
             self._pts = None
         if self._card is not None and len(self.stack) < self._depth:
-            self._card = None
+            self._card, self._lists = None, 0
 
     def handle_data(self, data):
-        if self._li is not None:
-            self._li.append(data)
-        if self._key is not None:
-            self._key.append(data)
+        for buf in (self._li, self._key, self._note):
+            if buf is not None:
+                buf.append(data)
+
+
+def _cards(path: pathlib.Path) -> _ChartCards:
+    p = _ChartCards()
+    p.feed(path.read_text(encoding="utf-8"))
+    p.close()
+    return p
 
 
 def check_chart_subtitles(results):
@@ -991,68 +1055,67 @@ def check_chart_subtitles(results):
 
 
 def check_chart_bullets(results):
-    """Every chart card, on every built page, carries one list of BULLETS_MIN to BULLETS_MAX explanation bullets
-    under its canvas, each one sentence, and its key, where it has one, is one sentence (the HTML a reader gets)."""
+    """Every chart card, on every built page, carries exactly one list, a ul.chart-points of BULLETS_MIN to BULLETS_MAX
+    explanation bullets under its canvas, each one sentence, with nothing nested in it; at most one key, of one
+    sentence; and no bullet list or key stands outside a card (the HTML a reader gets)."""
     bad, seen = [], []
     for path in _built_pages():
-        p = _ChartCards()
-        p.feed(path.read_text(encoding="utf-8"))
-        p.close()
+        p = _cards(path)
+        for s in p.stray:
+            bad.append("docs/%s: a %s outside any chart card" % (path.name, s))
         for cid, c in sorted(p.cards.items()):
             if not c["host"]:
                 continue
             seen.append("%s %s %d" % (path.stem, cid, len(c["bullets"])))
-            if c["lists"] != 1:
-                bad.append("docs/%s %s: %d bullet lists (one expected)" % (path.name, cid, c["lists"]))
+            if c["points"] != 1 or c["lists"] != 1:
+                bad.append("docs/%s %s: %d lists, %d of them bullet lists (exactly one, a bullet list, expected)"
+                           % (path.name, cid, c["lists"], c["points"]))
+            if c["nested"]:
+                bad.append("docs/%s %s: a list nested inside a bullet" % (path.name, cid))
             if not BULLETS_MIN <= len(c["bullets"]) <= BULLETS_MAX:
                 bad.append("docs/%s %s: %d bullets (%d to %d)" % (path.name, cid, len(c["bullets"]), BULLETS_MIN, BULLETS_MAX))
             for b in c["bullets"]:
                 if _sentences(b) != 1:
                     bad.append("docs/%s %s: a bullet of %d sentences: %r" % (path.name, cid, _sentences(b), b[:90]))
-            if c["key"] is not None and _sentences(c["key"]) != 1:
-                bad.append("docs/%s %s: the key is %d sentences" % (path.name, cid, _sentences(c["key"])))
+            if len(c["keys"]) > 1:
+                bad.append("docs/%s %s: %d keys (at most one)" % (path.name, cid, len(c["keys"])))
+            for k in c["keys"]:
+                if _sentences(k) != 1:
+                    bad.append("docs/%s %s: the key is %d sentences" % (path.name, cid, _sentences(k)))
     if not seen:
         bad.append("no chart card with a canvas on any built page")
-    results.append(("chart bullets: every chart carries %d to %d explanation bullets under it, each one sentence, and a one-sentence key"
-                    % (BULLETS_MIN, BULLETS_MAX), not bad, "; ".join(seen) or "none read", bad))
+    results.append(("chart bullets: every chart carries one list of %d to %d explanation bullets under it, each one sentence, "
+                    "and at most one key of one sentence" % (BULLETS_MIN, BULLETS_MAX), not bad, "; ".join(seen) or "none read", bad))
 
 
 def check_c4_summary_dates(results):
-    """Chart 4's visible text lists no recall dates: its summary (drawn under the canvas by page.js from the data
-    block) and its bullets and key may name only the span's first and last month, once each, and no full date;
-    the Class I dates are in its table only (Build Brief 2.2 step 8, B1)."""
+    """Chart 4's visible text lists no recall dates (Build Brief 2.2 step 8, B1); the Class I dates are in its table only.
+    Its summary (drawn under the canvas by page.js from the data block) and its subtitle may name the span once, as
+    "<first> to <last>"; its annotation and narrow-width note may name the episode they annotate the same way; its
+    title, bullets and key may name no date at all. A full date fails anywhere."""
     bad, n = [], 0
     for path in _built_pages():
         d = _data_block(path)
         if not d or "c4" not in d:
             continue
         n += 1
-        span = [d["c4"]["months"][0], d["c4"]["months"][-1]]
-        p = _ChartCards()
-        p.feed(path.read_text(encoding="utf-8"))
-        p.close()
-        card = p.cards.get("c4", {})
-        for where, text in [("summary", d["c4"].get("summary", ""))] + [("bullet", b) for b in card.get("bullets", [])] + \
-                           [("key", card.get("key") or "")]:
-            found = []
-            for m in _DATE_RX.finditer(text):
-                if m.group(1):
-                    if m.group(3):
-                        bad.append("docs/%s chart 4 %s: a full date %r" % (path.name, where, m.group(0)))
-                    found.append("%s-%s" % (m.group(1), m.group(2)))
-                else:
-                    yy = m.group(5) or "20" + m.group(6)
-                    found.append("%s-%02d" % (yy, [x[:3] for x in _MONTHS].index(m.group(4)[:3]) + 1))
-            extra = list(found)
-            for s in span:
-                if s in extra:
-                    extra.remove(s)
-            if extra:
-                bad.append("docs/%s chart 4 %s: dates beyond the span's ends %s: %s" % (path.name, where, span, ", ".join(extra)))
+        c4 = d["c4"]
+        span = (c4["months"][0], c4["months"][-1])
+        ep = c4.get("episodeNote") or {}
+        episode = (ep.get("start"), ep.get("end")) if ep else None
+        card = _cards(path).cards.get("c4", {"bullets": [], "keys": [], "note": ""})
+        channels = [("summary", c4.get("summary", ""), span), ("subtitle", c4.get("subtitle", ""), span),
+                    ("title", c4.get("finding", ""), None), ("annotation", c4.get("annotation", ""), episode),
+                    ("note", card["note"], episode)]
+        channels += [("bullet", b, None) for b in card["bullets"]] + [("key", k, None) for k in card["keys"]]
+        for where, text, allowed in channels:
+            left = _dates_outside_span(text, *allowed) if allowed else _dates(text)
+            for s, e, ym, day in left:
+                bad.append("docs/%s chart 4 %s: %s %r" % (path.name, where, "a full date" if day else "a date", text[s:e]))
     if not n:
         bad.append("no built page carries chart 4")
-    results.append(("chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table)",
-                    not bad, "%d page(s) with chart 4" % n, bad))
+    results.append(("chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated "
+                    "episode in its note, no date elsewhere; the dates are in the table", not bad, "%d page(s) with chart 4" % n, bad))
 
 
 class _CaseCard(html.parser.HTMLParser):
@@ -1367,6 +1430,21 @@ def _scenarios():
            lambda: _docs_tree_copy({"index.html": _data_edit(_c4_dates_into_summary)}))
     yield (check_c4_summary_dates, "one recall's full date written into a chart 4 bullet",
            lambda: _docs_tree_copy({"index.html": _sub_once(r'(<ul id="pts-c4" class="chart-points"><li>)', r"\1A Class I recall began 2024-03-14; ")}))
+    # Step 10a: the paths an adversarial review found the first versions of these checks did not read.
+    yield (check_chart_subtitles, "two sentences run together in chart 2's subtitle, no space after the first period",
+           lambda: _docs_tree_copy({"index.html": _data_edit(lambda d: d["c2"].__setitem__("subtitle", d["c2"]["subtitle"] + "Then more."))}))
+    yield (check_chart_bullets, "a second list written into chart 1's card, after its bullets",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(?s)(<ul id="pts-c1" class="chart-points">.*?</ul>)', r"\1<ul><li>Another list.</li></ul>")}))
+    yield (check_chart_bullets, "a list nested inside chart 2's first bullet",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(<ul id="pts-c2" class="chart-points"><li>[^<]*)', r"\1<ul><li>A nested point.</li></ul>")}))
+    yield (check_chart_bullets, "a second key written into chart 4's card",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(<p id="key-c4" class="chart-key">)', r'<p class="chart-key">Another key.</p>\1')}))
+    yield (check_chart_bullets, "a chart key written outside any card",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r"</main>", '<p class="chart-key">A stray key.</p></main>')}))
+    yield (check_c4_summary_dates, "a span-end month that is also a recall month (Jan 2024) written into a chart 4 bullet",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(<ul id="pts-c4" class="chart-points"><li>)', r"\1In Jan 2024 a recall began; ")}))
+    yield (check_c4_summary_dates, "a recall date in US slash form written into chart 4's summary",
+           lambda: _docs_tree_copy({"index.html": _data_edit(lambda d: d["c4"].__setitem__("summary", d["c4"]["summary"] + " One began 3/14/2024."))}))
     yield (check_case_card, "a second link written into the case-study card",
            lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(<aside data-case="card"[^>]*>)', r'\1<a href="index.html#s5">Method and receipts</a>')}))
     yield (check_case_card, "the card's one link pointed at the build repository instead of the module",

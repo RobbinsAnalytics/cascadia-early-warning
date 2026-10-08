@@ -450,7 +450,9 @@
     var endLabelW = gutter([useName + ' (in use)', otherName, 'received'], L);
     var plotW = Math.max(160, L.w - 70 - endLabelW);
     var plotH = cascadiaBankedHeight(d.actual, plotW, { min: 220, max: 340 }) || 280;
-    host.style.height = (top + plotH + 60) + 'px';
+    // The grid contains its axis labels (containLabel), so 24 px under it is margin enough; a flat 60 left an empty
+    // band under the axis (adversarial review, Build Brief 2.2 Step 10a).
+    host.style.height = (top + plotH + 24) + 'px';
     var allVals = d.actual.concat(d.candidate, d.baselineA, d.hi80);
     var ax = niceAxis(Math.max.apply(null, allVals), 1.18, 7);
     var span = d.hi80.map(function (v, i) { return v - d.lo80[i]; });
@@ -683,7 +685,7 @@
     var endLabelW = gutter(['within 12 months', 'within 6', 'within 3'], L);
     var plotW = Math.max(160, L.w - 70 - endLabelW);
     var plotH = cascadiaBankedHeight(d.within12, plotW, { min: 220, max: 340 }) || 280;
-    host.style.height = (top + plotH + 60) + 'px';
+    host.style.height = (top + plotH + 24) + 'px';   // as chart 2: the grid contains its axis labels
     var ax = niceAxis(Math.max.apply(null, d.within12), 1.15, 7);
     var i12 = d.months.indexOf(d.incomplete12[0]);
     var i3 = d.months.indexOf(d.incomplete3[0]);

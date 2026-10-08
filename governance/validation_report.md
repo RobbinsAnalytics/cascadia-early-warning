@@ -24,17 +24,17 @@
 | 14 | known-answer recovery: every verified Class I event is in the derived recall set with its date | PASS | 15 known rows checked against 175 derived events |
 | 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 4 pages, 7 marked statements; cohort Classes II and III, summary-eligible NPT |
 | 16 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | PASS | s1 3; s2 4; s3 4; s4 7 |
-| 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 46 words; order opening 79, results 107, first H2 231, first section 229; 6 result rows; H1 1 |
-| 18 | chart subtitles: every canvas subtitle is one sentence of at most 15 words | PASS | case-study c3 7w; index c1 14w; index c2 7w; index c3 7w; index c4 7w; index c5 15w |
-| 19 | chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | PASS | case-study c3 3; index c1 3; index c2 3; index c3 3; index c4 3; index c5 3 |
-| 20 | chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table) | PASS | 1 page(s) with chart 4 |
+| 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 46 words; order opening 72, results 100, first H2 224, first section 222; 6 result rows; H1 1 |
+| 18 | chart subtitles: every canvas subtitle is one sentence of at most 15 words | PASS | case-study c3 7w; index c1 15w; index c2 7w; index c3 7w; index c4 7w; index c5 15w |
+| 19 | chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | PASS | case-study c3 3; index c1 3; index c2 3; index c3 3; index c4 3; index c5 3 |
+| 20 | chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | PASS | 1 page(s) with chart 4 |
 | 21 | case-study card: exactly one link, to the module | PASS | links ['index.html'] |
 
 ## Proof the checks can fail
 
 *Each check above is re-run against a deliberately corrupted copy of its input and must reject it. A check that passes corrupted input is not testing anything, and reads identically in this report to one that works. The frozen data is never modified: the corruption is applied to a temporary copy and the path is restored after every scenario.*
 
-**39 of 39 scenarios tripped.**
+**46 of 46 scenarios tripped.**
 
 | Check | Corruption fed to it | Tripped? |
 |---|---|---|
@@ -69,11 +69,18 @@
 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | a second H1 written into the case study | tripped |
 | chart subtitles: every canvas subtitle is one sentence of at most 15 words | a second sentence added to chart 2's subtitle, still under the word limit | tripped |
 | chart subtitles: every canvas subtitle is one sentence of at most 15 words | chart 2's subtitle run one word past the limit, still one sentence | tripped |
-| chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | a fourth bullet added under chart 2 | tripped |
-| chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | a bullet of two sentences under the case study's chart 3 | tripped |
-| chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | chart 5's bullets removed | tripped |
-| chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table) | the Class I initiation months written back into chart 4's summary, as Build 2.1 had them | tripped |
-| chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table) | one recall's full date written into a chart 4 bullet | tripped |
+| chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | a fourth bullet added under chart 2 | tripped |
+| chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | a bullet of two sentences under the case study's chart 3 | tripped |
+| chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | chart 5's bullets removed | tripped |
+| chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | the Class I initiation months written back into chart 4's summary, as Build 2.1 had them | tripped |
+| chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | one recall's full date written into a chart 4 bullet | tripped |
+| chart subtitles: every canvas subtitle is one sentence of at most 15 words | two sentences run together in chart 2's subtitle, no space after the first period | tripped |
+| chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | a second list written into chart 1's card, after its bullets | tripped |
+| chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | a list nested inside chart 2's first bullet | tripped |
+| chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | a second key written into chart 4's card | tripped |
+| chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | a chart key written outside any card | tripped |
+| chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | a span-end month that is also a recall month (Jan 2024) written into a chart 4 bullet | tripped |
+| chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | a recall date in US slash form written into chart 4's summary | tripped |
 | case-study card: exactly one link, to the module | a second link written into the case-study card | tripped |
 | case-study card: exactly one link, to the module | the card's one link pointed at the build repository instead of the module | tripped |
 | review queue: every episode satisfies the rule on the scored rows | an episode claimed for a month that does not satisfy the rule | tripped |

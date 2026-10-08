@@ -53,6 +53,7 @@
   .table-block .table-wrap { margin-block:.5rem 0; }
   details.data-table th, details.data-table td { text-align:right; white-space:nowrap; min-width:0; }
   details.data-table th[scope="row"] { text-align:left; font-weight:400; }
+  details.data-table thead th:first-child, details.data-table th.t, details.data-table td.t { text-align:left; }
   .answers { }
   .toc a[data-active="true"] { border-color: var(--color-teal); color: var(--color-teal); font-weight:500; }
   .cta-grid { background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(ellipse 80% 70% at 70% 60%, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 60%, #000 30%, transparent 75%); }
@@ -169,7 +170,7 @@
     <div class="bg-white px-6 py-7"><p class="font-mono text-[0.7rem] text-ink-soft">02</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@o_lo80@@ to @@o_hi80@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">the 80% range, from the model's own past @@o_h_word@@-month-ahead errors</p></div>
     <div class="bg-white px-6 py-7"><p class="font-mono text-[0.7rem] text-ink-soft">03</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@o_cov@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">of locked-test months inside @@headline@@'s @@o_h_word@@-month-ahead 80% range, @@o_cov_in@@ of @@o_cov_n@@</p></div>
     <div class="bg-white px-6 py-7"><p class="font-mono text-[0.7rem] text-ink-soft">04</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@q_gated@@ / @@q_ungated@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">review episodes where the rule is on, and if it ran in every code; a retrospective, filtered demonstration</p></div>
-    <div class="col-span-2 bg-white px-6 py-7 sm:col-span-1"><p class="font-mono text-[0.7rem] text-ink-soft">05</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@rc_preceded@@ of @@rc_initiations@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">Class I recall initiations preceded by an episode; association only</p></div>
+    <div class="col-span-2 bg-white px-6 py-7 sm:col-span-1"><p class="font-mono text-[0.7rem] text-ink-soft">05</p><p class="mt-3 font-display text-[2.4rem] leading-none font-bold tracking-[-0.04em] text-ink">@@rc_preceded@@ of @@rc_initiations@@</p><p class="mt-2 max-w-[12rem] text-[0.8rem] leading-snug text-ink-soft">Class I recall initiations preceded by a queue episode; association only</p></div>
   </div>
   <p class="mt-3 font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Counts of reports, not rates</p>
 </section>
@@ -251,7 +252,7 @@
         </div>
         <dl class="mt-4 max-w-[46rem] rounded-3xl bg-white px-6 py-3 sm:px-7">
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Whose decision</dt><dd class="text-right text-sm font-semibold">the owner of a post-market review queue</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Horizon</dt><dd class="text-right text-sm font-semibold"><span class="block">Outlook: @@o_target@@, @@o_h_word@@ months from the @@o_origin_month@@ data origin.</span><span class="block">Review rule: one-month-ahead forecasts.</span></dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Horizon</dt><dd class="text-right text-sm font-semibold"><span class="block">Outlook: @@o_target@@, @@o_h_word@@ months from the @@o_origin_month@@ data origin.</span><span class="block">Review rule: @@rule_h_word@@-month-ahead forecasts.</span></dd></div>
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Literacy</dt><dd class="text-right text-sm font-semibold">a reader who works in spreadsheets and reads a trend line, not a statistician</dd></div>
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Benchmark</dt><dd class="text-right text-sm font-semibold">the trailing three-month mean, the figure a spreadsheet would already give</dd></div>
           <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cadence</dt><dd class="text-right text-sm font-semibold">monthly as the source loads</dd></div>
@@ -289,6 +290,7 @@
           <ul>
             <li><strong>Registered</strong> before the first forecast existed (<code>governance/pre-registration.md</code>, commit <code>@@prereg_commit@@</code>), under the model in use at one month ahead.</li>
             <li><strong>The rule.</strong> @@rule@@ @@rule_episode@@ One run is one episode, and an empty queue is a valid result.</li>
+            <li><strong>One-sided.</strong> The rule is one-sided by design: a month below its range is never flagged.</li>
             <li><strong>The floor.</strong> @@rule_floor@@</li>
             <li><strong>By chance.</strong> @@rule_chance@@</li>
           </ul>
