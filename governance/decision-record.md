@@ -809,3 +809,218 @@ had already abandoned.
 tooltip); `src/validate.py` (`check_tooltip_capability`);
 `src/test_tap_tooltips.py`; `governance/chart-review.md` (the tooltip
 decision, replaced 2026-10-08).
+
+## D23 · The live edge publishes itself, from a workflow, inside its lane
+
+**What changed.** Aaron, 2026-10-08: "I want the live edge to push without me
+manually doing anything. Otherwise I become a bottleneck and the pushes
+don't happen." The live edge now publishes from a repository workflow,
+`.github/workflows/live-edge.yml`, under PRINCIPLES v1.1.0 Principle 12
+(cascadia-standards `3707c2f`) and LIVE-EDGE-CHECKLIST v1.0.0. **This
+reverses D18's "never published".** The rest of D18 stands: the seven calls,
+the vintages, scoring at first sight, and no exclusion on live months.
+
+**A recorded departure: the pre-merge read was waived, not done.** Principle
+12 says a lane conversion is "read by Aaron once", and SESSION-RULES 1a says
+the first dispatch "comes after Aaron has read the conversion and it has
+merged". Aaron waived that read for this conversion, verbatim: "I don't even
+want to read the the 2.5 report. I just want it to assume I approve, then do
+the rest." The read did not happen, and this record does not say it did.
+Three things stood in for it, each with the power to stop the session:
+- the attack read (below);
+- every gate on the branch;
+- `.github/workflows/live-edge-check.yml` passing on GitHub's Linux runner
+  before the merge.
+
+The first dispatch was still made from `main`, after the merge, as 1a
+requires.
+
+**The two lanes.**
+- **Live-edge lane.** A scheduled or dispatched run of
+  `.github/workflows/live-edge.yml` from `main` that changes only the paths
+  on `governance/live-edge-allowlist.txt`. It publishes with no human step.
+- **Build lane: everything else.**
+  - any change to either workflow, the allow-list, `src/`, the templates,
+    `docs/assets/`, `requirements-live.txt`, `governance/freeze.toml` or a
+    frozen path;
+  - **any failure after a run's push.** That content is already live, the
+    run does not revert itself, and what happens next is Aaron's call.
+
+**How the lane holds.** The logic is in `src/live_edge_lane.py`, so the YAML
+stays thin and the logic is testable offline (`src/test_live_edge_lane.py`,
+48 cases). Every check exits non-zero and prints the values it compared.
+- **Two jobs** (the attack read's findings 1 to 3, below).
+  - `build` holds a read-only token and runs everything that executes
+    third-party code: the pull, the hash-pinned packages and the page build.
+    It hands over one thing, a tar of the listed files it changed.
+  - `publish` checks out `github.sha` afresh and runs only this repository's
+    standard-library code from that checkout. It applies the bundle (regular
+    files on the list only; no link, no `..`, no absolute path) and re-runs
+    `outcome`, the freeze gate and the path check. It commits once and
+    pushes. It is the only job with a write token, and it sees the token
+    only in its push and Pages-request steps.
+- **Condition 2: the allow-list.**
+  - The list names `data/live/`, the run history, the health and
+    reconciliation records, and each page as a file.
+  - It is read with `git show` from the run's own commit, `github.sha`,
+    before anything builds, and saved outside the tree. Every later step
+    re-reads it there, requires that commit, and re-applies every refusal.
+  - Globs are refused, and so are the list itself, `.github/`, `src/`, the
+    templates, `docs/assets/`, `freeze.toml`, the record-facts JSON and
+    every frozen path (read from `freeze.toml` at the same commit).
+  - After the build, any changed or untracked path off the list fails the
+    run.
+  - Staging is by name only. Before the push, `github.sha..HEAD` must be
+    exactly one commit, a child of `github.sha`, every path on the list.
+  - Both jobs are guarded `if: github.ref == 'refs/heads/main'`.
+- **Condition 3.** `validate_freeze.py` runs after the rebuild, and again in
+  `publish`.
+- **Condition 4.** `test_live_edge.py`, the lane tests, `test_golden.py` and
+  the 19 `validate.py` checks the runner can run. `outcome` requires the
+  run's own record to read `ok` or `skipped: source unchanged`, with no
+  failed check, and requires `health.json` to be that run's. A rate limit
+  or an outage fails the run. It is a failure to observe the source, not a
+  null result.
+- **Condition 5.** A plain `git push origin HEAD:main`, with no force, pull,
+  merge or rebase anywhere in the workflow.
+- **Conditions 6 and 7.** The rehearsal input tests condition 6.
+  `CLAUDE.md` says how to switch the workflow off (condition 7).
+- **The re-render check** rebuilds both pages from HEAD before new data is
+  applied and requires the committed bytes.
+- **Principle 10.** After the push, `verify-live` polls both public URLs
+  until each serves the committed bytes, or fails at 20 minutes.
+
+**What the runner does not have, so does not check.** Six of the 25
+`validate.py` checks:
+- the staging hash check (`check_hashes`), which needs the gitignored
+  staging pages;
+- the three record-table checks (`check_m01`, `check_dates`,
+  `check_uniqueness`), which need the gitignored DuckDB;
+- `check_exclusion` and the names gate (`check_names`), which need the
+  private list. That list is never committed, and both checks fail closed
+  without it.
+
+`validate_measures.py` needs the private list too. `test_tap_tooltips.py`
+needs Playwright.
+
+**The names gate does not run on a live-edge commit.** That is acceptable
+for three reasons:
+- a live run reads only the count series, which carry no manufacturer
+  field;
+- the re-render check and the allow-list leave the live data as the only
+  thing a run can move on a page;
+- every build-lane change still passes the full gate on Aaron's machine
+  (`run.ps1 validate`).
+
+**The record-table facts are committed.** The DuckDB is gitignored, so the
+page's distinct report totals and summary-report composition are now also in
+`data/conformed/record_facts.json`. That file is frozen, and the baseline
+moved to the commit that added it.
+- `build_page.py --write-record-facts` writes it once, from the table, in
+  the dict's own order.
+- A build with the table present must equal the JSON, or it fails closed.
+- A build without the table reads the JSON.
+- Pages built from the table, from the JSON, and as committed are
+  byte-identical (index `84d8e917...`, case study `addf4c6d...`).
+
+**Pinned.** The runner image is ubuntu-24.04. Python is 3.14.6 (offered by
+`actions/setup-python` for 24.04, and the freeze's own version). The
+packages are `requirements-live.txt`: the 15-package closure at the Windows
+interpreter's versions, each with the sha256 of its wheels, installed with
+`--require-hashes --no-deps --only-binary=:all:`. The actions are pinned by
+commit SHA, with the tag in a comment. Each pinned release was at least two
+weeks old when chosen: checkout v7.0.1, setup-python v7.0.0, upload-artifact
+v7.0.1, download-artifact v8.0.1. Day-old releases of the last two were
+passed over. Neither local time nor set iteration
+reaches a page, so neither `TZ` nor `PYTHONHASHSEED` is set.
+
+**The Code-store task is retired.** Its file holds a RETIRED notice and its
+schedule is disabled. The schedule had been registered earlier the same day
+(Tuesdays 06:00 Pacific) and never ran. **The hook
+`.claude/hooks/no_publish_from_scheduled_runs.py` is unchanged**, and a
+scheduled Claude session still never commits, pushes or dispatches
+(SESSION-RULES 1a).
+
+**Still untested at the time of writing (Block B until observed):**
+- which failure notification reaches Aaron;
+- whether a push made with the workflow's own token starts the Pages build
+  on its own (the workflow requests one through the API either way);
+- whether committing every run keeps the schedule from being disabled for
+  inactivity;
+- the absence of branch protection. Nothing yet stops an unread change to
+  a workflow or the allow-list from reaching `main`.
+
+**The attack read** (Build Brief 2.5 step 12). One fresh agent was given
+the two workflows, the lane script, the allow-list, Principle 12 and the
+checklist. It was asked for any way a run could do one of six things:
+- publish a path off the list;
+- publish after a failed gate;
+- force, merge or rebase;
+- run on a ref other than `main`;
+- change the list it is checked against;
+- publish what the re-render check should have stopped.
+
+It read the first version, a single job, and found its checks sound against
+accident but not against code earlier in the same job. That code held the
+push token and could write `src/`, `.git/` and the runner's temp folder.
+Eight findings and their dispositions:
+1. **Every step before the push held the push token** (medium; `checkout`
+   persisted it in `.git/config`). *Fixed:* `persist-credentials: false` in
+   both jobs. The token reaches only the publish job's push and
+   Pages-request steps, through `env`.
+2. **The checks ran from a tree the build had just written** (medium; a
+   build could overwrite `src/live_edge_lane.py`). *Fixed:* the two-job
+   split. The publish job runs the lane script from a fresh checkout of
+   `github.sha` and takes only a bundle of listed files from the build.
+3. **The saved list and the range base came from state the build could
+   write** (medium; a forged saved list pointing at a local commit, or a
+   moved `refs/remotes/origin/main`). *Fixed:* `--head ${{ github.sha }}`
+   pins the list to the run's commit, every load re-applies the forbidden
+   check, and the range base is `github.sha`. Tests forge both.
+4. **Packages were pinned by version, not hash** (low to medium; a file
+   added to a pinned release later would be taken). *Fixed:* a sha256 per
+   wheel, and `--require-hashes --no-deps`.
+5. **An openFDA outage gave a green run that published** (low;
+   `stopped: upstream failure` counted as passed). *Fixed:* `outcome`
+   fails every status but `ok` and `skipped: source unchanged`. An outage
+   now fails loudly and commits nothing. A null run still commits (the
+   checklist; Principle 9).
+6. **The `main` guard is part of the file it guards** (informational; a
+   branch with the guard removed, dispatched from that branch, would hold
+   a write token). *Not fixed here:* it is the branch-protection gap
+   Principle 12 already names, and changing a GitHub setting is outside
+   this brief. Recorded for Aaron.
+7. **The request ledger is empty on every runner** (informational; it lives
+   in gitignored staging, so the trailing-24-hour cap never binds).
+   *Accepted:* a run makes seven requests, the concurrency group allows one
+   run at a time, and openFDA's keyless allowance is far above that. A
+   ledger carried between runs is a build-forward candidate.
+8. **Some failures left the log silent** (low; a failed Pages request
+   skipped verify-live, and a cancellation skipped the after-push note).
+   *Fixed:* verify-live runs whenever the push succeeded, and the note
+   fires on failure or cancellation.
+
+What held up, in the agent's words reduced to a list:
+- path parsing is `-z` throughout, with no rename split;
+- case and links are refused;
+- forbidden overlap is checked in both directions;
+- staged and skip-worktree tricks cannot reach the commit;
+- the push is plain;
+- every gate runs before the commit;
+- no attacker-controlled expression appears in a `run:` block;
+- the PR check is read-only.
+
+The fixed lane was proved again locally, end to end and against all six
+negatives.
+
+*Counterfactual:* the Code-store task, reporting weekly, with each commit
+and push left to Aaron. That is the bottleneck this decision removes, and the
+reason the pushes were not happening.
+
+**Carried by:**
+- `.github/workflows/live-edge.yml` and `.github/workflows/live-edge-check.yml`;
+- `src/live_edge_lane.py` and `src/test_live_edge_lane.py`;
+- `governance/live-edge-allowlist.txt` and `requirements-live.txt`;
+- `data/conformed/record_facts.json` and `src/build_page.py` (`record_facts`);
+- `governance/freeze.toml` (`baseline`, `protected_paths`);
+- `CLAUDE.md` ("Publishing", "The live edge").

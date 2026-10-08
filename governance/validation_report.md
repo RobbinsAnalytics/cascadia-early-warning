@@ -16,8 +16,8 @@
 | 6 | exclusion receipt agrees with the private audit, and every audit token is in the list | PASS | 1 audit rows, 15 receipt rows |
 | 7 | chronology: origin precedes target, locked origins at or after 2023-12, promotion committed before locked rows | PASS | 3906 rows, 966 locked |
 | 8 | one locked result: the locked rows have one content hash across committed history and the working tree | PASS | 1 distinct locked-row hashes |
-| 9 | names gate: no private token in docs/ or any tracked file (verbatim kit files exempt) | PASS | 122 files scanned |
-| 10 | em-dash gate: no em dash in docs/ or any authored file | PASS | 122 files scanned, verbatim kit files exempt |
+| 9 | names gate: no private token in docs/ or any tracked file (verbatim kit files exempt) | PASS | 130 files scanned |
+| 10 | em-dash gate: no em dash in docs/ or any authored file | PASS | 130 files scanned, verbatim kit files exempt |
 | 11 | as-of agrees: freeze.toml, the count series' newest receipt day, and this gate | PASS | freeze 2026-08-31, newest receipt 20260831, gate 20260831 |
 | 12 | cohort gate: forecast rows exist only for codes that passed both stages | PASS | 7 of 7 codes forecast |
 | 13 | review queue: every episode satisfies the rule on the scored rows | PASS | 1 episodes checked |

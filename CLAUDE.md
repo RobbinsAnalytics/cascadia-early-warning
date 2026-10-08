@@ -6,7 +6,7 @@ earned trust on a locked held-out period, and turns departures from
 expectation into a human review queue. Source is openFDA `/device/event`,
 `/device/recall`, `/device/enforcement` and `/device/classification`. It
 publishes `docs/` to `https://www.robbinsanalytics.com/cascadia-early-warning/`
-once Aaron approves; no remote exists until he creates it.
+through GitHub Pages from `main` (see "Publishing": two lanes, D23).
 
 **The estate's session rules - surfaces, guards, and the traps that have each
 cost a session - are at
@@ -53,10 +53,12 @@ network request.
 the build session ran them directly and the git log records what they wrote.
 `run.ps1 validate` runs the four gates; `run.ps1 all` runs validate, build,
 validate and stops at the first failing stage with that stage's exit code.
-`build` reads the gitignored DuckDB record table for the distinct report
-totals and the summary-report composition, so a fresh clone needs the staged
-pages restored and `src/build_model.py` run first (it rewrites the frozen
-conformed tables, which the freeze gate must then show unchanged).
+The distinct report totals and the summary-report composition come from the
+gitignored DuckDB record table when it is present, and must then equal the
+committed `data/conformed/record_facts.json` or the build fails; without the
+table (a fresh clone, the live-edge runner) they are read from that JSON. The
+JSON is frozen and is written only by `src/build_page.py --write-record-facts`
+(D23). Pages built either way are byte-identical.
 The execution policy here is Restricted, so invoke it as
 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 <task>`.
 Until 2026-10-07 the wrapper passed no arguments to any stage (its parameter
@@ -83,7 +85,11 @@ commit. Nothing numeric is edited once frozen.
 **Both gates must pass before anything is committed under `data/conformed/`
 or `docs/`**: `src/validate.py`, `src/validate_measures.py` and
 `src/test_golden.py` (the module's own checks) and `src/validate_freeze.py`.
-Any of them exiting non-zero means publish nothing, commit nothing.
+Any of them exiting non-zero means publish nothing, commit nothing. The one
+exception is the live-edge lane's own commit to the two pages. The runner
+has no staging pages, DuckDB or private list, so it runs `test_golden.py`,
+`validate_freeze.py` and the 19 `validate.py` checks that need none of
+them, and not `validate_measures.py` (D23).
 
 ## The interpreter
 
@@ -126,25 +132,94 @@ there and is not written from here.
 
 ## Publishing
 
-Held. No remote, no push, no Pages, no site surfacing and no merge to `main`
-until Aaron does each one himself. `git push` is in the `ask` list and stays
-there. When it is published, `docs/` is served by GitHub Pages from `main`.
+**Published.** The remote is `RobbinsAnalytics/cascadia-early-warning`
+(public), and GitHub Pages serves `docs/` from `main`. Publication runs in
+two lanes (PRINCIPLES v1.1.0 Principle 12; D23):
+
+- **Build lane.** Anything that changes what a page claims or how it looks,
+  and anything that governs the live-edge lane: both workflows under
+  `.github/workflows/`, `governance/live-edge-allowlist.txt`, `src/`, the
+  templates and `docs/assets/`, `requirements-live.txt`, `governance/freeze.toml`
+  and every frozen path. Aaron reads it, then it ships. A session pushes,
+  opens a PR or merges only when Aaron has said so for that change; `git push`
+  is in the `ask` list and stays there.
+- **Live-edge lane.** A scheduled or dispatched run of
+  `.github/workflows/live-edge.yml` from `main`, changing only the paths on the
+  allow-list. It publishes with no human step. Any failure after its push is
+  build-lane work: the run does not revert itself.
+
+**Nothing yet stops an unread change to a workflow or the allow-list from
+reaching `main`** (no branch protection). That rests on the build lane being
+followed.
 
 ## The live edge
 
-**A weekly scheduled task, from the Code store, reports and never publishes.**
-Its file is `C:\Users\Ajayr\.claude\scheduled-tasks\cascadia-early-warning-live-edge\SKILL.md`
-(the Code store, which `C:\Users\Ajayr\Claude\Scheduled\` is not; the two
-stores do not see each other). It runs `src/pull_live_edge.py` then
-`src/reconcile_live_edge.py` with the venv interpreter by path, writes
-`data/live/`, `governance/run_history.jsonl`, `governance/health.json` and
-`governance/reconciliation.md`, and rebuilds both pages (`docs/index.html`
-and `docs/case-study.html`) as its last step. Live months are raw counts with no exclusion applied and say so (D18).
-Committing a run's record is Aaron's act; `.claude/hooks/no_publish_from_scheduled_runs.py`
-refuses a commit or a push from a scheduled transcript, and a push from any
-transcript it cannot read. Neither page is on the freeze gate's protected
-list (D18), so a rebuild does not trip that gate.
-`src/test_live_edge.py` drives the pull offline against a fake source.
+**A GitHub Actions workflow publishes it: `.github/workflows/live-edge.yml`,
+Tuesdays at 14:17 UTC** (07:17 Pacific in summer, 06:17 in winter), and by
+manual dispatch from `main`. The dispatch has one input, `rehearse_failure`,
+which stops the run after every gate and before the commit. Its logic lives
+in `src/live_edge_lane.py`, so the YAML stays thin. `src/test_live_edge_lane.py`
+tests that logic offline, and `.github/workflows/live-edge-check.yml` runs the
+same checks read-only on every pull request to `main`.
+
+**A run is two jobs.**
+
+`build` has a read-only token. It:
+1. reads `governance/live-edge-allowlist.txt` from the run's commit
+   (`github.sha`), refusing globs and forbidden entries;
+2. re-renders both pages and requires the committed bytes;
+3. runs `src/pull_live_edge.py`, then `src/reconcile_live_edge.py`, which
+   rebuilds both pages;
+4. checks `outcome`: only `ok` or `skipped: source unchanged` publishes, so
+   an outage or a rate limit fails loudly;
+5. runs `test_live_edge.py`, the lane tests, `test_golden.py`,
+   `validate_freeze.py` and the 19 `validate.py` checks a runner can run.
+   The other six need the staging pages, the DuckDB or the private list, and
+   `lane gates` names each one;
+6. bundles the listed files it changed.
+
+`publish` checks out `github.sha` afresh and runs only standard-library code
+from that checkout. It:
+1. applies the bundle;
+2. re-checks `outcome`, the freeze gate and the path check;
+3. stages by name and makes one commit as `github-actions[bot]`, with
+   `.githooks` active;
+4. range-checks the commit against `github.sha`;
+5. pushes with a plain `git push origin HEAD:main`. Its push step is the
+   only step with a write token;
+6. requests a Pages build;
+7. polls the public URLs until both pages serve the committed bytes.
+
+**Every passing run commits its record, including a run that found nothing
+new** ("skipped: source unchanged"). A failed pull exits non-zero, and nothing
+is committed. The runner is ubuntu-24.04 with Python 3.14.6 and
+`requirements-live.txt` (the full package closure, pinned by version and hash, binaries only). It
+needs no DuckDB, because the page reads `data/conformed/record_facts.json`
+(see "The freeze").
+
+**What a run may change:** `data/live/`, `governance/run_history.jsonl`,
+`governance/health.json`, `governance/reconciliation.md`, `docs/index.html`
+and `docs/case-study.html`. Neither page is on the freeze gate's protected
+list (D18), and the allow-list never names a template, `src/`, a workflow,
+itself or a frozen path. Live months are raw counts with no exclusion
+applied, and they say so (D18).
+
+**SWITCH IT OFF in one action:** `gh workflow disable live-edge.yml`, or on
+GitHub: Actions, Live edge, the "..." menu, Disable workflow. Turn it back on
+with `gh workflow enable live-edge.yml`, or the same menu's Enable workflow.
+
+**The Code-store scheduled task is retired** (D23). Its file,
+`C:\Users\Ajayr\.claude\scheduled-tasks\cascadia-early-warning-live-edge\SKILL.md`,
+now holds a RETIRED notice, and its schedule is disabled. That is the Code
+store, which `C:\Users\Ajayr\Claude\Scheduled\` is not, and the two stores
+do not see each other.
+
+**A scheduled Claude session never commits, pushes or dispatches**
+(SESSION-RULES 1a). `.claude/hooks/no_publish_from_scheduled_runs.py` is
+unchanged. It refuses a commit or a push from a scheduled transcript, and a
+push from any transcript it cannot read. It does not see a dispatch, so for a
+dispatch that rule is the only guard. `src/test_live_edge.py` drives the pull
+offline against a fake source.
 
 ## Content
 
