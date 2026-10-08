@@ -1081,3 +1081,116 @@ re-run. The K6 ladders of both pages were re-run (no overflow, every chart
 drawn, three strip segments); re-rendering also moves every card's pixels
 slightly between runs without any visible change, which is why all twenty
 module renders are new files.
+
+---
+
+## 8 · Revision of 2026-10-07: every chart's text cut (Build Brief 2.2, D20)
+
+*All five charts, on both pages. **No mark, no data and no annotation
+changed**. Two layout changes: charts 2 and 5 lose an empty 36 px band under
+their x-axis, and chart 4's key moved out of `page.js`. What changed is the
+text each chart carries. Per this document's opening and the repository's
+`CLAUDE.md`, a revision gets the gate and a link, not a new panel. Below,
+Checklist A is re-run for the rows whose result or evidence changed, the K6
+ladders are re-derived, and the verdicts are restated. The links are
+commits `7d283f2` (the text), `6bb4dd3` (the gates that hold it) and
+`39c25b3` (corrections from an adversarial review of both).*
+
+**The pattern, every chart.** Each chart now carries:
+- a finding title meant to sit on one line at the design width;
+- a canvas subtitle of period and horizon only, one sentence of 7 to 15
+  words, gated by `check_chart_subtitles`;
+- two or three one-sentence bullets in HTML under the provenance strip,
+  gated by `check_chart_bullets`.
+
+What the old subtitles carried moved to the bullets, the data tables'
+titles and section 05 of the module. The DOM summaries of charts 1, 2 and 5
+are shorter and no longer repeat the bullets. Chart 4's summary gives Class
+I initiations by code, not their dates (`check_c4_summary_dates`).
+
+**What changed, by chart.**
+- **Chart 1.** "DSQ: expect about 736 reports in November 2026, 80% range
+  376 to 906." over "January 2022 to August 2026; one-month-ahead ranges
+  from January 2024; November 2026, three months ahead." The horizon
+  coverage (20 of 22), September's elapsed-period status and the twenty
+  dots' derivation are the three bullets. **Finding 4's fix (section 0)**,
+  the device name beside the code, moves from the subtitle to the first
+  bullet. **Revision panel row 10 (section 6.0)**, "the count is in the
+  subtitle and summary": the count of twenty is now in the third bullet and
+  the summary.
+- **Chart 2.** "DSQ: the candidate's 80% range held 22 of 24 locked-test
+  months." The mean absolute errors and the largest miss leave the title
+  for the second bullet. The chronology sentences and the review rule leave
+  the subtitle; they are in section 05, and the strip still flags the
+  locked span, the selection cut-off and D17.
+- **Chart 3.** Build Brief 2.2's wording, with "Three", "seven", "24" and
+  the thresholds generated: "Three of seven codes fall below the coverage
+  floor for automated review." The bullets are Coverage, Thresholds and
+  Models. In the Thresholds bullet ". Both" reads "; both", so the bullet
+  is one sentence.
+- **Chart 4.** "One episode where the rule is on, and seven if it ran in
+  every code." The claim is the one section 6 reviewed, now in fewer words.
+  The bullets are the retrospective eligibility, the 22 of 30 flagged
+  months in rule-off lanes, and the recall association ("queue episode";
+  association only). The key is one sentence and now also declares the
+  lane order.
+  - **Panel row 30 (section 0)** rested on the subtitle saying the rule is
+    one-sided. The key now says "a month flagged above its range", and
+    section 05 says "The rule is one-sided by design".
+- **Chart 5.** "Within three months, May 2026 had 577 DSQ reports against
+  680 for May 2025." The filling windows, the like-for-like line and the
+  reports without an event date are the bullets.
+
+**Widths reached (K6):** re-derived on both pages by `src/render_charts.py`.
+On the module every chart's host crosses the 560 px breakpoint between
+viewports 655 and 656, and on the case study chart 3's does the same, so
+both ladders are 320, 655, 656 and 1040. They are recorded in
+`docs/renders/k6-ladder.json` and `docs/renders/case-study/k6-ladder.json`.
+At every width on both pages: no horizontal overflow, every chart drawn, no
+console error. New this revision, at 320 and 1040 only:
+- the three wide tables, opened: `docs/renders/table-tbl-outlook-*.png`,
+  `table-tbl-scores-*.png` and `table-tbl-c4-*.png`;
+- the case study's results table:
+  `docs/renders/case-study/table-case-results-*.png`;
+- the case study's card: `docs/renders/case-study/card-*.png`.
+
+**K5:** three strip segments at every width of both ladders, counted from
+the render. **K7, re-run: PASS.** Both pages load `felix.css` 6b1ee5dc9b,
+`page.js` 54dab665d8, `cascadia-echarts-theme.js` fe48511d43,
+`echarts.min.js` 334d8b37c4 and `favicon.svg` 9f2fe5d980, each the md5 of
+the file's bytes. **K8:** unchanged, PASS, with the same open item.
+
+### 8.1 · Checklist A, the rows whose result or evidence changed
+
+| Check | C1 outlook | C2 locked test | C3 coverage | C4 review timeline | C5 lag-matched |
+|---|---|---|---|---|---|
+| 1.4 causal disclaimer | n/a | n/a | n/a | **PASS**: the title makes no recall claim; the third bullet says "association only, not validation" and the strip "counts and dates, not rates or risk" | n/a |
+| 2.7 sort | time | time | descending by coverage | lanes with the rule on first, each group by flagged months: **PASS**, the order is declared, in the key directly under the canvas rather than the subtitle, which this brief limited to period and horizon. Recorded here because the check's text places the declaration in the subtitle and F-15 put it there; its FAIL is for alphabetical or arbitrary order, and this is neither | time |
+| 3.1 finding title, top | "DSQ: expect about 736 reports in November 2026, 80% range 376 to 906." | "DSQ: the candidate's 80% range held 22 of 24 locked-test months." | "Three of seven codes fall below the coverage floor for automated review." | "One episode where the rule is on, and seven if it ran in every code." | "Within three months, May 2026 had 577 DSQ reports against 680 for May 2025." |
+| 3.2 title readable from the plot | the point tick and the filled dots, as in 6.1; **PASS-BY-EXCEPTION** for the exact figures, carried by the outlook table and chart 1's table. The basis the subtitle names is the forecast and its horizon ("November 2026, three months ahead"). The range's derivation (twenty outcomes from the 36 latest three-month-ahead errors) moved from the subtitle to the third bullet, directly under the canvas. **That is a narrowing of the exception's letter, recorded for Aaron** | **PASS**: 24 months on the axis, two ringed outside the band, so 22 inside, countable; the title no longer carries the mean absolute errors | **PASS**: seven bars, three in Madrona to the left of the dashed line labelled "rule disabled below 70%" | **PASS**, as 6.1: the one filled bar among the four lanes without "rule off", and six outlined bars in the rule-off lanes | **PASS**: both months marked on the 3-month line with their values (F-18) |
+| 3.4 annotation | unchanged | unchanged | unchanged | unchanged; it names the one episode the title counts | unchanged |
+| 3.6 direct labels | unchanged | unchanged | unchanged | lane labels; one key sentence under the plot naming the marks, which cannot each carry a label, and the lane order | unchanged |
+| 4.3 travels alone | the subtitle states both horizons and the strip "Nov 2026 is three months ahead" | the strip's locked span, selection cut-off and D17 | unchanged | the strip; the association sentence is now a bullet, and the title no longer makes the claim it qualified | unchanged |
+| 5.1 three layers | summary, two tables, navigator | summary, table, navigator | summary, table; shape in the summary | summary, table, navigator | summary, table, navigator |
+| 5.2 L1 to L3 | type, span, range, latest, the outlook's figures | type, span, range, series, band, ringed months | unchanged | type, counts per lane; the dates are in the table only | type, span, ranges, the filling months |
+| K2 every figure from a query | unchanged; the subtitle's band start is the first drawn point | unchanged | the bullets' 24, 60% to 95% and 70% from `forecast_score.csv`, the one constant citing gate G5 (6.4) and `review.py` | unchanged; the bullets from `review_workload.csv`, `recall_count.json` and `review.py` | unchanged |
+| K6 widths | 320, 655, 656, 1040 | same | same; the case study's ladder is the same four | same | same |
+
+### 8.2 · Verdicts, restated
+
+```
+CASCADIA CHART REVIEW v2.8 - text revision of 2026-10-07 (Build Brief 2.2) - all five charts
+Widths reached (K6): 320, 655, 656, 1040 on both pages (crossing at 656, host 560)
+Once per publish (K7, K8): PASS - 2026-10-07
+Reading panel (7.4): none for this revision (marks and data unchanged); sections 0 and 6.0 stand
+C1  INVARIANTS: all PASS; 3.2 PASS-BY-EXCEPTION (basis narrowed, recorded above)
+    PREFERENCES: 5.5 failed (5), as 6.1      INVARIANT FAILURES: 0    PREFERENCE SCORE: 5
+C2  INVARIANTS: all PASS; 2.3.6 PASS-BY-EXCEPTION, as section 2
+    PREFERENCES: none failed                 INVARIANT FAILURES: 0    PREFERENCE SCORE: 0
+C3  INVARIANTS: all PASS      PREFERENCES: none failed     INVARIANT FAILURES: 0    PREFERENCE SCORE: 0
+C4  INVARIANTS: all PASS      PREFERENCES: none failed (2.7 declared under the canvas, recorded above)
+                                                           INVARIANT FAILURES: 0    PREFERENCE SCORE: 0
+C5  INVARIANTS: all PASS; 2.3.6 PASS-BY-EXCEPTION, as section 2
+    PREFERENCES: none failed                 INVARIANT FAILURES: 0    PREFERENCE SCORE: 0
+VERDICT: SHIP, each chart as its previous verdict stands, with the two judgments above for Aaron
+```

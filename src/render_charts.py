@@ -23,6 +23,12 @@ any width overflows horizontally or a chart fails to draw.
     python src/render_charts.py --page case-study.html --charts c3
                                            # a second page: its own K6 ladder, its own
                                            # chart list, renders under docs/renders/case-study/
+    python src/render_charts.py --tables tbl-outlook,tbl-scores,tbl-c4
+                                           # also each named table, its details opened, as
+                                           # table-<id>-<width>.png at 320 and 1040 only
+    python src/render_charts.py --page case-study.html --charts c3 --card
+                                           # also the case study's card as card-<width>.png,
+                                           # at 320 and 1040 only (Build Brief 2.2 step 10)
 """
 import json
 import pathlib
@@ -86,6 +92,14 @@ def main():
         i = argv.index("--charts")
         charts = argv[i + 1].split(",")
         argv = argv[:i] + argv[i + 2:]
+    tables, want_card = [], False
+    if "--tables" in argv:
+        i = argv.index("--tables")
+        tables = argv[i + 1].split(",")
+        argv = argv[:i] + argv[i + 2:]
+    if "--card" in argv:
+        want_card = True
+        argv.remove("--card")
     url = URL + page_name
     if "--out" in argv:
         i = argv.index("--out")
@@ -133,6 +147,25 @@ def main():
                 # the page a reader loads is unchanged.
                 target.screenshot(path=str(out_dir / ("%s-%d.png" % (cid, width))),
                                   style="#site-header{position:static !important}")
+            # The named tables and the card, at the narrowest and the design width only. A table's details is
+            # opened for the shot, which is the state the reader asks for; the cue is then re-measured by page.js.
+            if width in (NARROW_WIDTH, DESIGN_WIDTH):
+                for tid in tables:
+                    block = page.locator('[data-table-block="%s"]' % tid)
+                    if not block.count():
+                        draw_failures.append((width, "table " + tid))
+                        continue
+                    page.evaluate("(id) => { const d = document.querySelector('[data-table-block=\"' + id + '\"]').closest('details'); "
+                                  "if (d) d.open = true; }", tid)
+                    page.wait_for_timeout(250)
+                    block.screenshot(path=str(out_dir / ("table-%s-%d.png" % (tid, width))),
+                                     style="#site-header{position:static !important}")
+                if want_card:
+                    c = page.locator('[data-case="card"]')
+                    if not c.count():
+                        draw_failures.append((width, "card"))
+                    else:
+                        c.screenshot(path=str(out_dir / ("card-%d.png" % width)))
             seg = page.evaluate(
                 """() => Array.from(document.querySelectorAll('.cascadia-provenance'))
                         .map(n => n.textContent.split(' \\u00b7 ').length)""")

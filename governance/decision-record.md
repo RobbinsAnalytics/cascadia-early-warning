@@ -497,3 +497,132 @@ tags; the cohort-facts, names and em-dash gates read it as they read the
 module; Path 2 compares its data block. The site's old URL becomes a redirect
 stub in a later brief, written in the site repository, not here.
 
+
+---
+
+*Layer 4, 2026-10-07: a presentation pass on both pages, Build Brief 2.2.*
+
+## D20 · One action on the case study, chart text cut to a finding and three bullets, table titles above their tables
+
+Aaron's notes on the Build 2.1 pages and a third external review
+(Build21_Review_ChatGPT_2026-10-07), both checked by Cowork against disk,
+found three problems. The case study's own card diluted its purpose. Chart
+text ran to a paragraph inside the canvas (chart 4's subtitle was 222
+words). Two places still said "months the model never saw", and most data
+tables opened on a blank block. **Aaron's decisions, 2026-10-07:**
+- The case study makes the module unmistakable: one primary action in
+  Felix's lime spec-card pattern, headed "Forecast module", with no Owner
+  row and no method or repository links at the top.
+- The module hero's fifth tile is one clause.
+- The Horizon row and the remaining "never saw" wording are fixed.
+- Table titles stop producing the blank block.
+- Chart text is cut, not only bulleted, to a finding title, a one-line
+  subtitle and two or three bullets; the detail moves to the tables and
+  the method section.
+- The third review's wording is adopted where it supplies it.
+
+**Nothing the build computed changed.** The frozen tables, the locked test,
+the promotion, the review rule, the G5 band and floor, the cohort,
+`config/model.json` and the pre-registration are as committed, and
+`git diff --stat e615fb4 -- data/` prints nothing. What changed is what the
+pages say, how they are laid out, and what the gates check.
+
+**What each step changed.**
+- `e6a8a08` The case study's lead, verbatim, with "three of seven"
+  generated; the November outlook is the results table's first row.
+- `693f9c8` The card: "Forecast module", the supporting line verbatim, one
+  Felix 6.3 "Disc CTA, dark" labelled "Open forecast module" directly under
+  the heading, and three rows: receipts through, horizons and cohort.
+  Method and receipts and the build repository move to a links list at the
+  end of section 04. The closing invitation keeps one route, to the module.
+- `9706ffe` The test and its chronology in the brief's three sentences. The
+  calibration repair is stated once, in the experiment-history bullet;
+  section 02's heading drops "and the repair it needed".
+- `56b8a30` Section 03 becomes "Decisions and trade-offs": seven choices
+  from this record, each with what it cost, and one disclosure that Claude
+  Code implemented the approved plan and AI agents ran the simulated chart
+  reviews.
+- `6f796d8` Chart 3 on the case study is "Coverage by code", unnumbered. The
+  results table stacks below 640 px with explicit ARIA table roles. The
+  next test separates the shuffled-dates reference from prospective
+  scoring.
+- `afc9b08` The Horizon row (verbatim, two lines), the test heading
+  (verbatim), the opening question, and a one-clause fifth tile.
+- `5641ff9` Table titles. The blank block was the caption itself: set to
+  `display:block`, it stops being a caption and is wrapped in an anonymous
+  first-column cell under the header row. Every title is now a block above
+  its scrolling wrapper and names its table by `aria-labelledby`. A scroll
+  cue shows only where the wrapper scrolls.
+- `7d283f2` Chart text cut. Each chart has a one-line finding, a subtitle of
+  period and horizon only, and three one-sentence bullets under the
+  provenance strip. Chart 4's key is built with the page, no longer
+  composed in `page.js`.
+- `6bb4dd3` Four gates on chart text and the card, each with prove-failable
+  scenarios and an unmutated control.
+- `39c25b3` Corrections from an adversarial review of the nine steps
+  (workflow wf_85d0c97e-7aa: 36 findings, 33 confirmed in whole or in
+  part).
+  - Chart 4 and the fifth tile say "queue episode", because the chart also
+    draws outlined episodes that precede some initiations.
+  - Chart 4's title returns to the claim its annotation names.
+  - The case study's header loses its Repository button.
+  - The card's action keeps Felix's 44 px tap target.
+  - The gates read every list, key and date form.
+  - Several drafted sentences were made accurate.
+
+**Where the pages depart from Felix's strings, on the record (D14).** The
+card's action is the 6.3 "Disc CTA, dark" string with three utilities
+added:
+- `mt-4`, for spacing;
+- `min-h-11`, because Felix's own rule 10 asks 44 px of every tap target
+  and the 6.3 string draws 40 px;
+- `shrink-0` on its disc, so the disc stays round when the verbatim label
+  wraps in the 192 px a 320 px viewport leaves it.
+
+Its supporting line borrows the lime feature card's `text-ink/75` and adds
+`text-balance`. The case study's header drops its Repository button, so the
+card holds the page's one primary action at every width; the module's
+header keeps its button. No token changed.
+
+**What the brief got wrong, and what was done instead.**
+- The blank block's cause was not the scrolling wrapper. It was the caption
+  rule: `display:block` turns a caption into a cell. It affected 12 of the
+  module's 14 tables (not 13) and the case study's chart 3 table.
+- Chart 3's quoted "Thresholds" bullet is two sentences, and the same step
+  asks for one sentence per bullet. Its ". Both" renders as "; both", the
+  only change to the brief's words.
+- The brief's example fifth tile, "preceded by an episode", is false on this
+  page's own chart. It reads "preceded by a queue episode".
+- "Felix Fee Examiner style" is not a Felix pattern. It is the Links section
+  of the site's Fee Examiner case study, which section 04's links list
+  follows.
+- The brief's step 2 did not reach the case study's header, which put a
+  repository button styled as a primary action at the top of every viewport
+  768 px and wider.
+
+*Counterfactual:* the alternative was to bullet the long subtitles without
+cutting them. That would have moved the wall of text below the chart
+instead of out of it. Overriding only the caption's display would have
+removed the blank block but let a wide table's title scroll away with it.
+
+**Open, for Aaron.**
+- The row labels on both lime cards and in the module's section 05
+  decision list are `text-ink/60` at 0.7rem. They measure 4.16:1 on lime
+  and 4.49:1 on white, both under AA. The string predates this pass, and
+  D14's 6a substitution covers `muted`, not this string, so widening 6a is
+  his call.
+- Chart 4's lane order is stated in its key under the canvas rather than in
+  the subtitle, which VIZ-PRINCIPLES 2.7 prefers and this brief limited to
+  period and horizon.
+
+**Carried by:**
+- `src/build_page.py`: `case_opening`, `case_description`, `case_test`,
+  `case_decisions`, `promotion_ratio`, `c3_card`, `chart_card`, `table`,
+  and the chart text in `chart1` to `chart5`.
+- `docs/template.html`; `docs/case-study-template.html`.
+- `docs/assets/page.js`: the scroll cues.
+- `src/validate.py`: `check_chart_subtitles`, `check_chart_bullets`,
+  `check_c4_summary_dates` and `check_case_card`, with their scenarios and
+  controls.
+- `src/render_charts.py`: the card and table renders.
+- `governance/chart-review.md`: section 8.
