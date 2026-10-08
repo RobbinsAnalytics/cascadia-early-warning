@@ -147,7 +147,11 @@
     cascadiaResize(host, ch);
     cascadiaProvenance(host, spec.provenance);
     el('sum-' + host.id).textContent = spec.summary;
-    cascadiaAccessible(host, { label: spec.ariaLabel, summaryId: 'sum-' + host.id, tableId: 'tbl-' + host.id });
+    // The description is collapsed (Build Brief 2.3); Chromium drops aria-describedby text inside a closed <details>,
+    // so the canvas points at a hidden copy of the same text, which it reads while the disclosure is closed.
+    var ref = el('desc-' + host.id);
+    if (ref) ref.textContent = spec.summary;
+    cascadiaAccessible(host, { label: spec.ariaLabel, summaryId: ref ? 'desc-' + host.id : 'sum-' + host.id, tableId: 'tbl-' + host.id });
     if (spec.nav) cascadiaNavigator(host, spec.nav);
     var note = el('note-' + host.id);
     if (note) note.hidden = !(spec.noteVisible == null ? L.narrow : spec.noteVisible);

@@ -949,12 +949,21 @@ def chart_card(cid: str, index: str, kicker: str, height: int, note_class: str, 
              '<span class="text-teal-2">%s</span>' % html.escape(kicker))
     key = ('<p id="key-%s" class="chart-key"><strong>Key:</strong> %s</p>' % (cid, html.escape(legend))) if legend else ""
     pts = '<ul id="pts-%s" class="chart-points">%s</ul>' % (cid, "".join("<li>%s</li>" % html.escape(b) for b in bullets))
+    # The description (Rule 5.1 layer 1) is collapsed, in a closed <details> styled as the data disclosure and named
+    # with the data disclosure's own short name (Build Brief 2.3 step 2). It stays first in the DOM and above the
+    # canvas, as 5.1 requires the summary "in the DOM before the chart"; page.js writes the text into it and the
+    # canvas keeps aria-describedby on that text, which a screen reader announces while the disclosure is closed.
+    desc = html.escape(tables[0][0].split(": ", 1)[-1])
     return ('<div class="chart-card rounded-[1.75rem] bg-white p-5 sm:p-7" id="card-%s">'
             '<p class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">%s</p>'
-            '<p id="sum-%s" class="chart-summary"></p>'
+            '<details class="data-table rich chart-description"><summary>Chart description: %s</summary>'
+            '<p id="sum-%s" class="chart-summary"></p></details>'
+            # The same text, hidden, for aria-describedby: Chromium drops a description that points into a closed
+            # <details> (observed in its accessibility tree, Build Brief 2.3), and reads a hidden node referenced directly.
+            '<p id="desc-%s" class="chart-desc-ref" hidden></p>'
             '<div id="%s" class="chart" style="height:%dpx"></div>'
             '<p id="note-%s" class="chart-note %s" hidden>%s</p>%s%s%s</div>'
-            % (cid, label, cid, cid, height, cid, note_class, html.escape(note), key, pts, tbls))
+            % (cid, label, desc, cid, cid, cid, height, cid, note_class, html.escape(note), key, pts, tbls))
 
 
 def c3_card(c3: dict, index: str, kicker: str, data_label: str) -> str:

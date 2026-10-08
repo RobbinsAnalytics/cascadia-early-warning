@@ -22,8 +22,8 @@
 <style>
   /* Chart cards: module-specific internals that Felix does not describe. The
      canvas keeps the Cascadia theme (D15); the card around it is Felix's
-     white surface. Visual order inside a card: canvas, note, key, navigator, strip,
-     bullets, summary, tables; the summary stays FIRST in the DOM (Rule 5.1). */
+     white surface. Visual order inside a card: the collapsed description, canvas, note, key,
+     navigator, strip, bullets, tables; the description is FIRST in the DOM and above the canvas (Rule 5.1). */
   .chart-card { display:flex; flex-direction:column; }
   .chart-card > .chart { order:1; width:100%; }
   .chart-card > .chart-note { order:2; }
@@ -31,8 +31,9 @@
   .chart-card > .cascadia-nav { order:3; }
   .chart-card > .cascadia-provenance { order:4; }
   .chart-card > .chart-points { order:5; }
-  .chart-card > .chart-summary { order:6; }
   .chart-card > details.data-table { order:7; }
+  /* The description, collapsed (Build Brief 2.3 step 2): first in the DOM and above the canvas (Rule 5.1). */
+  .chart-card > details.data-table.chart-description { order:0; margin:8px 2px 4px; }
   .chart-summary { font:13px/1.6 var(--font-sans); color:var(--color-ink-soft); margin:10px 2px 0; max-width:72ch; }
   .chart-note { font:13px/1.55 "Source Serif 4", Georgia, serif; margin:6px 2px 2px; max-width:72ch; }
   .chart-note.evergreen { color:#1E7A4C; }
@@ -137,12 +138,12 @@
           <span class="h-2.5 w-2.5 rounded-full bg-ink" aria-hidden="true"></span>
         </div>
         <dl>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Status</dt><dd class="text-right text-sm font-semibold">Built and reviewed</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Receipts through</dt><dd class="text-right text-sm font-semibold whitespace-nowrap">@@as_of@@</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Retrieved</dt><dd class="text-right text-sm font-semibold">@@retrieved@@</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Source</dt><dd class="text-right text-sm font-semibold">openFDA</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">@@n_codes@@ codes, @@cohort_classes@@</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Candidate in use</dt><dd class="text-right text-sm font-semibold">@@n_cand@@ of @@n_codes@@ codes</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Status</dt><dd class="text-right text-sm font-semibold">Built and reviewed</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Receipts through</dt><dd class="text-right text-sm font-semibold whitespace-nowrap">@@as_of@@</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Retrieved</dt><dd class="text-right text-sm font-semibold">@@retrieved@@</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Source</dt><dd class="text-right text-sm font-semibold">openFDA</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Cohort</dt><dd class="text-right text-sm font-semibold">@@n_codes@@ codes, @@cohort_classes@@</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Candidate in use</dt><dd class="text-right text-sm font-semibold">@@n_cand@@ of @@n_codes@@ codes</dd></div>
         </dl>
         <ul class="mt-2">
           <li><a class="group flex items-center justify-between gap-4 border-b border-ink py-3 text-sm font-semibold" href="@@repo_url@@"><span>Build repository</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-lime transition-transform group-hover:-rotate-12" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a></li>
@@ -251,12 +252,12 @@
           <p>The decision this page serves is a quality team's monthly choice of where to look first: which product codes are reporting as expected and which are not.</p>
         </div>
         <dl class="mt-4 max-w-[46rem] rounded-3xl bg-white px-6 py-3 sm:px-7">
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Whose decision</dt><dd class="text-right text-sm font-semibold">the owner of a post-market review queue</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Horizon</dt><dd class="text-right text-sm font-semibold"><span class="block">Outlook: @@o_target@@, @@o_h_word@@ months from the @@o_origin_month@@ data origin.</span><span class="block">Review rule: @@rule_h_word@@-month-ahead forecasts.</span></dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Literacy</dt><dd class="text-right text-sm font-semibold">a reader who works in spreadsheets and reads a trend line, not a statistician</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Benchmark</dt><dd class="text-right text-sm font-semibold">the trailing three-month mean, the figure a spreadsheet would already give</dd></div>
-          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Cadence</dt><dd class="text-right text-sm font-semibold">monthly as the source loads</dd></div>
-          <div class="flex items-baseline justify-between gap-4 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink/60 uppercase">Action</dt><dd class="text-right text-sm font-semibold">open a review or do not</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Whose decision</dt><dd class="text-right text-sm font-semibold">the owner of a post-market review queue</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Horizon</dt><dd class="text-right text-sm font-semibold"><span class="block">Outlook: @@o_target@@, @@o_h_word@@ months from the @@o_origin_month@@ data origin.</span><span class="block">Review rule: @@rule_h_word@@-month-ahead forecasts.</span></dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Literacy</dt><dd class="text-right text-sm font-semibold">a reader who works in spreadsheets and reads a trend line, not a statistician</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Benchmark</dt><dd class="text-right text-sm font-semibold">the trailing three-month mean, the figure a spreadsheet would already give</dd></div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-ink/25 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Cadence</dt><dd class="text-right text-sm font-semibold">monthly as the source loads</dd></div>
+          <div class="flex items-baseline justify-between gap-4 py-3"><dt class="font-mono text-[0.7rem] tracking-[0.16em] text-ink-soft uppercase">Action</dt><dd class="text-right text-sm font-semibold">open a review or do not</dd></div>
         </dl>
         <div class="rich prose mt-10 max-w-[46rem]">
           <h3>The snapshot and the live edge</h3>
