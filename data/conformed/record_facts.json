@@ -1,0 +1,59 @@
+{
+ "summary": {
+  "LWS": {
+   "reports": 222604,
+   "summary": 0,
+   "multi": 0,
+   "max_events": 0,
+   "events": 0
+  },
+  "OZD": {
+   "reports": 45326,
+   "summary": 1,
+   "multi": 0,
+   "max_events": 1,
+   "events": 1
+  },
+  "DSP": {
+   "reports": 50700,
+   "summary": 1,
+   "multi": 0,
+   "max_events": 1,
+   "events": 1
+  },
+  "NPT": {
+   "reports": 72845,
+   "summary": 4179,
+   "multi": 3375,
+   "max_events": 3108,
+   "events": 149569
+  },
+  "DSQ": {
+   "reports": 138034,
+   "summary": 1,
+   "multi": 0,
+   "max_events": 1,
+   "events": 1
+  },
+  "PYX": {
+   "reports": 2190,
+   "summary": 1,
+   "multi": 0,
+   "max_events": 1,
+   "events": 1
+  },
+  "NIK": {
+   "reports": 117383,
+   "summary": 0,
+   "multi": 0,
+   "max_events": 0,
+   "events": 0
+  }
+ },
+ "reports": {
+  "distinctRaw": 649080,
+  "distinctEligible": 649079,
+  "memberships": 649083,
+  "multiCodeReports": 3
+ }
+}

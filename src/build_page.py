@@ -24,7 +24,9 @@ Five charts:
   c5  how complete is the recent record: the headline code's event-month
       counts at 3, 6 and 12 months of receipt lag (M-02)
 
-    python src/build_page.py
+    python src/build_page.py                       from the record table if present, else
+                                                   data/conformed/record_facts.json
+    python src/build_page.py --write-record-facts  write that JSON once, from the table
 """
 from __future__ import annotations
 
@@ -56,6 +58,7 @@ GOV = REPO / "governance"
 DOCS = REPO / "docs"
 CONFIG = REPO / "config" / "model.json"
 DB = CONF / "early_warning.duckdb"
+RECORD_FACTS = CONF / "record_facts.json"
 
 PAGE_URL = "https://www.robbinsanalytics.com/cascadia-early-warning/"
 SITE_URL = "https://www.robbinsanalytics.com/"
@@ -234,16 +237,46 @@ def cohort_facts(d) -> dict:
             "eligible": elig, "ineligible": sorted(c for c in codes if c not in elig)}
 
 
-def record_facts(d) -> dict:
+def record_facts(d, write: bool = False) -> dict:
     """Facts only the record table holds: each forecast code's summary-report composition (one
-    summary report can stand for many events). Read from the engine's DuckDB record table, which
-    src/build_model.py rebuilds from the freeze; the page fails closed without it rather than
-    typing the figures."""
+    summary report can stand for many events), and the distinct report totals.
+
+    Two sources, one answer (Build Brief 2.5 step 1). The engine's DuckDB record table is gitignored,
+    so a runner that publishes the live edge has none; the same dict is committed, once, as
+    data/conformed/record_facts.json (a frozen path). With the table present the facts are computed
+    from it and must equal the JSON, or the build fails closed; without it they are read from the
+    JSON. The JSON is written only by `build_page.py --write-record-facts`, never as a side effect."""
     if not DB.exists():
-        raise SystemExit("no record table at %s: the summary-report composition is read from it. "
-                         "Restore the staged pages (src/acquire.py --restore) and rebuild it with src/build_model.py, which also "
-                         "rewrites the frozen conformed tables; src/validate_freeze.py must then show them unchanged."
-                         % DB.relative_to(REPO).as_posix())
+        if write:
+            raise SystemExit("--write-record-facts needs the record table at %s; it computes what it writes"
+                             % DB.relative_to(REPO).as_posix())
+        if not RECORD_FACTS.exists():
+            raise SystemExit("no record table at %s and no %s: the summary-report composition is read from one of them. "
+                             "Restore the staged pages (src/acquire.py --restore) and rebuild the table with src/build_model.py, "
+                             "which also rewrites the frozen conformed tables; src/validate_freeze.py must then show them unchanged."
+                             % (DB.relative_to(REPO).as_posix(), RECORD_FACTS.relative_to(REPO).as_posix()))
+        return json.loads(RECORD_FACTS.read_text(encoding="utf-8"))
+    rf = record_facts_from_db(d)
+    if write:
+        # Insertion order, not sorted: the dict's order reaches the page's data block, and the order
+        # written here is the order every later build renders, from either source.
+        RECORD_FACTS.write_text(json.dumps(rf, indent=1) + "\n", encoding="utf-8", newline="\n")
+        print("wrote %s from the record table" % RECORD_FACTS.relative_to(REPO).as_posix())
+    if not RECORD_FACTS.exists():
+        raise SystemExit("%s is absent; write it once with `build_page.py --write-record-facts`"
+                         % RECORD_FACTS.relative_to(REPO).as_posix())
+    committed = json.loads(RECORD_FACTS.read_text(encoding="utf-8"))
+    if committed != rf:
+        raise SystemExit("the record table and %s disagree.\n  record table: %s\n  committed:    %s"
+                         % (RECORD_FACTS.relative_to(REPO).as_posix(), json.dumps(rf, sort_keys=True),
+                            json.dumps(committed, sort_keys=True)))
+    # Equal in content; render in the committed order, so the page cannot depend on the order the
+    # record table happens to return its groups in.
+    return committed
+
+
+def record_facts_from_db(d) -> dict:
+    """record_facts, computed from the DuckDB record table."""
     import duckdb
     codes = d["forecast_codes"]
     con = duckdb.connect(str(DB), read_only=True)
@@ -1163,9 +1196,9 @@ def case_live_edge() -> str:
     return s + " Live months are counted on a different basis from the frozen ones: %s." % basis.replace("; ", ", with ")
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
     d = load()
-    d["rf"] = record_facts(d)
+    d["rf"] = record_facts(d, write="--write-record-facts" in argv)
     code = headline_code(d)
     c1, c2, c3, c4, c5 = chart1(d, code), chart2(d, code), chart3(d), chart4(d), chart5(d, code)
     for c in (c1, c2, c3, c4, c5):
@@ -1411,4 +1444,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
