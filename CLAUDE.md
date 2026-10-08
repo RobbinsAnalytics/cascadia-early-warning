@@ -34,7 +34,7 @@ predicts nothing about safety.
 **3 · Chronology is enforced by the git log, not by promise.** `config/model.json`
 and `governance/pre-registration.md` are committed before the first forecast
 row exists; every forecast row's origin precedes its target; the locked test
-(2024-01 to 2025-12) runs once and its scores are not revisited. If a result
+(2024-01 to 2025-12) is frozen once (D17 records the one pre-commit repair) and its scores are not revisited. If a result
 looks wrong, say so in the report; do not re-fit.
 
 ## The freeze
