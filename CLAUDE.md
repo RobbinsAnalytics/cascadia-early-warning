@@ -138,12 +138,12 @@ Its file is `C:\Users\Ajayr\.claude\scheduled-tasks\cascadia-early-warning-live-
 stores do not see each other). It runs `src/pull_live_edge.py` then
 `src/reconcile_live_edge.py` with the venv interpreter by path, writes
 `data/live/`, `governance/run_history.jsonl`, `governance/health.json` and
-`governance/reconciliation.md`, and rebuilds `docs/index.html` as its last
-step. Live months are raw counts with no exclusion applied and say so (D18).
+`governance/reconciliation.md`, and rebuilds both pages (`docs/index.html`
+and `docs/case-study.html`) as its last step. Live months are raw counts with no exclusion applied and say so (D18).
 Committing a run's record is Aaron's act; `.claude/hooks/no_publish_from_scheduled_runs.py`
 refuses a commit or a push from a scheduled transcript, and a push from any
-transcript it cannot read. The rebuilt page trips the freeze gate until the
-baseline in `governance/freeze.toml` is advanced with that commit (D18).
+transcript it cannot read. Neither page is on the freeze gate's protected
+list (D18), so a rebuild does not trip that gate.
 `src/test_live_edge.py` drives the pull offline against a fake source.
 
 ## Content
