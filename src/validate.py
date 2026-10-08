@@ -876,9 +876,235 @@ def check_case_study(results):
                     % (len(words), pos.get("opening"), pos.get("results"), pos.get("h2"), pos.get("section"), p.rows, p.h1), bad))
 
 
+# ---------------------------------------------------------------------------
+# chart text and the case-study card (Build Brief 2.2 step 9)
+# ---------------------------------------------------------------------------
+
+SUBTITLE_MAX_WORDS = 15
+BULLETS_MIN, BULLETS_MAX = 2, 3
+_SENTENCE_END = re.compile(r"[.!?](?=\s|$)")
+_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+# A date in any form the pages write one: 2024-03-14, 2024-03, Mar 2024, March 2024, Mar '24.
+_DATE_RX = re.compile(r"\b(\d{4})-(\d{2})(?:-(\d{2}))?\b|\b(%s)[a-z]*\.? (?:(\d{4})|'(\d{2}))\b"
+                      % "|".join(m[:3] for m in _MONTHS))
+
+
+def _sentences(s: str) -> int:
+    """Sentences in a string: terminal marks followed by a space or the end. A string with none is not a sentence."""
+    return len(_SENTENCE_END.findall(s.strip()))
+
+
+def _words(s: str) -> int:
+    return len([w for w in s.split() if re.search(r"[A-Za-z0-9]", w)])
+
+
+def _data_block(path: pathlib.Path):
+    m = re.search(r'<script id="cascadia-data" type="application/json">(.*?)</script>', path.read_text(encoding="utf-8"), re.S)
+    return json.loads(m.group(1)) if m and not m.group(1).strip().startswith("@@") else None
+
+
+def _built_pages():
+    return [p for p in sorted(DOCS.glob("*.html")) if "template" not in p.name]
+
+
+class _ChartCards(html.parser.HTMLParser):
+    """Each chart card on a page: its canvas host, its bullets (ul.chart-points) and its key (p.chart-key)."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.cards, self._card, self._depth, self._li, self._key, self._pts = {}, None, 0, None, None, None
+        self.stack = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in _VOID:
+            return
+        a = dict(attrs)
+        cls = (a.get("class") or "").split()
+        self.stack.append(tag)
+        if "chart-card" in cls and re.fullmatch(r"card-c\d+", a.get("id") or ""):
+            self._card, self._depth = a["id"][5:], len(self.stack)
+            self.cards[self._card] = {"host": False, "lists": 0, "bullets": [], "key": None}
+        if self._card is None:
+            return
+        c = self.cards[self._card]
+        if "chart" in cls and tag == "div":
+            c["host"] = True
+        if tag == "ul" and "chart-points" in cls:
+            c["lists"] += 1
+            self._pts = len(self.stack)
+        if tag == "li" and self._pts is not None and len(self.stack) == self._pts + 1:
+            self._li = []
+        if tag == "p" and "chart-key" in cls:
+            self._key = []
+
+    def handle_endtag(self, tag):
+        if tag in _VOID:
+            return
+        if self._card is not None:
+            c = self.cards[self._card]
+            if tag == "li" and self._li is not None:
+                c["bullets"].append(" ".join("".join(self._li).split()))
+                self._li = None
+            if tag == "p" and self._key is not None:
+                c["key"] = " ".join("".join(self._key).split())
+                self._key = None
+        while self.stack:
+            t = self.stack.pop()
+            if t == tag:
+                break
+        if self._pts is not None and len(self.stack) < self._pts:
+            self._pts = None
+        if self._card is not None and len(self.stack) < self._depth:
+            self._card = None
+
+    def handle_data(self, data):
+        if self._li is not None:
+            self._li.append(data)
+        if self._key is not None:
+            self._key.append(data)
+
+
+def check_chart_subtitles(results):
+    """Every canvas subtitle, on every built page, is one sentence of at most SUBTITLE_MAX_WORDS words, read from
+    the data block page.js draws it from (state: what the canvas is given, not a reading of the canvas)."""
+    bad, seen = [], []
+    for path in _built_pages():
+        d = _data_block(path)
+        if d is None:
+            bad.append("docs/%s: no chart data block" % path.name)
+            continue
+        for cid in sorted(k for k in d if re.fullmatch(r"c\d+", k)):
+            s = (d[cid] or {}).get("subtitle")
+            if not s:
+                bad.append("docs/%s %s: no subtitle" % (path.name, cid))
+                continue
+            n_s, n_w = _sentences(s), _words(s)
+            seen.append("%s %s %dw" % (path.stem, cid, n_w))
+            if n_s != 1:
+                bad.append("docs/%s %s: the subtitle is %d sentences, not one: %r" % (path.name, cid, n_s, s[:90]))
+            if n_w > SUBTITLE_MAX_WORDS:
+                bad.append("docs/%s %s: the subtitle is %d words (limit %d)" % (path.name, cid, n_w, SUBTITLE_MAX_WORDS))
+    if not seen and not bad:
+        bad.append("no chart subtitle found on any built page")
+    results.append(("chart subtitles: every canvas subtitle is one sentence of at most %d words" % SUBTITLE_MAX_WORDS,
+                    not bad, "; ".join(seen) or "none read", bad))
+
+
+def check_chart_bullets(results):
+    """Every chart card, on every built page, carries one list of BULLETS_MIN to BULLETS_MAX explanation bullets
+    under its canvas, each one sentence, and its key, where it has one, is one sentence (the HTML a reader gets)."""
+    bad, seen = [], []
+    for path in _built_pages():
+        p = _ChartCards()
+        p.feed(path.read_text(encoding="utf-8"))
+        p.close()
+        for cid, c in sorted(p.cards.items()):
+            if not c["host"]:
+                continue
+            seen.append("%s %s %d" % (path.stem, cid, len(c["bullets"])))
+            if c["lists"] != 1:
+                bad.append("docs/%s %s: %d bullet lists (one expected)" % (path.name, cid, c["lists"]))
+            if not BULLETS_MIN <= len(c["bullets"]) <= BULLETS_MAX:
+                bad.append("docs/%s %s: %d bullets (%d to %d)" % (path.name, cid, len(c["bullets"]), BULLETS_MIN, BULLETS_MAX))
+            for b in c["bullets"]:
+                if _sentences(b) != 1:
+                    bad.append("docs/%s %s: a bullet of %d sentences: %r" % (path.name, cid, _sentences(b), b[:90]))
+            if c["key"] is not None and _sentences(c["key"]) != 1:
+                bad.append("docs/%s %s: the key is %d sentences" % (path.name, cid, _sentences(c["key"])))
+    if not seen:
+        bad.append("no chart card with a canvas on any built page")
+    results.append(("chart bullets: every chart carries %d to %d explanation bullets under it, each one sentence, and a one-sentence key"
+                    % (BULLETS_MIN, BULLETS_MAX), not bad, "; ".join(seen) or "none read", bad))
+
+
+def check_c4_summary_dates(results):
+    """Chart 4's visible text lists no recall dates: its summary (drawn under the canvas by page.js from the data
+    block) and its bullets and key may name only the span's first and last month, once each, and no full date;
+    the Class I dates are in its table only (Build Brief 2.2 step 8, B1)."""
+    bad, n = [], 0
+    for path in _built_pages():
+        d = _data_block(path)
+        if not d or "c4" not in d:
+            continue
+        n += 1
+        span = [d["c4"]["months"][0], d["c4"]["months"][-1]]
+        p = _ChartCards()
+        p.feed(path.read_text(encoding="utf-8"))
+        p.close()
+        card = p.cards.get("c4", {})
+        for where, text in [("summary", d["c4"].get("summary", ""))] + [("bullet", b) for b in card.get("bullets", [])] + \
+                           [("key", card.get("key") or "")]:
+            found = []
+            for m in _DATE_RX.finditer(text):
+                if m.group(1):
+                    if m.group(3):
+                        bad.append("docs/%s chart 4 %s: a full date %r" % (path.name, where, m.group(0)))
+                    found.append("%s-%s" % (m.group(1), m.group(2)))
+                else:
+                    yy = m.group(5) or "20" + m.group(6)
+                    found.append("%s-%02d" % (yy, [x[:3] for x in _MONTHS].index(m.group(4)[:3]) + 1))
+            extra = list(found)
+            for s in span:
+                if s in extra:
+                    extra.remove(s)
+            if extra:
+                bad.append("docs/%s chart 4 %s: dates beyond the span's ends %s: %s" % (path.name, where, span, ", ".join(extra)))
+    if not n:
+        bad.append("no built page carries chart 4")
+    results.append(("chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table)",
+                    not bad, "%d page(s) with chart 4" % n, bad))
+
+
+class _CaseCard(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.cards, self._depth, self.stack = [], None, []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag not in _VOID:
+            self.stack.append(tag)
+        if a.get("data-case") == "card" and tag not in _VOID:
+            self.cards.append([])
+            self._depth = len(self.stack)
+        elif self._depth is not None and tag == "a":
+            self.cards[-1].append(a.get("href"))
+
+    def handle_endtag(self, tag):
+        if tag in _VOID:
+            return
+        while self.stack:
+            if self.stack.pop() == tag:
+                break
+        if self._depth is not None and len(self.stack) < self._depth:
+            self._depth = None
+
+
+def check_case_card(results):
+    """The case study's card (data-case="card") holds exactly one link, and it opens the module page."""
+    page = DOCS / "case-study.html"
+    bad = []
+    if not page.exists():
+        bad.append("docs/case-study.html absent")
+        links = []
+    else:
+        p = _CaseCard()
+        p.feed(page.read_text(encoding="utf-8"))
+        p.close()
+        if len(p.cards) != 1:
+            bad.append("%d elements marked data-case=\"card\" (one expected)" % len(p.cards))
+        links = p.cards[0] if p.cards else []
+        if len(links) != 1:
+            bad.append("the card holds %d links (exactly one expected)" % len(links))
+        elif (links[0] or "").split("#")[0] not in ("index.html", "./", "./index.html"):
+            bad.append("the card's one link opens %r, not the module page" % links[0])
+    results.append(("case-study card: exactly one link, to the module", not bad, "links %s" % (links or "none"), bad))
+
+
 CHECKS = [check_hashes, check_extraction_log, check_m01, check_dates, check_uniqueness, check_exclusion,
           check_chronology, check_locked_once, check_names, check_emdash, check_asof, check_cohort, check_review,
-          check_known_events, check_cohort_facts, check_words_before_chart, check_case_study]
+          check_known_events, check_cohort_facts, check_words_before_chart, check_case_study,
+          check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card]
 
 
 # ---------------------------------------------------------------------------
@@ -1038,6 +1264,22 @@ def _move_results_below_first_section(text: str) -> str:
     return rest[:end] + m.group(0) + rest[end:]
 
 
+def _data_edit(mutate):
+    """A page mutation that edits the chart data block: parse it, apply mutate(d), write it back."""
+    def fn(text: str) -> str:
+        m = re.search(r'(<script id="cascadia-data" type="application/json">)(.*?)(</script>)', text, re.S)
+        if not m:
+            raise RuntimeError("no data block; the scenario would prove nothing")
+        d = json.loads(m.group(2))
+        mutate(d)
+        return text[:m.start(2)] + json.dumps(d, separators=(",", ":")) + text[m.end(2):]
+    return fn
+
+
+def _c4_dates_into_summary(d):
+    d["c4"]["summary"] += " Class I initiations: %s." % ", ".join(r["month"] for l in d["c4"]["lanes"] for r in l["classI"])
+
+
 def _first_eligible_token() -> str:
     s = private_sections()
     t = s["firm_tokens"][0]
@@ -1111,9 +1353,48 @@ def _scenarios():
            lambda: _docs_tree_copy({"case-study.html": lambda x: x.replace(CASE_CANONICAL_URL, CANONICAL_ORIGIN + "projects/cascadia-early-warning.html")}))
     yield (check_case_study, "a second H1 written into the case study",
            lambda: _docs_tree_copy({"case-study.html": _sub_once(r"</main>", "<h1>A second title</h1></main>")}))
+    yield (check_chart_subtitles, "a second sentence added to chart 2's subtitle, still under the word limit",
+           lambda: _docs_tree_copy({"index.html": _data_edit(lambda d: d["c2"].__setitem__("subtitle", d["c2"]["subtitle"] + " Then a second."))}))
+    yield (check_chart_subtitles, "chart 2's subtitle run one word past the limit, still one sentence",
+           lambda: _docs_tree_copy({"index.html": _data_edit(lambda d: d["c2"].__setitem__("subtitle", " ".join(["word"] * (SUBTITLE_MAX_WORDS + 1)) + "."))}))
+    yield (check_chart_bullets, "a fourth bullet added under chart 2",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(<ul id="pts-c2" class="chart-points">)', r"\1<li>An extra bullet.</li>")}))
+    yield (check_chart_bullets, "a bullet of two sentences under the case study's chart 3",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(<ul id="pts-c3" class="chart-points"><li>)', r"\1A first sentence. ")}))
+    yield (check_chart_bullets, "chart 5's bullets removed",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(?s)<ul id="pts-c5" class="chart-points">.*?</ul>', "")}))
+    yield (check_c4_summary_dates, "the Class I initiation months written back into chart 4's summary, as Build 2.1 had them",
+           lambda: _docs_tree_copy({"index.html": _data_edit(_c4_dates_into_summary)}))
+    yield (check_c4_summary_dates, "one recall's full date written into a chart 4 bullet",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(<ul id="pts-c4" class="chart-points"><li>)', r"\1A Class I recall began 2024-03-14; ")}))
+    yield (check_case_card, "a second link written into the case-study card",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(<aside data-case="card"[^>]*>)', r'\1<a href="index.html#s5">Method and receipts</a>')}))
+    yield (check_case_card, "the card's one link pointed at the build repository instead of the module",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(?s)(<aside data-case="card"(?:(?!</aside>).)*?<a [^>]*?href=")[^"]*"',
+                                                                 r'\1https://github.com/RobbinsAnalytics/cascadia-early-warning"')}))
     yield (check_review, "an episode claimed for a month that does not satisfy the rule",
            lambda: _csv_copy("QUEUE", lambda rows: rows.append(dict(rows[0], episode_start="2024-01", episode_end="2024-02", months_in_episode="2"))
                              if rows and rows[0]["product_code"] else rows.append({"product_code": "DSQ", "model_in_use": "baseline_a", "episode_start": "2024-01", "episode_end": "2024-02", "months_in_episode": "2", "max_excess_over_point": "0", "status": "x"})))
+
+
+# Each check added in Build Brief 2.2 step 9 is also run against an UNMUTATED copy of the pages, through the same
+# copy-and-repoint machinery its scenarios use, and must pass there: a scenario that trips proves the check can
+# fail, and the control proves it trips on the corruption rather than on the copy.
+CONTROLLED = [check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card]
+
+
+def run_controls():
+    out = []
+    for check in CONTROLLED:
+        probe = []
+        try:
+            with _docs_tree_copy({}):
+                check(probe)
+            passed = probe[0][1]
+            out.append((check.__name__, "the pages copied with nothing changed", passed))
+        except Exception as exc:  # noqa: BLE001
+            out.append((check.__name__, "the pages copied with nothing changed  [raised %s]" % type(exc).__name__, False))
+    return out
 
 
 def prove_failable():
@@ -1166,9 +1447,10 @@ def main(argv: list[str]) -> int:
         except Exception as exc:  # noqa: BLE001
             results.append((check.__name__, False, "raised %s: %s" % (type(exc).__name__, exc), [str(exc)]))
     proofs = prove_failable() if "--prove-failable" in argv else []
+    controls = run_controls() if "--prove-failable" in argv else []
     all_pass = all(ok for _, ok, _, _ in results)
     all_tripped = all(t for _, _, t, _ in proofs if t is not None)
-    ok = all_pass and (all_tripped if proofs else True)
+    ok = all_pass and (all_tripped if proofs else True) and all(c for _, _, c in controls)
 
     md = ["# Validation report: Cascadia Early Warning", "",
           "*Auto-generated by `src/validate.py` on %s. Receipts frozen through 2026-08-31, "
@@ -1192,6 +1474,15 @@ def main(argv: list[str]) -> int:
                "| Check | Corruption fed to it | Tripped? |", "|---|---|---|"]
         for name, scenario, t, note in proofs:
             md.append("| %s | %s | %s |" % (name, scenario, "tripped" if t else ("**NO**" if t is not None else note)))
+    if controls:
+        md += ["", "## Controls: the same checks on unmutated copies", "",
+               "*Each check added in Build Brief 2.2 step 9 is also run against a copy of the pages with nothing changed, "
+               "through the machinery its scenarios use, and must pass: the scenario shows the check can fail, the control "
+               "that it fails on the corruption and not on the copy.*", "",
+               "**%d of %d controls passed.**" % (sum(1 for _, _, c in controls if c), len(controls)), "",
+               "| Check | Input | Passed? |", "|---|---|---|"]
+        for name, label, c in controls:
+            md.append("| %s | %s | %s |" % (name, label, "passed" if c else "**NO**"))
     md += ["", "---", "*Report counts are not incident rates or measures of device safety. This independent public-data "
            "demonstration provides no medical, legal or regulatory advice.*", ""]
     REPORT.write_text("\n".join(md), encoding="utf-8", newline="\n")
@@ -1208,6 +1499,10 @@ def main(argv: list[str]) -> int:
         for name, scenario, t, note in proofs:
             print("  [%s] %s" % ("TRIPPED" if t else ("DID NOT TRIP" if t is not None else "SKIPPED"), name))
             print("          %s%s" % (scenario, (" " + note) if note else ""))
+    if controls:
+        print("\nControls, unmutated copies (each must pass):")
+        for name, label, c in controls:
+            print("  [%s] %s" % ("PASSED" if c else "CONTROL FAILED", name))
     print("\nwrote %s" % REPORT.relative_to(REPO).as_posix())
     print("\nPUBLISH GATE: " + ("PASSED" if ok else "FAILED: publish nothing, commit nothing under data/conformed/ or docs/."))
     return 0 if ok else 1

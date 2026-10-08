@@ -25,12 +25,16 @@
 | 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 4 pages, 7 marked statements; cohort Classes II and III, summary-eligible NPT |
 | 16 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | PASS | s1 3; s2 4; s3 4; s4 7 |
 | 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 46 words; order opening 79, results 107, first H2 231, first section 229; 6 result rows; H1 1 |
+| 18 | chart subtitles: every canvas subtitle is one sentence of at most 15 words | PASS | case-study c3 7w; index c1 14w; index c2 7w; index c3 7w; index c4 7w; index c5 15w |
+| 19 | chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | PASS | case-study c3 3; index c1 3; index c2 3; index c3 3; index c4 3; index c5 3 |
+| 20 | chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table) | PASS | 1 page(s) with chart 4 |
+| 21 | case-study card: exactly one link, to the module | PASS | links ['index.html'] |
 
 ## Proof the checks can fail
 
 *Each check above is re-run against a deliberately corrupted copy of its input and must reject it. A check that passes corrupted input is not testing anything, and reads identically in this report to one that works. The frozen data is never modified: the corruption is applied to a temporary copy and the path is restored after every scenario.*
 
-**30 of 30 scenarios tripped.**
+**39 of 39 scenarios tripped.**
 
 | Check | Corruption fed to it | Tripped? |
 |---|---|---|
@@ -63,7 +67,29 @@
 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | a section of prose written between the opening and the results table | tripped |
 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | the canonical URL and og:url pointed at the site's old case-study address | tripped |
 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | a second H1 written into the case study | tripped |
+| chart subtitles: every canvas subtitle is one sentence of at most 15 words | a second sentence added to chart 2's subtitle, still under the word limit | tripped |
+| chart subtitles: every canvas subtitle is one sentence of at most 15 words | chart 2's subtitle run one word past the limit, still one sentence | tripped |
+| chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | a fourth bullet added under chart 2 | tripped |
+| chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | a bullet of two sentences under the case study's chart 3 | tripped |
+| chart bullets: every chart carries 2 to 3 explanation bullets under it, each one sentence, and a one-sentence key | chart 5's bullets removed | tripped |
+| chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table) | the Class I initiation months written back into chart 4's summary, as Build 2.1 had them | tripped |
+| chart 4's visible summary, bullets and key list no recall dates (the span's two ends only; dates in the table) | one recall's full date written into a chart 4 bullet | tripped |
+| case-study card: exactly one link, to the module | a second link written into the case-study card | tripped |
+| case-study card: exactly one link, to the module | the card's one link pointed at the build repository instead of the module | tripped |
 | review queue: every episode satisfies the rule on the scored rows | an episode claimed for a month that does not satisfy the rule | tripped |
+
+## Controls: the same checks on unmutated copies
+
+*Each check added in Build Brief 2.2 step 9 is also run against a copy of the pages with nothing changed, through the machinery its scenarios use, and must pass: the scenario shows the check can fail, the control that it fails on the corruption and not on the copy.*
+
+**4 of 4 controls passed.**
+
+| Check | Input | Passed? |
+|---|---|---|
+| check_chart_subtitles | the pages copied with nothing changed | passed |
+| check_chart_bullets | the pages copied with nothing changed | passed |
+| check_c4_summary_dates | the pages copied with nothing changed | passed |
+| check_case_card | the pages copied with nothing changed | passed |
 
 ---
 *Report counts are not incident rates or measures of device safety. This independent public-data demonstration provides no medical, legal or regulatory advice.*
