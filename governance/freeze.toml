@@ -45,7 +45,13 @@ as_of_date = "2026-08-31"
 # one line and on nothing else, which is the interaction D18 records).
 # Strictly stronger than "HEAD": a committed change to any path below is
 # caught, not only an uncommitted one.
-baseline = "6b519ffe8d744e1e409ca98f8f3e24e5ee82a51a"
+#
+# Advanced to Build Brief 2.5's commit 1 (d0ecbac17e72), which added
+# data/conformed/record_facts.json, the record-table facts the page reads when
+# the gitignored DuckDB is absent (the live-edge workflow's runner). No other
+# protected path changed between 6b519ffe8d74 and it; the gate passed at the
+# old baseline immediately before the move.
+baseline = "d0ecbac17e7221bc0a7412d8b4ea6471950e48e1"
 
 # EVERY PATH HERE MUST BE GIT-TRACKED. A gitignored path FAILS OPEN: Path.glob
 # matches the filesystem, `git diff --quiet` reports no change on an untracked
@@ -79,14 +85,16 @@ protected_paths = [
   "data/conformed/recall_context.csv",
   "data/conformed/recall_count.json",
   "data/conformed/recall_context_meta.json",
+  "data/conformed/record_facts.json",
   "governance/source-register.md",
   "governance/exclusion-receipt-records.md",
   # docs/index.html is NOT listed (D18, resolved by Aaron 2026-10-06). The
   # page is computed from the tables above, which stay frozen, and the live
   # edge rebuilds it after every scheduled run; on the list it would fail
   # this gate every week. This is cascadia-matter-ledger's answer.
-  # docs/renders/* is not listed either: review artifacts that change with
-  # chart code.
+  # docs/case-study.html is not listed either, for the same reason: the same
+  # build writes it. docs/renders/* is not listed: review artifacts that
+  # change with chart code.
 ]
 
 # No permitted_edit entries. An exemption is a path that is no longer checked.
