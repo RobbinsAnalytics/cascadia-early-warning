@@ -43,6 +43,56 @@ SEARCH_MAX = 1600
 CHARTS = ["c1", "c2", "c3", "c4", "c5"]
 
 
+def dialog_check(page, tid, width, out_dir):
+    """Open table tid full screen through its own control, check it and close it with Esc. Returns a failure or ''."""
+    btn = page.locator('button[data-expand="%s"]' % tid)
+    if not btn.count():
+        return "no expand control"
+    page.evaluate("(id) => { const d = document.querySelector('[data-table-block=\"' + id + '\"]').closest('details'); if (d) d.open = true; }", tid)
+    # The inline table first: scrolled sideways, its first column stays where it was.
+    inline = page.evaluate("""(id) => { const w = document.querySelector('[data-scroll-for="' + id + '"]');
+        const c = w.querySelector('tbody tr > :first-child'); const x0 = c.getBoundingClientRect().left;
+        const can = w.scrollWidth > w.clientWidth + 1; w.scrollLeft = 200; const x1 = c.getBoundingClientRect().left; w.scrollLeft = 0;
+        return {scrolls: can, x0: x0, x1: x1}; }""", tid)
+    if inline["scrolls"] and abs(inline["x0"] - inline["x1"]) > 1:
+        return "inline first column moved %.0f px on a sideways scroll" % (inline["x1"] - inline["x0"])
+    btn.scroll_into_view_if_needed()
+    btn.click()
+    page.wait_for_timeout(350)
+    r = page.evaluate("""() => { const d = document.getElementById('table-dialog'); if (!d || !d.open) return null;
+        const b = d.getBoundingClientRect(), w = d.querySelector('.table-wrap'), c = w.querySelector('tbody tr > :first-child');
+        const x0 = c.getBoundingClientRect().left, can = w.scrollWidth > w.clientWidth + 1; w.scrollLeft = 200;
+        const x1 = c.getBoundingClientRect().left; w.scrollLeft = 0;
+        return {w: b.width, h: b.height, vw: innerWidth, vh: innerHeight, scrolls: can, x0: x0, x1: x1,
+                title: document.getElementById('table-dialog-title').textContent,
+                lock: getComputedStyle(document.documentElement).overflow}; }""")
+    if r is None:
+        return "the dialog did not open"
+    page.screenshot(path=str(out_dir / ("dialog-%s-%d.png" % (tid, width))))
+    title = page.evaluate("(id) => document.getElementById(id + '-title').textContent", tid)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(250)
+    after = page.evaluate("""(id) => ({open: document.getElementById('table-dialog').open,
+        focus: document.activeElement && document.activeElement.getAttribute('data-expand'),
+        home: !!document.querySelector('[data-table-block="' + id + '"] .table-wrap table'),
+        lock: getComputedStyle(document.documentElement).overflow})""", tid)
+    if abs(r["w"] - r["vw"]) > 1 or abs(r["h"] - r["vh"]) > 1:
+        return "dialog %dx%d in a %dx%d viewport" % (r["w"], r["h"], r["vw"], r["vh"])
+    if r["title"] != title:
+        return "dialog titled %r, table titled %r" % (r["title"][:40], title[:40])
+    if r["lock"] != "hidden":
+        return "background scroll not locked"
+    if r["scrolls"] and abs(r["x0"] - r["x1"]) > 1:
+        return "first column moved %.0f px in the dialog" % (r["x1"] - r["x0"])
+    if after["open"]:
+        return "Esc did not close the dialog"
+    if after["focus"] != tid:
+        return "focus went to %r, not the control" % after["focus"]
+    if not after["home"] or after["lock"] == "hidden":
+        return "the table did not go back, or the page stayed locked"
+    return ""
+
+
 def k6_ladder(browser, url, charts):
     page = browser.new_page(viewport={"width": DESIGN_WIDTH, "height": 900})
     page.goto(url, wait_until="networkidle")
@@ -92,7 +142,15 @@ def main():
         i = argv.index("--charts")
         charts = argv[i + 1].split(",")
         argv = argv[:i] + argv[i + 2:]
-    tables, want_card = [], False
+    tables, want_card, dialogs, describe = [], False, [], []
+    if "--dialog" in argv:
+        i = argv.index("--dialog")
+        dialogs = argv[i + 1].split(",")
+        argv = argv[:i] + argv[i + 2:]
+    if "--describe" in argv:
+        i = argv.index("--describe")
+        describe = argv[i + 1].split(",")
+        argv = argv[:i] + argv[i + 2:]
     if "--tables" in argv:
         i = argv.index("--tables")
         tables = argv[i + 1].split(",")
@@ -111,7 +169,7 @@ def main():
     except ImportError:
         sys.exit("playwright is required")
     out_dir.mkdir(parents=True, exist_ok=True)
-    overflow_failures, draw_failures = [], []
+    overflow_failures, draw_failures, dialog_failures = [], [], []
     record = {"url": url, "widths": [], "breakpoints": [], "crossings": [], "per_width": {}}
 
     with sync_playwright() as p:
@@ -166,6 +224,21 @@ def main():
                         draw_failures.append((width, "card"))
                     else:
                         c.screenshot(path=str(out_dir / ("card-%d.png" % width)))
+                # A chart's description opened for the shot (Build Brief 2.3); closed, it is the chart render itself.
+                for cid in describe:
+                    page.evaluate("(id) => { const d = document.querySelector('#card-' + id + ' details.chart-description'); if (d) d.open = true; }", cid)
+                    page.wait_for_timeout(200)
+                    page.locator("#card-" + cid).screenshot(path=str(out_dir / ("%s-described-%d.png" % (cid, width))),
+                                                           style="#site-header{position:static !important}")
+                    page.evaluate("(id) => { document.querySelector('#card-' + id + ' details.chart-description').open = false; }", cid)
+                # The full-screen table, driven as a reader drives it (Build Brief 2.3 step 4): the control clicked, the
+                # dialog measured against the viewport, the table scrolled sideways with the first column checked in
+                # place, Esc pressed, focus checked on the control. A behaviour check, not a reading of the markup.
+                for tid in dialogs:
+                    fail = dialog_check(page, tid, width, out_dir)
+                    if fail:
+                        dialog_failures.append((width, tid, fail))
+                    print("  width %d: dialog %s %s" % (width, tid, "FAILED: " + fail if fail else "fills the viewport, first column pinned, Esc closes, focus returns"))
             seg = page.evaluate(
                 """() => Array.from(document.querySelectorAll('.cascadia-provenance'))
                         .map(n => n.textContent.split(' \\u00b7 ').length)""")
@@ -203,6 +276,9 @@ def main():
     print("\nrenders in %s" % out_dir)
     if draw_failures:
         print("\nCHARTS DID NOT DRAW: %s" % draw_failures)
+        sys.exit(1)
+    if dialog_failures:
+        print("\nTABLE DIALOG FAILED: %s" % dialog_failures)
         sys.exit(1)
     if overflow_failures:
         print("\nRULE 5.3 / WCAG 1.4.10 FAILED, the page scrolls sideways:")

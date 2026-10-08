@@ -24,17 +24,20 @@
 | 14 | known-answer recovery: every verified Class I event is in the derived recall set with its date | PASS | 15 known rows checked against 175 derived events |
 | 15 | cohort facts: every device-class and summary-eligibility statement on the pages agrees with product_code.csv | PASS | 4 pages, 7 marked statements; cohort Classes II and III, summary-eligible NPT |
 | 16 | words before the first chart: at most 40 visible words between each section's H2 and its first chart card on the module page (01 to 03 must hold one, 04 if it does, 05 exempt) | PASS | s1 21; s2 11; s3 14; s4 16 |
-| 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 46 words; order opening 72, results 100, first H2 227, first section 225; 6 result rows; H1 1 |
+| 17 | case study: the opening at most 120 words, then the results table before any section; one H1; canonical, Open Graph and Twitter tags | PASS | opening 46 words; order opening 72, results 100, first H2 231, first section 229; 6 result rows; H1 1 |
 | 18 | chart subtitles: every canvas subtitle is one sentence of at most 15 words | PASS | case-study c3 7w; index c1 15w; index c2 7w; index c3 7w; index c4 7w; index c5 15w |
 | 19 | chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | PASS | case-study c3 3; index c1 3; index c2 3; index c3 3; index c4 3; index c5 3 |
 | 20 | chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | PASS | 1 page(s) with chart 4 |
 | 21 | case-study card: exactly one link, to the module | PASS | links ['index.html'] |
+| 22 | chart descriptions: every chart's description sits in a closed <details>, before its canvas | PASS | case-study c3; index c1; index c2; index c3; index c4; index c5 |
+| 23 | tables: every table's title row carries an expand control, and each page one labelled table dialog | PASS | 16 tables |
+| 24 | contrast: the low-contrast label class text-ink/60 is in no template and no page | PASS | 4 files |
 
 ## Proof the checks can fail
 
 *Each check above is re-run against a deliberately corrupted copy of its input and must reject it. A check that passes corrupted input is not testing anything, and reads identically in this report to one that works. The frozen data is never modified: the corruption is applied to a temporary copy and the path is restored after every scenario.*
 
-**46 of 46 scenarios tripped.**
+**53 of 53 scenarios tripped.**
 
 | Check | Corruption fed to it | Tripped? |
 |---|---|---|
@@ -81,6 +84,13 @@
 | chart bullets: every chart carries one list of 2 to 3 explanation bullets under it, each one sentence, and at most one key of one sentence | a chart key written outside any card | tripped |
 | chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | a span-end month that is also a recall month (Jan 2024) written into a chart 4 bullet | tripped |
 | chart 4's visible text lists no recall dates: the span once in its summary and subtitle, the annotated episode in its note, no date elsewhere; the dates are in the table | a recall date in US slash form written into chart 4's summary | tripped |
+| chart descriptions: every chart's description sits in a closed <details>, before its canvas | chart 2's description opened by default | tripped |
+| chart descriptions: every chart's description sits in a closed <details>, before its canvas | the case study's chart description taken out of its <details>, as Build 2.2 had it | tripped |
+| chart descriptions: every chart's description sits in a closed <details>, before its canvas | chart 5's description moved after its canvas | tripped |
+| tables: every table's title row carries an expand control, and each page one labelled table dialog | chart 4's table loses its expand control | tripped |
+| tables: every table's title row carries an expand control, and each page one labelled table dialog | the scores table's expand control pointed at the outlook table | tripped |
+| tables: every table's title row carries an expand control, and each page one labelled table dialog | the case study's table dialog removed | tripped |
+| contrast: the low-contrast label class text-ink/60 is in no template and no page | the low-contrast label class written back into the module template | tripped |
 | case-study card: exactly one link, to the module | a second link written into the case-study card | tripped |
 | case-study card: exactly one link, to the module | the card's one link pointed at the build repository instead of the module | tripped |
 | review queue: every episode satisfies the rule on the scored rows | an episode claimed for a month that does not satisfy the rule | tripped |
@@ -89,7 +99,7 @@
 
 *Each check added in Build Brief 2.2 step 9 is also run against a copy of the pages with nothing changed, through the machinery its scenarios use, and must pass: the scenario shows the check can fail, the control that it fails on the corruption and not on the copy.*
 
-**4 of 4 controls passed.**
+**7 of 7 controls passed.**
 
 | Check | Input | Passed? |
 |---|---|---|
@@ -97,6 +107,9 @@
 | check_chart_bullets | the pages copied with nothing changed | passed |
 | check_c4_summary_dates | the pages copied with nothing changed | passed |
 | check_case_card | the pages copied with nothing changed | passed |
+| check_chart_descriptions | the pages copied with nothing changed | passed |
+| check_table_expand | the pages copied with nothing changed | passed |
+| check_low_contrast_class | the pages copied with nothing changed | passed |
 
 ---
 *Report counts are not incident rates or measures of device safety. This independent public-data demonstration provides no medical, legal or regulatory advice.*

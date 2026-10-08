@@ -1164,10 +1164,170 @@ def check_case_card(results):
     results.append(("case-study card: exactly one link, to the module", not bad, "links %s" % (links or "none"), bad))
 
 
+# ---------------------------------------------------------------------------
+# descriptions, full-screen tables and contrast (Build Brief 2.3 step 4)
+# ---------------------------------------------------------------------------
+
+LOW_CONTRAST_CLASSES = ("text-ink/60",)   # 4.16:1 on lime and 4.49:1 on white at 0.7rem (D21)
+
+
+class _Descriptions(html.parser.HTMLParser):
+    """Per chart card: where its p.chart-summary sits (inside which <details>, open or not) and whether that comes
+    before the card's canvas in the DOM."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.cards, self.stack, self._card, self._depth = {}, [], None, 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in _VOID:
+            return
+        a = dict(attrs)
+        cls = (a.get("class") or "").split()
+        self.stack.append((tag, a))
+        if "chart-card" in cls and re.fullmatch(r"card-c\d+", a.get("id") or ""):
+            self._card, self._depth = a["id"][5:], len(self.stack)
+            self.cards[self._card] = {"summaries": [], "canvas": False}
+        if self._card is None:
+            return
+        c = self.cards[self._card]
+        if tag == "div" and "chart" in cls:
+            c["canvas"] = True
+        if tag == "p" and "chart-summary" in cls:
+            details = [x for t, x in self.stack[:-1] if t == "details"]
+            c["summaries"].append({"in_details": bool(details), "open": bool(details) and "open" in details[-1],
+                                   "before_canvas": not c["canvas"]})
+
+    def handle_endtag(self, tag):
+        if tag in _VOID:
+            return
+        while self.stack:
+            if self.stack.pop()[0] == tag:
+                break
+        if self._card is not None and len(self.stack) < self._depth:
+            self._card = None
+
+
+def check_chart_descriptions(results):
+    """Every chart's description (p.chart-summary, written into by page.js) sits inside a <details> that is closed by
+    default, and before the chart's canvas in the DOM, as VIZ-PRINCIPLES 5.1 requires (Build Brief 2.3 step 2)."""
+    bad, seen = [], []
+    for path in _built_pages():
+        p = _Descriptions()
+        p.feed(path.read_text(encoding="utf-8"))
+        p.close()
+        for cid, c in sorted(p.cards.items()):
+            if not c["canvas"]:
+                continue
+            seen.append("%s %s" % (path.stem, cid))
+            if len(c["summaries"]) != 1:
+                bad.append("docs/%s %s: %d descriptions (one expected)" % (path.name, cid, len(c["summaries"])))
+                continue
+            s = c["summaries"][0]
+            if not s["in_details"]:
+                bad.append("docs/%s %s: the description is not inside a <details>" % (path.name, cid))
+            elif s["open"]:
+                bad.append("docs/%s %s: the description's <details> is open by default" % (path.name, cid))
+            if not s["before_canvas"]:
+                bad.append("docs/%s %s: the description comes after the canvas in the DOM (Rule 5.1)" % (path.name, cid))
+    if not seen:
+        bad.append("no chart card with a canvas on any built page")
+    results.append(("chart descriptions: every chart's description sits in a closed <details>, before its canvas",
+                    not bad, "; ".join(seen) or "none read", bad))
+
+
+class _TableBlocks(html.parser.HTMLParser):
+    """Every table, the table block around it, the block's title and its expand control; and the page's dialog."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.tables, self.blocks, self.stack, self.dialogs, self._dialog = [], {}, [], [], None
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        cls = (a.get("class") or "").split()
+        if tag not in _VOID:
+            self.stack.append((tag, a))
+        blocks = [x.get("data-table-block") for t, x in self.stack if x.get("data-table-block")]
+        if a.get("data-table-block"):
+            self.blocks[a["data-table-block"]] = {"title": False, "expand": [], "in_head": False}
+        if blocks:
+            b = self.blocks[blocks[-1]]
+            if "table-title" in cls and a.get("id") == "%s-title" % blocks[-1]:
+                b["title"] = True
+            if tag == "button" and "table-expand" in cls:
+                b["expand"].append(a.get("data-expand"))
+                b["in_head"] = any("table-head" in (x.get("class") or "").split() for t, x in self.stack)
+        if tag == "table" and a.get("id"):
+            self.tables.append((a["id"], blocks[-1] if blocks else None))
+        if tag == "dialog":
+            self._dialog = {"id": a.get("id"), "labelledby": a.get("aria-labelledby"), "close": False}
+            self.dialogs.append(self._dialog)
+        if self._dialog is not None and tag == "button" and "table-dialog-close" in cls and a.get("aria-label"):
+            self._dialog["close"] = True
+
+    def handle_endtag(self, tag):
+        if tag in _VOID:
+            return
+        while self.stack:
+            if self.stack.pop()[0] == tag:
+                break
+        if tag == "dialog":
+            self._dialog = None
+
+
+def check_table_expand(results):
+    """Every table on every built page sits in its own table block whose title row carries an expand control for
+    that table, and the page holds one labelled table dialog with a labelled close button (Build Brief 2.3 step 3)."""
+    bad, n = [], 0
+    for path in _built_pages():
+        p = _TableBlocks()
+        p.feed(path.read_text(encoding="utf-8"))
+        p.close()
+        for tid, block in p.tables:
+            n += 1
+            b = p.blocks.get(block)
+            if block != tid or b is None:
+                bad.append("docs/%s %s: not in its own table block" % (path.name, tid))
+                continue
+            if not b["title"]:
+                bad.append("docs/%s %s: no title" % (path.name, tid))
+            if b["expand"] != [tid]:
+                bad.append("docs/%s %s: expand controls %s (exactly one, for this table, expected)" % (path.name, tid, b["expand"]))
+            elif not b["in_head"]:
+                bad.append("docs/%s %s: the expand control is not on the title row" % (path.name, tid))
+        if p.tables:
+            ok_dialogs = [d for d in p.dialogs if d["id"] == "table-dialog" and d["labelledby"] and d["close"]]
+            if len(p.dialogs) != 1 or len(ok_dialogs) != 1:
+                bad.append("docs/%s: %d dialogs, %d of them the labelled table dialog with a labelled close button (one expected)"
+                           % (path.name, len(p.dialogs), len(ok_dialogs)))
+    if not n:
+        bad.append("no table on any built page")
+    results.append(("tables: every table's title row carries an expand control, and each page one labelled table dialog",
+                    not bad, "%d tables" % n, bad))
+
+
+def check_low_contrast_class(results):
+    """The low-contrast label class (D21) appears in neither template and in no built page."""
+    bad, n = [], 0
+    for path in sorted(DOCS.glob("*.html")):
+        n += 1
+        text = path.read_text(encoding="utf-8")
+        for c in LOW_CONTRAST_CLASSES:
+            k = len(re.findall(r'class="[^"]*(?<![\w/-])%s(?![\w/-])' % re.escape(c), text))
+            if k:
+                bad.append("docs/%s: %d element(s) carry %s" % (path.name, k, c))
+    if not n:
+        bad.append("no page or template under docs/")
+    results.append(("contrast: the low-contrast label class %s is in no template and no page" % ", ".join(LOW_CONTRAST_CLASSES),
+                    not bad, "%d files" % n, bad))
+
+
 CHECKS = [check_hashes, check_extraction_log, check_m01, check_dates, check_uniqueness, check_exclusion,
           check_chronology, check_locked_once, check_names, check_emdash, check_asof, check_cohort, check_review,
           check_known_events, check_cohort_facts, check_words_before_chart, check_case_study,
-          check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card]
+          check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card,
+          check_chart_descriptions, check_table_expand, check_low_contrast_class]
 
 
 # ---------------------------------------------------------------------------
@@ -1445,6 +1605,24 @@ def _scenarios():
            lambda: _docs_tree_copy({"index.html": _sub_once(r'(<ul id="pts-c4" class="chart-points"><li>)', r"\1In Jan 2024 a recall began; ")}))
     yield (check_c4_summary_dates, "a recall date in US slash form written into chart 4's summary",
            lambda: _docs_tree_copy({"index.html": _data_edit(lambda d: d["c4"].__setitem__("summary", d["c4"]["summary"] + " One began 3/14/2024."))}))
+    # Build Brief 2.3.
+    yield (check_chart_descriptions, "chart 2's description opened by default",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'<details class="data-table rich chart-description">(<summary>Chart description: the locked)',
+                                                            r'<details class="data-table rich chart-description" open>\1')}))
+    yield (check_chart_descriptions, "the case study's chart description taken out of its <details>, as Build 2.2 had it",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'<details class="data-table rich chart-description"><summary>[^<]*</summary>(<p id="sum-c3"[^>]*></p>)</details>',
+                                                                 r"\1")}))
+    yield (check_chart_descriptions, "chart 5's description moved after its canvas",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'(?s)(<details class="data-table rich chart-description">.{0,200}?<p id="sum-c5"[^>]*></p></details>)(.*?<div id="c5" class="chart"[^>]*></div>)',
+                                                            r"\2\1")}))
+    yield (check_table_expand, "chart 4's table loses its expand control",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'<button type="button" class="table-expand" data-expand="tbl-c4"[^>]*>[^<]*</button>', "")}))
+    yield (check_table_expand, "the scores table's expand control pointed at the outlook table",
+           lambda: _docs_tree_copy({"index.html": _sub_once(r'data-expand="tbl-scores"', 'data-expand="tbl-outlook"')}))
+    yield (check_table_expand, "the case study's table dialog removed",
+           lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(?s)<dialog id="table-dialog".*?</dialog>', "")}))
+    yield (check_low_contrast_class, "the low-contrast label class written back into the module template",
+           lambda: _docs_tree_copy({"template.html": _sub_once(r"text-ink-soft uppercase", "text-ink/60 uppercase")}))
     yield (check_case_card, "a second link written into the case-study card",
            lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(<aside data-case="card"[^>]*>)', r'\1<a href="index.html#s5">Method and receipts</a>')}))
     yield (check_case_card, "the card's one link pointed at the build repository instead of the module",
@@ -1458,7 +1636,8 @@ def _scenarios():
 # Each check added in Build Brief 2.2 step 9 is also run against an UNMUTATED copy of the pages, through the same
 # copy-and-repoint machinery its scenarios use, and must pass there: a scenario that trips proves the check can
 # fail, and the control proves it trips on the corruption rather than on the copy.
-CONTROLLED = [check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card]
+CONTROLLED = [check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card,
+              check_chart_descriptions, check_table_expand, check_low_contrast_class]
 
 
 def run_controls():

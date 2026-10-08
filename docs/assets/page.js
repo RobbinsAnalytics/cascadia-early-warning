@@ -33,10 +33,58 @@
    */
   function scrollCues() {
     Array.prototype.forEach.call(document.querySelectorAll('[data-scroll-cue]'), function (cue) {
-      var wrap = document.querySelector('[data-scroll-for="' + cue.getAttribute('data-scroll-cue') + '"]');
-      cue.hidden = !(wrap && wrap.scrollWidth > wrap.clientWidth + 1);
+      // The dialog's cue measures whichever table is in the dialog; a table's own cue hides while its table is there.
+      var dlg = cue.closest('dialog');
+      var wrap = dlg ? dlg.querySelector('.table-wrap')
+                     : document.querySelector('[data-scroll-for="' + cue.getAttribute('data-scroll-cue') + '"]');
+      cue.hidden = !wrap || (!dlg && !!wrap.closest('dialog')) || !(wrap.scrollWidth > wrap.clientWidth + 1);
     });
   }
+
+  /**
+   * FULL-SCREEN TABLES (Build Brief 2.3 step 3). One native <dialog> per page. "Expand table" moves the table's
+   * scrolling wrapper into the dialog and shows it modal; the X, a click outside the table, or Esc closes it, the
+   * wrapper goes back where it was, background scroll unlocks, and focus returns to the control. The page never
+   * holds two copies of a table. Without <dialog> support, or without JavaScript, the controls stay hidden and every
+   * table reads inline.
+   */
+  (function () {
+    var dlg = document.getElementById('table-dialog');
+    if (!dlg || typeof dlg.showModal !== 'function') return;
+    var body = dlg.querySelector('.table-dialog-body'), heading = document.getElementById('table-dialog-title');
+    var opener = null, home = null, wrap = null;
+    function open(btn) {
+      var block = document.querySelector('[data-table-block="' + btn.getAttribute('data-expand') + '"]');
+      if (!block || dlg.open) return;
+      wrap = block.querySelector('.table-wrap');
+      home = document.createComment('table-home');
+      wrap.parentNode.insertBefore(home, wrap);
+      body.appendChild(wrap);
+      heading.textContent = block.querySelector('.table-title').textContent;
+      opener = btn;
+      document.documentElement.classList.add('table-dialog-open');
+      dlg.showModal();
+      wrap.scrollLeft = 0;
+      scrollCues();
+    }
+    dlg.addEventListener('close', function () {
+      if (wrap && home) { home.parentNode.insertBefore(wrap, home); home.parentNode.removeChild(home); }
+      wrap = home = null;
+      document.documentElement.classList.remove('table-dialog-open');
+      if (opener) opener.focus();
+      opener = null;
+      scrollCues();
+    });
+    dlg.querySelector('.table-dialog-close').addEventListener('click', function () { dlg.close(); });
+    // A click anywhere but the table and the dialog's own heading row closes it (the backdrop included).
+    dlg.addEventListener('click', function (e) {
+      if (!e.target.closest('.table-wrap') && !e.target.closest('.table-dialog-head')) dlg.close();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('button.table-expand'), function (btn) {
+      btn.hidden = false;
+      btn.addEventListener('click', function () { open(btn); });
+    });
+  })();
   scrollCues();
   document.addEventListener('toggle', scrollCues, true);
   window.addEventListener('load', scrollCues);

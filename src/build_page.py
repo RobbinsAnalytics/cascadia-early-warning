@@ -872,6 +872,8 @@ def chart5(d, code):
 
 # The cue shown above a table only where it scrolls sideways; page.js decides where, the words are here (K2).
 SCROLL_CUE = "Scroll sideways for more columns →"
+# The control that opens a table full screen (Build Brief 2.3); the dialog's own words are in the templates.
+EXPAND_LABEL = "Expand table"
 
 
 def table(tid: str, title: str, headers: list[str], rows: list[list[str]], roles: bool = False) -> str:
@@ -893,10 +895,14 @@ def table(tid: str, title: str, headers: list[str], rows: list[list[str]], roles
         return sum(1 for c in cells if not num.match(c)) * 2 > len(cells)
     text_cols = {i for i in range(1, len(headers)) if is_text(i)}
     t_ = lambda i: ' class="t"' if i in text_cols else ""  # noqa: E731
-    h = ['<div class="table-block" data-table-block="%s"><div class="table-title" id="%s-title">%s</div>'
+    # The expand control (Build Brief 2.3 step 3) sits on the title row, hidden until page.js finds <dialog> support,
+    # so with JavaScript off the table stays inline and fully readable and no dead button shows.
+    h = ['<div class="table-block" data-table-block="%s"><div class="table-head"><div class="table-title" id="%s-title">%s</div>'
+         '<button type="button" class="table-expand" data-expand="%s" aria-describedby="%s-title" hidden>%s</button></div>'
          '<p class="scroll-cue" data-scroll-cue="%s" aria-hidden="true" hidden>%s</p>'
          '<div class="table-wrap" data-scroll-for="%s"><table id="%s"%s aria-labelledby="%s-title"><thead%s><tr%s>'
-         % (tid, tid, html.escape(title), tid, html.escape(SCROLL_CUE), tid, tid, r_("table"), tid, r_("rowgroup"), r_("row"))]
+         % (tid, tid, html.escape(title), tid, tid, html.escape(EXPAND_LABEL), tid, html.escape(SCROLL_CUE), tid, tid, r_("table"), tid,
+            r_("rowgroup"), r_("row"))]
     h += ['<th scope="col"%s%s>%s</th>' % (r_("columnheader"), t_(i), html.escape(c)) for i, c in enumerate(headers)]
     h.append("</tr></thead><tbody%s>" % r_("rowgroup"))
     for r in rows:
