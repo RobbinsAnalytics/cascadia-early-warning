@@ -1,0 +1,133 @@
+# The live edge, publishing itself inside its lane.
+#
+# PRINCIPLES v1.1.0 Principle 12 and LIVE-EDGE-CHECKLIST v1.0.0; decision record
+# D23. The logic is in src/live_edge_lane.py, so this file stays thin and the
+# checks are testable offline (src/test_live_edge_lane.py). Any change to this
+# file, to governance/live-edge-allowlist.txt or to src/ is build-lane work:
+# Aaron reads it, then it ships.
+#
+# Order: the list from HEAD, the re-render check, the pull, the reconcile (which
+# rebuilds both pages), the tests and gates, the path check, one commit, the
+# range check, a plain push, a Pages build request, the public check. A failure
+# before the push publishes nothing and commits nothing. A failure after it means
+# the content is already live, and the run does not revert itself.
+#
+# SWITCH IT OFF in one action: `gh workflow disable live-edge.yml`, or GitHub,
+# Actions, Live edge, the "..." menu, Disable workflow. Back on with
+# `gh workflow enable live-edge.yml`. (CLAUDE.md, "The live edge".)
+
+name: Live edge
+
+on:
+  schedule:
+    # Tuesdays 14:17 UTC: 07:17 Pacific in summer, 06:17 in winter. openFDA's
+    # last_updated has landed on Mondays. Off the hour on purpose.
+    - cron: "17 14 * * 2"
+  workflow_dispatch:
+    inputs:
+      rehearse_failure:
+        description: "Fail on purpose after every gate and before the commit (tests the failure notification)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: live-edge
+  cancel-in-progress: false
+
+jobs:
+  live-edge:
+    # Only the default branch builds; a dispatch on any other ref exits here.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out main with its full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Python 3.14.6, the freeze's interpreter version
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14.6"
+
+      - name: Install the pinned packages, binaries only
+        run: "python -m pip install --disable-pip-version-check --only-binary=:all: -r requirements-live.txt"
+
+      - name: Read the allow-list from HEAD, before anything builds
+        run: python src/live_edge_lane.py allowlist --out "$RUNNER_TEMP/allowlist.json"
+
+      - name: Re-render check, before new data is applied
+        run: python src/live_edge_lane.py rerender-check --list "$RUNNER_TEMP/allowlist.json"
+
+      - name: Pull the live edge (seven keyless openFDA requests)
+        run: python src/pull_live_edge.py
+
+      - name: Reconcile, and rebuild both pages
+        run: python src/reconcile_live_edge.py
+
+      - name: Live-edge tests
+        run: python src/test_live_edge.py
+
+      - name: Lane tests
+        run: python src/test_live_edge_lane.py
+
+      - name: Golden test
+        run: python src/test_golden.py
+
+      - name: Freeze gate
+        run: python src/validate_freeze.py
+
+      - name: Domain gate, the checks the runner can run
+        run: python src/live_edge_lane.py gates
+
+      - name: Rehearsal stop (dispatch input rehearse_failure)
+        if: ${{ inputs.rehearse_failure }}
+        run: |
+          echo "::error::Rehearsal: rehearse_failure was set, so this run stops here, after every gate and before the commit. Nothing is committed and nothing is pushed."
+          exit 1
+
+      - name: Path check
+        run: python src/live_edge_lane.py path-check --list "$RUNNER_TEMP/allowlist.json"
+
+      - name: Stage by name
+        run: |
+          git config core.hooksPath .githooks
+          python src/live_edge_lane.py stage --list "$RUNNER_TEMP/allowlist.json"
+
+      - name: Commit with a fixed identity
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          what=$(python -c "import json; r = json.load(open('data/live/last_live_run.json', encoding='utf-8')); print('vintage %s' % r['vintage'] if r.get('vintage') else r['status'])")
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Live edge: ${what} (run ${RUN_ID})" -m "Published by .github/workflows/live-edge.yml in the live-edge lane (D23)."
+
+      - name: Range check
+        run: python src/live_edge_lane.py range-check --list "$RUNNER_TEMP/allowlist.json" --base origin/main
+
+      - name: Push, plain
+        id: push
+        run: git push origin HEAD:main
+
+      - name: Request a Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Pages' latest build before the request (does a push from this token start one on its own?):"
+          gh api "repos/$REPO/pages/builds/latest" --jq '"  commit \(.commit) status \(.status) created \(.created_at)"' || true
+          gh api -X POST "repos/$REPO/pages/builds" --jq '"requested: \(.status) \(.url)"'
+
+      - name: The public pages serve this commit
+        run: python src/live_edge_lane.py verify-live --list "$RUNNER_TEMP/allowlist.json"
+
+      - name: A failure after the push
+        if: ${{ failure() && steps.push.outcome == 'success' }}
+        run: |
+          echo "::error::A step after the push failed. The commit is already on main and its content is already live or about to be. This run does not revert itself: a revert is a second publication. What happens next is Aaron's call, as build-lane work (PRINCIPLES 12)."
+          exit 1

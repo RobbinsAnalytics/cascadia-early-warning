@@ -1,0 +1,35 @@
+# requirements-live.txt -- the live-edge workflow's packages, every one pinned.
+#
+# The runner installs from this file and nothing else (.github/workflows/
+# live-edge.yml, live-edge-check.yml), with --only-binary=:all: so no package
+# is ever compiled there. The versions are what the Windows interpreter the
+# freeze was built with carries (C:\Users\Ajayr\AppData\Local\Python\
+# pythoncore-3.14-64, Python 3.14.6, through the project venv), so the runner
+# rebuilds the pages from the same library versions the committed pages came
+# from. A version rolling forward can change a page's bytes with no data
+# change; the re-render check then fails the run, which is build-lane work.
+#
+# The closure is complete, not only the direct imports: duckdb (build_model,
+# validate), numpy (forecast, build_page, pull_live_edge), statsmodels (the
+# ETS candidate in forecast.fit_candidate) and what each of those requires.
+# requests is not imported anywhere on the live path (acquire.py uses urllib)
+# and is not listed. Proved complete by a clean venv without
+# --system-site-packages (Build Brief 2.5 step 2).
+#
+# requirements.txt stays as it is: it names what the Windows venv adds on top
+# of the system interpreter.
+duckdb==1.5.5
+formulaic==1.2.2
+interface-meta==2.0.1
+narwhals==2.26.0
+numpy==2.4.6
+packaging==26.3
+pandas==3.0.3
+patsy==1.0.3
+python-dateutil==2.9.0.post0
+scipy==1.18.1
+six==1.17.0
+statsmodels==0.15.0
+typing-extensions==4.16.0
+tzdata==2026.3
+wrapt==2.5.0

@@ -1,0 +1,31 @@
+# governance/live-edge-allowlist.txt -- the paths a live-edge run may change.
+#
+# PRINCIPLES v1.1.0 Principle 12, condition 2; LIVE-EDGE-CHECKLIST v1.0.0,
+# "The allow-list"; decision record D23. The workflow
+# (.github/workflows/live-edge.yml) reads this file from HEAD, with
+# `git show HEAD:governance/live-edge-allowlist.txt`, before anything builds,
+# and src/live_edge_lane.py refuses any changed or untracked path outside it.
+#
+# One entry per line. A line ending in "/" is a folder and covers every file
+# under it; any other line is one file, named exactly. No globs: the lane
+# script rejects "*", "?" and "[" outright. Comments start a line with "#".
+#
+# This file never names itself, either workflow, src/, a template,
+# governance/freeze.toml, data/conformed/record_facts.json or any frozen path;
+# the lane script rejects each of those too. Changing this file is build-lane
+# work: Aaron reads it, then it ships.
+
+# the live data: each week's vintage folder, the watermark, the last run, and
+# the live series, forecasts and scores (src/pull_live_edge.py)
+data/live/
+
+# the run history, the health record and the reconciliation record
+# (src/pull_live_edge.py, src/reconcile_live_edge.py)
+governance/run_history.jsonl
+governance/health.json
+governance/reconciliation.md
+
+# the two rendered pages, each named as a file (src/build_page.py, called by
+# src/reconcile_live_edge.py as its last step)
+docs/index.html
+docs/case-study.html
