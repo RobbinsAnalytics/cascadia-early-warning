@@ -11,31 +11,45 @@ only, except `gates`, which imports src/validate.py.
     rerender-check --list FILE          the tree must equal HEAD; rebuild both pages; each must
                                         equal its committed bytes; restore; the tree must equal
                                         HEAD again
+    outcome                             the run's own record says ok or "skipped: source
+                                        unchanged"; anything else fails the run
     gates                               the src/validate.py checks that can run without the
                                         gitignored staging pages, DuckDB and private list
     path-check     --list FILE          every changed or untracked path is on the list
+    bundle         --list FILE --out T  path-check, then every changed path into one tar
+    apply          --list FILE --bundle T
+                                        lay a bundle over a clean checkout: regular files on
+                                        the list only
     stage          --list FILE          `git add` by name, only listed paths, nothing left over
-    range-check    --list FILE --base origin/main
+    range-check    --list FILE --base SHA
                                         base..HEAD is exactly one commit, a child of base, every
                                         path in it on the list
     verify-live    --list FILE          poll each page's public URL until it serves the
                                         committed bytes, or fail at the timeout
 
-The list is read from HEAD before anything builds, so nothing the build writes can
-change the list it is checked against. `allowlist` records the commit it read the list
-from, and every later subcommand re-reads the list at that commit and refuses a saved
-copy that differs.
+Every subcommand that takes --list re-reads the list at the commit `allowlist` read it
+from, re-applies every refusal, and refuses a saved copy that differs. With the global
+--head SHA (the workflow passes ${{ github.sha }}), that commit must be the run's own.
 
-    python src/live_edge_lane.py allowlist --out "$RUNNER_TEMP/allowlist.json"
+TWO JOBS, BECAUSE A CHECK IS ONLY AS GOOD AS THE PROCESS RUNNING IT (D23, attack read
+findings 1 to 3). The build job runs the pull, the third-party packages and the page
+build with a read-only token, and hands over only a bundle of listed files. The publish
+job checks out the run's commit afresh, runs this script (standard library only) from
+that checkout, applies the bundle, and is the only job that ever sees a write token,
+and then only in its push step.
+
+    python src/live_edge_lane.py --head "$RUN_SHA" allowlist --out "$RUNNER_TEMP/allowlist.json"
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import pathlib
 import subprocess
 import sys
+import tarfile
 import time
 import tomllib
 import urllib.error
@@ -189,17 +203,37 @@ def allowed(path: str, entries: list[str]) -> bool:
     return any(path == e or (e.endswith("/") and path.startswith(e)) for e in entries)
 
 
-def load_saved(repo: pathlib.Path, saved: str) -> dict:
-    """The list as `allowlist` saved it, re-checked against the commit it was read from."""
+def list_at(repo: pathlib.Path, rev: str) -> tuple[bytes, list[str]]:
+    """The list at a commit, with every refusal applied: globs, forbidden entries, no page."""
+    raw = show_bytes(repo, rev, LIST_PATH)
+    entries = parse_list(raw.decode("utf-8"))
+    forb = forbidden_at(repo, rev)
+    hits = ["%s (overlaps %s)" % (e, f) for e in entries for f in forb if overlaps(e, f)]
+    if hits:
+        raise LaneFail("the allow-list at %s names paths a run may never change:\n  %s"
+                       % (rev[:12], "\n  ".join(sorted(set(hits)))))
+    if not pages(entries):
+        raise LaneFail("the allow-list names no page; the re-render check would check nothing")
+    return raw, entries
+
+
+def load_saved(repo: pathlib.Path, saved: str, head: str | None = None) -> dict:
+    """The list as `allowlist` saved it, re-read and re-checked at the commit it was read from.
+
+    `head` is the commit the run started from, passed into the step by the workflow
+    (`${{ github.sha }}`), which no earlier step can rewrite. A saved list read from any
+    other commit is refused (D23, attack read finding 3)."""
     p = pathlib.Path(saved).resolve()
     if repo.resolve() in p.parents:
         raise LaneFail("the saved list %s is inside the work tree; it must live outside it" % p)
     rec = json.loads(p.read_text(encoding="utf-8"))
-    now = sha(show_bytes(repo, rec["commit"], LIST_PATH))
-    if now != rec["sha256"]:
+    if head is not None and rec["commit"] != head:
+        raise LaneFail("the saved list was read from %s, not from the run's commit %s" % (rec["commit"], head))
+    raw, entries = list_at(repo, rec["commit"])
+    if sha(raw) != rec["sha256"]:
         raise LaneFail("the saved list does not match %s at %s: saved %s, at the commit %s"
-                       % (LIST_PATH, rec["commit"][:12], rec["sha256"], now))
-    if parse_list(show_bytes(repo, rec["commit"], LIST_PATH).decode("utf-8")) != rec["entries"]:
+                       % (LIST_PATH, rec["commit"][:12], rec["sha256"], sha(raw)))
+    if entries != rec["entries"]:
         raise LaneFail("the saved entries differ from the list at %s" % rec["commit"][:12])
     return rec
 
@@ -217,14 +251,9 @@ def cmd_allowlist(repo: pathlib.Path, a) -> None:
     if repo.resolve() in out.parents:
         raise LaneFail("--out %s is inside the work tree; the list is kept outside it" % out)
     head = git(repo, "rev-parse", "--verify", "HEAD^{commit}").stdout.strip()
-    raw = show_bytes(repo, head, LIST_PATH)
-    entries = parse_list(raw.decode("utf-8"))
-    forb = forbidden_at(repo, head)
-    hits = ["%s (overlaps %s)" % (e, f) for e in entries for f in forb if overlaps(e, f)]
-    if hits:
-        raise LaneFail("the allow-list names paths a run may never change:\n  " + "\n  ".join(sorted(set(hits))))
-    if not pages(entries):
-        raise LaneFail("the allow-list names no page; the re-render check would check nothing")
+    if a.head is not None and head != a.head:
+        raise LaneFail("HEAD is %s, not the run's commit %s" % (head, a.head))
+    raw, entries = list_at(repo, head)
     out.write_text(json.dumps({"commit": head, "sha256": sha(raw), "entries": entries}, indent=1) + "\n", encoding="utf-8")
     print("allow-list read from HEAD %s (%s), %d entries, saved outside the tree at %s"
           % (head[:12], sha(raw)[:12], len(entries), out))
@@ -233,7 +262,7 @@ def cmd_allowlist(repo: pathlib.Path, a) -> None:
 
 
 def cmd_rerender(repo: pathlib.Path, a) -> None:
-    rec = load_saved(repo, a.list)
+    rec = load_saved(repo, a.list, a.head)
     pg = pages(rec["entries"])
     before = changed_paths(repo)
     if before:
@@ -296,7 +325,7 @@ def cmd_gates(repo: pathlib.Path, a) -> None:
 
 
 def cmd_path_check(repo: pathlib.Path, a) -> list[str]:
-    rec = load_saved(repo, a.list)
+    rec = load_saved(repo, a.list, a.head)
     paths = changed_paths(repo)
     off = [p for p in paths if not allowed(p, rec["entries"])]
     if off:
@@ -325,7 +354,7 @@ def cmd_stage(repo: pathlib.Path, a) -> None:
 
 
 def cmd_range_check(repo: pathlib.Path, a) -> None:
-    rec = load_saved(repo, a.list)
+    rec = load_saved(repo, a.list, a.head)
     base = git(repo, "rev-parse", "--verify", a.base + "^{commit}").stdout.strip()
     head = git(repo, "rev-parse", "--verify", "HEAD^{commit}").stdout.strip()
     commits = git(repo, "rev-list", "%s..%s" % (base, head)).stdout.split()
@@ -348,6 +377,91 @@ def cmd_range_check(repo: pathlib.Path, a) -> None:
           % (a.base, head[:12], base[:12], len(files)))
 
 
+PUBLISHABLE = ("ok", "skipped: source unchanged since ")
+
+
+def cmd_outcome(repo: pathlib.Path, a) -> None:
+    """The run's own record decides whether it is a result to publish (D23, attack read finding 5).
+    `ok`, and `skipped: source unchanged` (a null run, Principle 9), publish. Every other status, a
+    failed check or an error fails the run loudly: a rate limit or an outage is a failure to observe
+    the source, not a result, and it commits nothing. The health record must be this run's."""
+    run = json.loads((repo / "data" / "live" / "last_live_run.json").read_text(encoding="utf-8"))
+    health = json.loads((repo / "governance" / "health.json").read_text(encoding="utf-8"))
+    failed = [c["check"] for c in run.get("checks", []) if not c["passed"]]
+    st = run.get("status", "")
+    ok = (st == PUBLISHABLE[0] or st.startswith(PUBLISHABLE[1])) and run.get("passed") is True and not failed \
+        and run.get("error") is None
+    if health.get("last_run", {}).get("started_utc") != run.get("started_utc"):
+        raise LaneFail("governance/health.json records the run started %s; data/live/last_live_run.json the run started %s"
+                       % (health.get("last_run", {}).get("started_utc"), run.get("started_utc")))
+    if not ok:
+        raise LaneFail("the run is not a result to publish: status %r, passed %r, failed checks %s, error %r, notes %s"
+                       % (st, run.get("passed"), failed, run.get("error"), run.get("notes")))
+    print("outcome: %s (vintage %s, %d checks, none failed)" % (st, run.get("vintage"), len(run.get("checks", []))))
+
+
+def cmd_bundle(repo: pathlib.Path, a) -> None:
+    """The build job's hand-off: every changed path, all on the list, as regular files in one tar
+    outside the tree. The publish job never runs the build's code; it gets only these bytes."""
+    paths = cmd_path_check(repo, a)
+    out = pathlib.Path(a.out).resolve()
+    if repo.resolve() in out.parents:
+        raise LaneFail("--out %s is inside the work tree" % out)
+    bad = [p for p in paths if (repo / p).is_symlink() or not (repo / p).is_file()]
+    if bad:
+        raise LaneFail("bundle: not regular files (a deletion or a link is not something this lane writes): %s" % bad)
+    with tarfile.open(out, "w") as tf:
+        for p in paths:
+            data = (repo / p).read_bytes()
+            ti = tarfile.TarInfo(p)
+            ti.size, ti.mode, ti.mtime = len(data), 0o644, 0
+            tf.addfile(ti, io.BytesIO(data))
+            print("  %s  %s" % (sha(data)[:16], p))
+    print("bundled %d path(s) into %s" % (len(paths), out))
+
+
+def cmd_apply(repo: pathlib.Path, a) -> None:
+    """The publish job lays the build's bytes over a fresh checkout of the run's commit. Only regular
+    files, only listed paths, no '..', no absolute path, no link anywhere on the way."""
+    rec = load_saved(repo, a.list, a.head)
+    before = changed_paths(repo)
+    if before:
+        raise LaneFail("apply: the checkout differs from HEAD before anything is applied: %s" % before)
+    root = repo.resolve()
+    with tarfile.open(pathlib.Path(a.bundle), "r") as tf:
+        members = tf.getmembers()
+        names = [m.name for m in members]
+        bad = []
+        for m in members:
+            n = m.name
+            if not m.isreg():
+                bad.append("%s: not a regular file" % n)
+            elif n.startswith("/") or "\\" in n or any(x in ("", ".", "..") for x in n.split("/")):
+                bad.append("%s: not a plain repo-relative path" % n)
+            elif not allowed(n, rec["entries"]):
+                bad.append("%s: not on the list" % n)
+            elif names.count(n) > 1:
+                bad.append("%s: twice in the bundle" % n)
+            else:
+                for parent in (repo / n).parents:
+                    if parent == repo:
+                        break
+                    if parent.is_symlink():
+                        bad.append("%s: %s is a link" % (n, parent))
+                        break
+        if bad or not members:
+            raise LaneFail("apply: the bundle is refused, nothing written:\n  " + ("\n  ".join(bad) or "it is empty"))
+        for m in members:
+            target = (repo / m.name).resolve()
+            if root not in target.parents:
+                raise LaneFail("apply: %s resolves outside the tree" % m.name)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            data = tf.extractfile(m).read()
+            target.write_bytes(data)
+            print("  %s  %s" % (sha(data)[:16], m.name))
+    print("applied %d listed path(s) from the build job's bundle" % len(members))
+
+
 def fetch(url: str, timeout: int = 30) -> tuple[int, bytes]:
     req = urllib.request.Request(url, headers={"User-Agent": "cascadia-early-warning live-edge verify",
                                                "Cache-Control": "no-cache", "Pragma": "no-cache"})
@@ -361,7 +475,7 @@ def fetch(url: str, timeout: int = 30) -> tuple[int, bytes]:
 
 
 def cmd_verify_live(repo: pathlib.Path, a) -> None:
-    rec = load_saved(repo, a.list)
+    rec = load_saved(repo, a.list, a.head)
     head = git(repo, "rev-parse", "--verify", "HEAD^{commit}").stdout.strip()
     want = {}
     for p in pages(rec["entries"]):
@@ -398,6 +512,7 @@ def cmd_verify_live(repo: pathlib.Path, a) -> None:
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--repo", default=str(REPO))
+    ap.add_argument("--head", default=None, help="the run's commit (github.sha); the list must come from it")
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("allowlist")
     s.add_argument("--out", required=True)
@@ -405,9 +520,16 @@ def main(argv: list[str]) -> int:
     s.add_argument("--list", required=True)
     s.add_argument("--build-cmd", nargs="+", default=None, help=argparse.SUPPRESS)
     sub.add_parser("gates")
+    sub.add_parser("outcome")
     for name in ("path-check", "stage"):
         s = sub.add_parser(name)
         s.add_argument("--list", required=True)
+    s = sub.add_parser("bundle")
+    s.add_argument("--list", required=True)
+    s.add_argument("--out", required=True)
+    s = sub.add_parser("apply")
+    s.add_argument("--list", required=True)
+    s.add_argument("--bundle", required=True)
     s = sub.add_parser("range-check")
     s.add_argument("--list", required=True)
     s.add_argument("--base", default="origin/main")
@@ -418,8 +540,9 @@ def main(argv: list[str]) -> int:
     s.add_argument("--interval", type=int, default=30)
     a = ap.parse_args(argv)
     repo = pathlib.Path(a.repo).resolve()
-    fn = {"allowlist": cmd_allowlist, "rerender-check": cmd_rerender, "gates": cmd_gates, "path-check": cmd_path_check,
-          "stage": cmd_stage, "range-check": cmd_range_check, "verify-live": cmd_verify_live}[a.cmd]
+    fn = {"allowlist": cmd_allowlist, "rerender-check": cmd_rerender, "gates": cmd_gates, "outcome": cmd_outcome,
+          "path-check": cmd_path_check, "stage": cmd_stage, "bundle": cmd_bundle, "apply": cmd_apply,
+          "range-check": cmd_range_check, "verify-live": cmd_verify_live}[a.cmd]
     try:
         fn(repo, a)
     except LaneFail as exc:

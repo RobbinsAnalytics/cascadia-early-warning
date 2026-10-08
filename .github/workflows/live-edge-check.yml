@@ -21,6 +21,8 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      RUN_SHA: ${{ github.sha }}
     steps:
       - name: Check out the pull request with its full history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,14 +35,14 @@ jobs:
         with:
           python-version: "3.14.6"
 
-      - name: Install the pinned packages, binaries only
-        run: "python -m pip install --disable-pip-version-check --only-binary=:all: -r requirements-live.txt"
+      - name: Install the pinned packages, by hash, binaries only
+        run: "python -m pip install --disable-pip-version-check --require-hashes --no-deps --only-binary=:all: -r requirements-live.txt"
 
       - name: Read the allow-list from HEAD, with the forbidden-entry check
-        run: python src/live_edge_lane.py allowlist --out "$RUNNER_TEMP/allowlist.json"
+        run: python src/live_edge_lane.py --head "$RUN_SHA" allowlist --out "$RUNNER_TEMP/allowlist.json"
 
       - name: Re-render check
-        run: python src/live_edge_lane.py rerender-check --list "$RUNNER_TEMP/allowlist.json"
+        run: python src/live_edge_lane.py --head "$RUN_SHA" rerender-check --list "$RUNNER_TEMP/allowlist.json"
 
       - name: Live-edge tests
         run: python src/test_live_edge.py

@@ -115,6 +115,96 @@ def live_run(work: pathlib.Path) -> None:
 BUILD_CMD = ["--build-cmd", sys.executable, "build.py"]
 
 
+def write_run(work: pathlib.Path, status: str, passed: bool = True, failed: bool = False, health_started: str | None = None):
+    started = "2026-10-13T14:17:00+00:00"
+    run = {"started_utc": started, "status": status, "passed": passed, "error": None, "vintage": None, "notes": [],
+           "checks": [{"check": "c", "value": 1, "expected": None, "passed": not failed}]}
+    write(work / "data" / "live" / "last_live_run.json", json.dumps(run))
+    write(work / "governance" / "health.json", json.dumps({"last_run": {"started_utc": health_started or started}}))
+
+
+def part_two() -> None:
+    """Attack read findings 1 to 5 (D23): the run's commit pins the list, the refusals are re-run on
+    every load, the run's record decides, and the publish job takes only a bundle of listed files."""
+    import tarfile
+    with tempfile.TemporaryDirectory() as d:
+        tmp = pathlib.Path(d)
+        saved = str(tmp / "allowlist.json")
+        origin, work = fixture(tmp / "a")
+        head = g(work, "rev-parse", "HEAD").strip()
+
+        print("--head: the run's commit")
+        code, out = run(work, "--head", head, "allowlist", "--out", saved)
+        check(code == 0, "the list read at the run's commit passes")
+        code, out = run(work, "--head", "0" * 40, "allowlist", "--out", str(tmp / "x.json"))
+        check(code == 1 and "not the run's commit" in out, "HEAD other than the run's commit is refused")
+        # A build that commits a widened list locally and forges the saved copy to point at it.
+        write(work / lane.LIST_PATH, LIST + "src/\n")
+        g(work, "commit", "-q", "-am", "widen the list")
+        forged_commit = g(work, "rev-parse", "HEAD").strip()
+        raw = lane.show_bytes(work, forged_commit, lane.LIST_PATH)
+        forged = tmp / "forged.json"
+        forged.write_text(json.dumps({"commit": forged_commit, "sha256": lane.sha(raw),
+                                      "entries": lane.parse_list(raw.decode())}), encoding="utf-8")
+        code, out = run(work, "--head", head, "path-check", "--list", str(forged))
+        check(code == 1 and "not from the run's commit" in out, "a saved list forged at another commit is refused by --head")
+        code, out = run(work, "path-check", "--list", str(forged))
+        check(code == 1 and "never change" in out, "and the forbidden entries are re-checked on every load, --head or not")
+        g(work, "reset", "-q", "--hard", head)
+
+        print("outcome: the run's own record decides")
+        for status, passed, failed, hs, want, what in (
+                ("ok", True, False, None, 0, "ok publishes"),
+                ("skipped: source unchanged since 2026-09-29", True, False, None, 0, "a null run publishes"),
+                ("stopped: upstream failure", True, False, None, 1, "an outage fails loudly"),
+                ("stopped: rate limited", True, False, None, 1, "a rate limit fails loudly"),
+                ("ok", False, True, None, 1, "a failed check fails"),
+                ("ok", True, False, "2026-10-06T00:00:00+00:00", 1, "a health record from another run fails")):
+            write_run(work, status, passed, failed, hs)
+            code, out = run(work, "outcome")
+            check(code == want, what, out.strip().splitlines()[-1][:100] if code != want else "")
+        g(work, "checkout", "--", ".")
+        for p in ("data/live/last_live_run.json", "governance/health.json"):
+            if (work / p).exists() and p not in g(work, "ls-files"):
+                (work / p).unlink()
+
+        print("bundle and apply: the publish job takes bytes, never code")
+        live_run(work)
+        bundle = tmp / "b.tar"
+        code, out = run(work, "--head", head, "bundle", "--list", saved, "--out", str(bundle))
+        check(code == 0 and len(tarfile.open(bundle).getnames()) == 4, "the build job bundles its four listed paths")
+        fresh = tmp / "fresh"
+        g(tmp, "clone", "-q", "-c", "core.autocrlf=false", str(origin), str(fresh))
+        for k, v in (("user.name", "t"), ("user.email", "t@example.invalid")):
+            g(fresh, "config", k, v)
+        saved2 = str(tmp / "allowlist2.json")
+        run(fresh, "--head", head, "allowlist", "--out", saved2)
+        code, out = run(fresh, "--head", head, "apply", "--list", saved2, "--bundle", str(bundle))
+        same = all((fresh / p).read_bytes() == (work / p).read_bytes() for p in tarfile.open(bundle).getnames())
+        code2, _ = run(fresh, "--head", head, "path-check", "--list", saved2)
+        check(code == 0 and same and code2 == 0, "a fresh checkout takes the bundle byte for byte, inside the list")
+        g(fresh, "reset", "-q", "--hard", head)
+        g(fresh, "clean", "-q", "-fd")
+
+        def evil(name: str, kind: str = "file") -> pathlib.Path:
+            t = tmp / ("evil-%d.tar" % abs(hash((name, kind))))
+            with tarfile.open(t, "w") as tf:
+                ti = tarfile.TarInfo(name)
+                if kind == "link":
+                    ti.type, ti.linkname = tarfile.SYMTYPE, "../../src"
+                else:
+                    ti.size = 2
+                tf.addfile(ti, io.BytesIO(b"x\n") if kind == "file" else None)
+            return t
+        for name, kind, what in (("src/live_edge_lane.py", "file", "an off-list member"),
+                                 ("data/live/../../src/x.py", "file", "a '..' member"),
+                                 ("/etc/x", "file", "an absolute member"),
+                                 ("data/live/counts", "link", "a link member")):
+            code, out = run(fresh, "--head", head, "apply", "--list", saved2, "--bundle", str(evil(name, kind)))
+            check(code == 1 and "nothing written" in out and sh(fresh, "git", "status", "--porcelain").stdout == "",
+                  "apply refuses %s and writes nothing" % what)
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as d:
         tmp = pathlib.Path(d)
@@ -238,6 +328,7 @@ def main() -> int:
             srv.shutdown()
             srv.server_close()
 
+    part_two()
     print()
     print("LIVE EDGE LANE TESTS: %s" % ("PASSED" if not FAILS else "FAILED: " + "; ".join(FAILS)))
     return 0 if not FAILS else 1
