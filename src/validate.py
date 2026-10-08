@@ -1323,11 +1323,42 @@ def check_low_contrast_class(results):
                     not bad, "%d files" % n, bad))
 
 
+# ---------------------------------------------------------------------------
+# the tooltip follows the pointer, not the width (Build Brief 2.4, D22)
+# ---------------------------------------------------------------------------
+
+# A width gate on the tooltip is what this page carried until 2026-10-08: tooltips off at or below a 768 px viewport.
+_WIDTH_GATES = [(r"\bnoTip\b", "a noTip flag"),
+                (r"innerWidth\s*[<>]=?", "a comparison on window.innerWidth"),
+                (r"""matchMedia\(\s*['"]\(\s*(?:max|min)-width""", "a width media query in script")]
+_CAPABILITY = "(hover: hover) and (pointer: fine)"
+
+
+def check_tooltip_capability(results):
+    """docs/assets/page.js gates the tooltip on the pointer's capability and never on the window's width: no noTip
+    flag, no comparison on window.innerWidth, no width media query in script, and the capability query present."""
+    path = DOCS / "assets" / "page.js"
+    bad = []
+    if not path.exists():
+        bad.append("docs/assets/page.js absent")
+    else:
+        text = path.read_text(encoding="utf-8")
+        code = re.sub(r"(?m)//.*$", "", re.sub(r"(?s)/\*.*?\*/", "", text))   # comments may say what was removed
+        for rx, what in _WIDTH_GATES:
+            for m in re.finditer(rx, code):
+                bad.append("docs/assets/page.js: %s (%r)" % (what, code[max(0, m.start() - 20):m.end() + 20].strip()))
+        if _CAPABILITY not in code:
+            bad.append("docs/assets/page.js: no %r capability query" % _CAPABILITY)
+    results.append(("tooltips: page.js gates the tooltip on the pointer's capability, never on the window's width", not bad,
+                    "page.js read, comments excluded", bad))
+
+
+
 CHECKS = [check_hashes, check_extraction_log, check_m01, check_dates, check_uniqueness, check_exclusion,
           check_chronology, check_locked_once, check_names, check_emdash, check_asof, check_cohort, check_review,
           check_known_events, check_cohort_facts, check_words_before_chart, check_case_study,
           check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card,
-          check_chart_descriptions, check_table_expand, check_low_contrast_class]
+          check_chart_descriptions, check_table_expand, check_low_contrast_class, check_tooltip_capability]
 
 
 # ---------------------------------------------------------------------------
@@ -1426,6 +1457,10 @@ def _docs_tree_copy(mutations: dict):
         d.mkdir()
         for p in DOCS.glob("*.html"):
             shutil.copyfile(p, d / p.name)
+        # and the page's scripts, so a scenario can corrupt assets/page.js (Build Brief 2.4)
+        (d / "assets").mkdir()
+        for p in (DOCS / "assets").glob("*.js"):
+            shutil.copyfile(p, d / "assets" / p.name)
         for name, fn in mutations.items():
             p = d / name
             before = p.read_text(encoding="utf-8") if p.exists() else ""
@@ -1623,6 +1658,11 @@ def _scenarios():
            lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(?s)<dialog id="table-dialog".*?</dialog>', "")}))
     yield (check_low_contrast_class, "the low-contrast label class written back into the module template",
            lambda: _docs_tree_copy({"template.html": _sub_once(r"text-ink-soft uppercase", "text-ink/60 uppercase")}))
+    # Build Brief 2.4.
+    yield (check_tooltip_capability, "the width gate put back in page.js: tooltips off at or below a 768 px viewport",
+           lambda: _docs_tree_copy({"assets/page.js": _sub_once(r"(tapTip: )", "noTip: window.innerWidth <= 768,\n             \\1")}))
+    yield (check_tooltip_capability, "the capability query taken out of page.js: the tap path decided by nothing",
+           lambda: _docs_tree_copy({"assets/page.js": lambda x: x.replace("(hover: hover) and (pointer: fine)", "(min-width: 769px)")}))
     yield (check_case_card, "a second link written into the case-study card",
            lambda: _docs_tree_copy({"case-study.html": _sub_once(r'(<aside data-case="card"[^>]*>)', r'\1<a href="index.html#s5">Method and receipts</a>')}))
     yield (check_case_card, "the card's one link pointed at the build repository instead of the module",
@@ -1637,7 +1677,7 @@ def _scenarios():
 # copy-and-repoint machinery its scenarios use, and must pass there: a scenario that trips proves the check can
 # fail, and the control proves it trips on the corruption rather than on the copy.
 CONTROLLED = [check_chart_subtitles, check_chart_bullets, check_c4_summary_dates, check_case_card,
-              check_chart_descriptions, check_table_expand, check_low_contrast_class]
+              check_chart_descriptions, check_table_expand, check_low_contrast_class, check_tooltip_capability]
 
 
 def run_controls():

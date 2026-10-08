@@ -16,7 +16,8 @@ The repo copies are canonical and are what this build was reviewed against
 
 **Quadrant: EXPLANATORY. Checklist A applies in full.** No reader controls of
 any kind: no filters, selectors or tabs. Every finding is fixed in a title
-computed at build time. Tooltips exist above 768 px and move no finding.
+computed at build time. Tooltips move no finding; since 2026-10-08 they follow
+the pointer's capability, not the width (hover on a fine pointer, tap elsewhere; D22).
 
 **Chart class: all five are detailed charts**, read for values. No signature
 charts.
@@ -396,13 +397,27 @@ returns 404.
 counts the separator in the rendered strip at every width of the ladder and
 printed `[3, 3, 3, 3, 3]` at 320, 655, 656 and 1040.
 
-**The tooltip decision, recorded so it is not re-derived.** Tooltips exist
-above a 768 px viewport and are absent at or below it, because CHART-REVIEW
-5.5 fails a hover-following tooltip there and the drop order makes it the
-first thing to go; the table and the keyboard navigator carry the values.
+**The tooltip decision, recorded so it is not re-derived. Replaced 2026-10-08
+(D22).** The pointer's CAPABILITY decides, never the width, as the estate's
+published modules have it (`cascadia-matter-ledger-analytics` d92321c, which
+reversed its own width gate, then Fee Examiner and Revenue Assurance).
+- A fine pointer that can hover gets the hover tooltip at every width.
+- Every other pointer gets the same readout on TAP. It is anchored above the
+  tap point, dropped below only when there is no room above, and clamped to
+  the visible viewport below the sticky site header.
+- That readout does not follow the pointer, so CHART-REVIEW 5.5, which fails
+  a HOVER-FOLLOWING tooltip at or below 768 px, is not engaged.
+- The table and the keyboard navigator remain the guaranteed layers.
+
 This does not move the artifact to Checklist B: every finding is fixed in a
-computed title and a tooltip moves none of them. The same decision is on the
-record in `cascadia-matter-ledger-analytics`.
+computed title and a tooltip moves none of them.
+
+*Superseded:* from 2026-10-06 to 2026-10-08 this page switched tooltips off at
+or below a 768 px viewport (F-19 below), citing "the decision Matter Ledger
+recorded". That decision had already been reversed there. Aaron found no
+readout on his phone on 2026-10-08. `src/test_tap_tooltips.py` now taps a mark
+on every chart on an emulated phone, and hovers one on a 1040 px desktop, and
+fails if the readout is missing, outside the viewport, or under the finger.
 
 ### Per-chart verdicts
 

@@ -743,3 +743,69 @@ gate and Path 2.
   scroll cues.
 - `src/validate.py`; `src/render_charts.py`.
 - `governance/chart-review.md`: section 9.
+
+---
+
+*Layer 6, 2026-10-08: tap tooltips restored (Build Brief 2.4).*
+
+## D22 · The tooltip follows the pointer's capability, never the width
+
+**What happened.** On 2026-10-08 Aaron found no chart readouts on his phone,
+on the live site. `docs/assets/page.js` switched tooltips off at or below a
+768 px viewport (`noTip: window.innerWidth <= 768`), citing "the decision
+Matter Ledger recorded" (F-19 in the chart review). That was a misreading:
+Matter Ledger had already reversed its own width gate (its page.js at
+`d92321c` says why). The estate's behaviour, set by its three published
+modules (Matter Ledger, Fee Examiner, Revenue Assurance), is that **the
+pointer's capability decides**:
+- A fine pointer that can hover gets the hover tooltip at every width.
+- Every other pointer gets the same readout on TAP. It is anchored above the
+  tap point, dropped below only when there is no room above, and clamped to
+  the visible viewport.
+
+CHART-REVIEW 5.5 fails a HOVER-FOLLOWING tooltip at or below 768 px because of
+touch. A tap readout that stays put is not one. Aaron did not ask for the
+regression and should not have had to re-specify the behaviour.
+
+**What changed.**
+- `page.js` drops `noTip`. Its `tip()` is Matter Ledger's, with this page's
+  formatters:
+  - `mousemove|click` on the tap path, without `mouseout`, because a
+    synthesised tap can fire both in one gesture;
+  - `mousemove|mouseout` for a fine pointer, so the box leaves with it;
+  - the above-the-tap position with its viewport clamp, and an `axisPointer`
+    line for axis triggers.
+- Four departures from the reference, each found by the touch test:
+  - the clamp starts below this page's sticky site header, not at the
+    viewport's edge;
+  - the tap path is clamped to the viewport rather than confined to the
+    chart's own box, so a tap near the top of a short plot is not pushed
+    back under the finger;
+  - the readout wraps within the chart's width, because chart 4's
+    flagged-month readout carries the rule's sentence and drew an 823 px box
+    on a 390 px phone;
+  - chart 1's stacked layout, below the 560 px host breakpoint, had its own
+    `tooltip: {show: false}` and now takes the same `tip()`.
+- The render mode no longer keys on the tooltip, only on the 560 px host
+  breakpoint.
+- **Gates.** `src/validate.py`'s `check_tooltip_capability` fails a `page.js`
+  that gates the tooltip on width or lacks the capability query, with two
+  prove-failable scenarios and an unmutated control.
+- **Touch test.** `src/test_tap_tooltips.py` runs Chromium with `hasTouch`
+  and `isMobile` at 390 x 844 on both pages. It scrolls each plot to just
+  below the header, title above the fold, and taps a mark on every chart.
+  It asserts the readout is visible, inside the viewport below the header,
+  and clear of the tap point, then hovers the same marks on a 1040 px
+  desktop.
+
+No figure, wording, model, rule or frozen file changed.
+`git diff --stat dba1c30 -- data/` prints nothing.
+
+*Counterfactual:* keeping the width gate and pointing readers to the tables,
+which is what the 768 px rule did, and which every other published module
+had already abandoned.
+
+**Carried by:** `docs/assets/page.js` (`layout`, `tip`, chart 1's stacked
+tooltip); `src/validate.py` (`check_tooltip_capability`);
+`src/test_tap_tooltips.py`; `governance/chart-review.md` (the tooltip
+decision, replaced 2026-10-08).

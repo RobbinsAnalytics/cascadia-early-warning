@@ -167,23 +167,61 @@
   function layout(host) {
     var w = host.clientWidth || CASCADIA.minCanvasPx;
     return { w: w, narrow: w < BP.narrow,
-             // No tooltip at or below a 768 px viewport (CHART-REVIEW 5.5 fails a hover-following
-             // tooltip there, and the drop order makes it the first thing to go); the table and the
-             // keyboard navigator carry the values. The decision Matter Ledger recorded, kept here.
-             noTip: window.innerWidth <= 768,
+             // THE ESTATE RULE: the pointer's CAPABILITY decides, never the width (Matter Ledger d92321c, followed
+             // by Fee Examiner and Revenue Assurance; D22). What CHART-REVIEW 5.5 fails at or below 768 px is a
+             // HOVER-FOLLOWING tooltip, and the reason is touch: there is no hover, and a readout chasing the
+             // finger covers the mark it describes. A width gate got both cases wrong (a narrow desktop window has
+             // a mouse; a phone lost its readout for a reason that was never size), and this page carried one,
+             // citing a decision Matter Ledger had already reversed. So a fine pointer that can hover keeps the
+             // hover tooltip at every width, and everything else gets the same readout on TAP, anchored above the
+             // tap point and clamped to the visible viewport, which is not a hover-following tooltip and does not
+             // engage 5.5. The data tables and the keyboard navigator remain the guaranteed layers (Rule 5.1).
              tapTip: !(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) };
   }
+  /**
+   * Tooltip config, ported from Matter Ledger's tip() (d92321c) with this page's formatters. A tooltip moves no
+   * finding (every finding is fixed in a title), so this stays Checklist A and the strip stays at three segments.
+   */
   function tip(L, opts) {
     return {
-      show: !L.noTip, trigger: opts.trigger || 'item', confine: true, appendToBody: false,
-      triggerOn: L.tapTip ? 'mousemove|click' : 'mousemove',
+      // On the tap path the box is clamped to the visible viewport below, not confined to the chart's own box: a
+      // tap near the top of a short plot, just under the sticky header, otherwise had no room above or below and
+      // was pushed back over the finger (the touch test, D22). The hover path stays confined, as before.
+      show: true, trigger: opts.trigger || 'item', confine: !L.tapTip, appendToBody: false,
+      // Both triggers fire on the touch path: a tap arrives as a click, and a browser that synthesises mouse events
+      // sends mousemove. 'mouseout' is deliberately NOT in the touch list: a synthesised tap often fires mousemove
+      // then mouseout in one gesture, which would show the box and hide it before it could be read. A fine pointer
+      // gets 'mouseout' so the box leaves with the pointer.
+      triggerOn: L.tapTip ? 'mousemove|click' : 'mousemove|mouseout',
+      // Anchored to the tap, not the top of the chart: on a phone the plot fills the screen and the title is above
+      // the fold, so a box pinned to the container's top renders off screen ("line, no box", reported twice on
+      // Matter Ledger). The box sits above the touch point so a finger does not cover it, drops below only when
+      // there is no room above, and is clamped horizontally and against the VIEWPORT, not the container.
       position: L.tapTip ? function (pt, params, dom, rect, size) {
         var cw = size.contentSize[0], chh = size.contentSize[1];
-        var x = Math.max(4, Math.min(Math.round(pt[0] - cw / 2), size.viewSize[0] - cw - 4));
+        var x = Math.round(pt[0] - cw / 2);
+        x = Math.max(4, Math.min(x, size.viewSize[0] - cw - 4));
         var y = Math.round(pt[1] - chh - 18);
-        if (y < 4) y = Math.round(pt[1] + 26);
+        var box = dom && dom.parentNode && dom.parentNode.getBoundingClientRect
+                  ? dom.parentNode.getBoundingClientRect() : null;
+        if (box) {
+          // The visible top is below this page's sticky site header, not the viewport's edge (touch test, D22).
+          var hdr = document.getElementById('site-header');
+          var topEdge = hdr ? Math.max(0, hdr.getBoundingClientRect().bottom) : 0;
+          var minY = Math.max(4, topEdge + 8 - box.top);
+          var maxY = window.innerHeight - 8 - chh - box.top;
+          if (y < minY) y = Math.round(pt[1] + 26);
+          if (y < minY) y = minY;
+          if (maxY > minY && y > maxY) y = maxY;
+        } else if (y < 4) {
+          y = Math.round(pt[1] + 26);
+        }
         return [x, y];
       } : undefined,
+      axisPointer: opts.trigger === 'axis' ? { type: 'line' } : undefined,
+      // The readout wraps within the chart's width: chart 4's flagged-month readout carries the rule's sentence,
+      // and unwrapped it drew an 823 px box on a 390 px phone (the touch test, D22).
+      extraCssText: 'white-space:normal;max-width:' + Math.max(180, L.w - 16) + 'px;',
       formatter: opts.formatter
     };
   }
@@ -209,7 +247,7 @@
     var host = el(id), state = { mode: null, chart: null };
     if (!host) return;   // a page may carry a subset of the charts (docs/case-study.html carries chart 3 only)
     function run() {
-      var L = layout(host), mode = (L.narrow ? 'n' : 'w') + (L.noTip ? 't' : '');
+      var L = layout(host), mode = L.narrow ? 'n' : 'w';   // the tooltip follows the pointer, not the width (D22)
       if (state.chart && state.mode === mode) return;
       if (state.chart) state.chart.dispose();
       state.mode = mode;
@@ -340,7 +378,16 @@
                 axisLabel: { formatter: kfmt } },
               { gridIndex: 1, type: 'category', data: [monthTick(O.target, true)], axisTick: { show: false }, axisLine: { show: false },
                 axisLabel: { fontFamily: SANS, fontSize: 12, color: C.slateMoss } }],
-      tooltip: { show: false },
+      // The history's readout, by tap or hover (D22); the strip below it is drawn by a silent custom series.
+      tooltip: tip(L, { trigger: 'axis', formatter: function (qs) {
+        var q = (qs || []).filter(function (x) { return x.seriesIndex === 3; })[0];
+        if (!q) return '';
+        var i = q.dataIndex;
+        var s = monthShort(d.months[i]) + '<br>received: ' + nf(d.actual[i]);
+        if (d.points[i] != null) s += '<br>' + d.modelLabel + ' point: ' + nf(d.points[i]);
+        if (d.lo80[i] != null) s += '<br>80% range ' + nf(d.lo80[i]) + ' to ' + nf(d.hi80[i]);
+        return s;
+      } }),
       series: [
         { name: '80% range low', type: 'line', stack: 'band', data: lo, showSymbol: false, symbol: 'none', lineStyle: { opacity: 0 }, itemStyle: { opacity: 0 }, z: 1 },
         { name: '80% range', type: 'line', stack: 'band', data: span, showSymbol: false, symbol: 'none', lineStyle: { opacity: 0 },
