@@ -1,7 +1,7 @@
 {
- "started_utc": "2026-10-07T03:31:13+00:00",
- "finished_utc": "2026-10-07T03:31:19+00:00",
- "status": "ok",
+ "started_utc": "2026-10-09T01:50:25+00:00",
+ "finished_utc": "2026-10-09T01:50:32+00:00",
+ "status": "skipped: source unchanged since 2026-09-29",
  "passed": true,
  "checks": [
   {
@@ -105,69 +105,15 @@
    "value": "2026-09-29",
    "expected": null,
    "passed": true
-  },
-  {
-   "check": "responses saved as a vintage",
-   "value": 7,
-   "expected": 7,
-   "passed": true
-  },
-  {
-   "check": "frozen months re-read",
-   "value": 896,
-   "expected": null,
-   "passed": true
-  },
-  {
-   "check": "frozen months reading higher (late loads)",
-   "value": 0,
-   "expected": null,
-   "passed": true
-  },
-  {
-   "check": "frozen months rewritten downward by more than 1%",
-   "value": 0,
-   "expected": 0,
-   "passed": true
-  },
-  {
-   "check": "months elapsed and loaded beyond the freeze",
-   "value": "none",
-   "expected": null,
-   "passed": true
-  },
-  {
-   "check": "forecasts scored at first sight of their month",
-   "value": 0,
-   "expected": null,
-   "passed": true
-  },
-  {
-   "check": "forecasts issued this run",
-   "value": 0,
-   "expected": null,
-   "passed": true
-  },
-  {
-   "check": "candidate fits that failed",
-   "value": 0,
-   "expected": 0,
-   "passed": true
   }
  ],
  "error": null,
  "requests_made": 7,
  "last_updated": "2026-09-29",
- "vintage": "20261007T033113",
+ "vintage": null,
  "months_appended": {},
  "forecasts_issued": 0,
  "forecasts_scored": 0,
- "frozen_variance": {
-  "months_compared": 896,
-  "months_reading_higher": 0,
-  "reports_added_to_frozen_months": 0,
-  "months_reading_lower": 0,
-  "material_downward": []
- },
+ "frozen_variance": null,
  "notes": []
 }

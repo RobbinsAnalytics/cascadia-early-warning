@@ -6,8 +6,8 @@
 |---|---|
 | Frozen snapshot | receipts through **2026-08-31**, retrieved 2026-10-06, source last_updated 2026-09-29 |
 | Live edge, source last_updated seen | **2026-09-29** |
-| Runs recorded | 1 (1 with status ok) |
-| Last run | **ok**, started 2026-10-07T03:31:13+00:00, 25 checks, 0 failed |
+| Runs recorded | 2 (1 with status ok) |
+| Last run | **skipped: source unchanged since 2026-09-29**, started 2026-10-09T01:50:25+00:00, 17 checks, 0 failed |
 | Months seen beyond the freeze | none: the source has not loaded past 2026-08-31 |
 
 ## What a run is allowed to change
@@ -16,17 +16,7 @@ Nothing under `data/raw/` or `data/conformed/`, and no figure on the frozen page
 
 ## The frozen months, re-read
 
-The last run re-read every frozen month (2016-01 to 2026-08) for the seven codes from the new vintage.
-
-| | |
-|---|---:|
-| Code-months compared | 896 |
-| Reading higher than frozen (late-loaded reports) | 0 |
-| Reports added to frozen months, in total | 0 |
-| Reading lower than frozen | 0 |
-| Lower by more than 1% (a failed check) | 0 |
-
-**It does not balance, and it is not supposed to.** A report is counted by the day FDA received it, and the source keeps loading reports for weeks after that day, so a month read later reads higher. That is the lag chart 5 draws. A month reading *lower* would mean the source removed reports from its past; a material case fails the run and is reported, never absorbed.
+The last run did not reach the re-read (status: skipped: source unchanged since 2026-09-29).
 
 ## Months appended, as seen
 
@@ -61,12 +51,4 @@ None issued: the frozen outlook (origin 2026-08) is still the latest.
 | response schema, DSP | 5372 buckets, 0 malformed |  | PASS |
 | meta.last_updated present | 2026-09-29 |  | PASS |
 | meta.last_updated not before the frozen datum | 2026-09-29 |  | PASS |
-| responses saved as a vintage | 7 | 7 | PASS |
-| frozen months re-read | 896 |  | PASS |
-| frozen months reading higher (late loads) | 0 |  | PASS |
-| frozen months rewritten downward by more than 1% | 0 | 0 | PASS |
-| months elapsed and loaded beyond the freeze | none |  | PASS |
-| forecasts scored at first sight of their month | 0 |  | PASS |
-| forecasts issued this run | 0 |  | PASS |
-| candidate fits that failed | 0 | 0 | PASS |
 
