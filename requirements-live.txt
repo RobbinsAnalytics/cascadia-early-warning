@@ -1,0 +1,63 @@
+# requirements-live.txt -- the live-edge workflow's packages, every one pinned.
+#
+# The runner installs from this file and nothing else (.github/workflows/
+# live-edge.yml, live-edge-check.yml), with --require-hashes --no-deps
+# --only-binary=:all:, so no package is compiled there, nothing unlisted is
+# installed, and a file added to a pinned release after the fact is refused
+# (D23, attack read finding 4). Each pin carries the sha256 of its wheels for
+# CPython 3.14 on manylinux x86_64 and on win_amd64 (or its pure-Python wheel),
+# read from PyPI's JSON API on 2026-10-08.
+#
+# The versions are what the Windows interpreter the freeze was built with
+# carries (C:\Users\Ajayr\AppData\Local\Python\
+# pythoncore-3.14-64, Python 3.14.6, through the project venv), so the runner
+# rebuilds the pages from the same library versions the committed pages came
+# from. A version rolling forward can change a page's bytes with no data
+# change; the re-render check then fails the run, which is build-lane work.
+#
+# The closure is complete, not only the direct imports: duckdb (build_model,
+# validate), numpy (forecast, build_page, pull_live_edge), statsmodels (the
+# ETS candidate in forecast.fit_candidate) and what each of those requires.
+# requests is not imported anywhere on the live path (acquire.py uses urllib)
+# and is not listed. Proved complete by a clean venv without
+# --system-site-packages (Build Brief 2.5 step 2).
+#
+# requirements.txt stays as it is: it names what the Windows venv adds on top
+# of the system interpreter.
+duckdb==1.5.5 \
+    --hash=sha256:fbf0f2d48b43c6c304d00463b463c27ead6c4b01c3c1816b750f728decf71afe \
+    --hash=sha256:9dc826c4b50e64f6c4e4d07a3a9cb075ef70ba3899dc43ec5493dc3d7b04b353
+formulaic==1.2.2 \
+    --hash=sha256:0f84ff49e3fc9dc0e68ab08a0a9427874021aa6c558e66b44dc634a35739b09b
+interface-meta==2.0.1 \
+    --hash=sha256:f38016bef9a4429b6d0792d809be7b65e9781820c674bf7f463999086b6e6323
+narwhals==2.26.0 \
+    --hash=sha256:29326d74f107c347fd1009bd58e38d9f7c7c5b51e6de97bc93dbc325d9038b54
+numpy==2.4.6 \
+    --hash=sha256:a2c306dea656c12c68f51f4cea133cbe78ca7435eb28c735eac1d3ebe73be6e8 \
+    --hash=sha256:b507f5c4c1d508876d1819b6bf9a49d365b96320b5d4993426b33a23ca4b8261
+packaging==26.3 \
+    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+pandas==3.0.3 \
+    --hash=sha256:9d71c63ae4ebdbf70209742096f1fc46a83a0613c99d4b23766cced9ff8cd62a \
+    --hash=sha256:3c20a521bbb85902f79f7270c80a59e1b5452d96d170c034f207181870f97ac5
+patsy==1.0.3 \
+    --hash=sha256:d3dbebe8fd5f46e29912d030b63c6268647b59bf788a99e2af28a30234cf357c
+python-dateutil==2.9.0.post0 \
+    --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
+scipy==1.18.1 \
+    --hash=sha256:ac0333bdf38309aa3dcbe7e3fa7ea29e7a2c37c6ea306a757b700ded8e4596ad \
+    --hash=sha256:78a0d7c918e74a232394117160e7e3db503377572a45bcef8826e4ab8a35feba
+six==1.17.0 \
+    --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274
+statsmodels==0.15.0 \
+    --hash=sha256:edd803f4606061af8c7a83e2326ea294cbfa802a908dfbda4a88347301fb6820 \
+    --hash=sha256:c3c1138b4d0e5b0c2387b17dafd2a0fd137c67bd869f70d4ee56feecc918cb0d
+typing-extensions==4.16.0 \
+    --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
+tzdata==2026.3 \
+    --hash=sha256:dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931
+wrapt==2.5.0 \
+    --hash=sha256:b640460f0ffb346b192686bd6fac5589e35a6c6640501c59a9fb6e82b0dd6bd8 \
+    --hash=sha256:1a3c4035d2026b87ef23dd8d165f1f8d3853ee2bd02791cfd22bd8c6226c41ce \
+    --hash=sha256:107eea1a511e98a3a5033b0c2cb403fbb37f05dee6ac1fb85c0460d311ec278c

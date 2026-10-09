@@ -1,0 +1,65 @@
+# The live edge's read-only check: proves a change to the lane on GitHub's Linux
+# runner before it merges (Build Brief 2.5 step 6; D23). No openFDA request, no
+# commit, no push. It runs the parts of .github/workflows/live-edge.yml that do
+# not need new data: the list from HEAD with its forbidden-entry check, the
+# re-render check, the tests and the gates.
+
+name: Live edge check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-edge-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      RUN_SHA: ${{ github.sha }}
+    steps:
+      - name: Check out the pull request with its full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Python 3.14.6, the freeze's interpreter version
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14.6"
+
+      - name: Install the pinned packages, by hash, binaries only
+        run: "python -m pip install --disable-pip-version-check --require-hashes --no-deps --only-binary=:all: -r requirements-live.txt"
+
+      - name: Read the allow-list from HEAD, with the forbidden-entry check
+        run: python src/live_edge_lane.py --head "$RUN_SHA" allowlist --out "$RUNNER_TEMP/allowlist.json"
+
+      - name: Re-render check
+        run: python src/live_edge_lane.py --head "$RUN_SHA" rerender-check --list "$RUNNER_TEMP/allowlist.json"
+
+      - name: Live-edge tests
+        run: python src/test_live_edge.py
+
+      - name: Lane tests
+        run: python src/test_live_edge_lane.py
+
+      - name: Golden test
+        run: python src/test_golden.py
+
+      - name: Freeze gate
+        run: python src/validate_freeze.py
+
+      - name: Domain gate, the checks the runner can run
+        run: python src/live_edge_lane.py gates
+
+      - name: The tree is untouched
+        run: |
+          git status --porcelain --untracked-files=all
+          test -z "$(git status --porcelain --untracked-files=all)"
