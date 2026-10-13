@@ -221,7 +221,8 @@ def main() -> int:
                          ("governance/freeze.toml", "freeze.toml"), ("data/conformed/x.csv", "a frozen path"),
                          ("data/raw/counts/DSQ_date_received.json", "a file under a frozen glob"),
                          ("data/", "a folder over frozen paths"), ("docs/", "a folder over the templates"),
-                         ("data/conformed/record_facts.json", "the record-facts JSON"), ("../x", "a '..' path")):
+                         ("data/conformed/record_facts.json", "the record-facts JSON"),
+                         ("governance/source-revisions.toml", "the disposition record (D25)"), ("../x", "a '..' path")):
             sub = tmp / ("bad%d" % abs(hash(bad)))
             _, w = fixture(sub, LIST + bad + "\n")
             code, out = run(w, "allowlist", "--out", str(sub / "l.json"))

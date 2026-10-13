@@ -972,9 +972,20 @@ def live_edge_line() -> str:
     if le.get("latest_live_origin"):
         s += "Latest live outlook issued from origin %s. " % le["latest_live_origin"]
     if le.get("frozen_months_re_read"):
-        s += ("The frozen months re-read from the latest vintage: %s of %s read higher, by %s reports in total; %s read lower."
+        s += ("The frozen months re-read from the latest vintage: %s of %s read higher, by %s reports in total; %s read lower. "
               % (nf(le["frozen_months_reading_higher"]), nf(le["frozen_months_re_read"]),
                  nf(le["reports_added_to_frozen_months"]), nf(le["frozen_months_reading_lower"])))
+    # The source-revision disclosure (D25), rendered from the record and never typed. health.json written
+    # before D25 has no such field, and the sentence is then absent rather than guessed.
+    n_rev = le.get("source_revisions_dispositioned")
+    if n_rev is not None:
+        if n_rev:
+            s += ("The source has revised %d frozen month%s downward since the freeze, by %s report%s in total; each is "
+                  "dispositioned in the decision record (%s) and the frozen table is unchanged. "
+                  % (n_rev, "" if n_rev == 1 else "s", nf(le["source_revisions_reports_removed"]),
+                     "" if le["source_revisions_reports_removed"] == 1 else "s", ", ".join(le.get("source_revisions_decisions") or [])))
+        else:
+            s += "The source has revised no frozen month downward since the freeze. "
     return s.strip() + " The record is governance/reconciliation.md."
 
 

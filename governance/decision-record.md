@@ -1128,3 +1128,95 @@ left as it is; whether it stays is Aaron's.
 - `governance/reconciliation.md` (section 2026-10-13, until the next passing
   run regenerates it);
 - this record.
+
+## D25 · A source revision, once dispositioned, is a record the lane reads, not a stop it repeats
+
+**What changed.** Aaron, 2026-10-13, after reading D24's report: option 2.
+A frozen month the source has revised downward, once examined and
+classified, is entered by hand in `governance/source-revisions.toml`, and
+`src/pull_live_edge.py` reads that record on every run. The frozen table is
+untouched. The gate can still fail. The page says the source revised. The
+stop turns into a disclosure. The alternatives D24 set out were leaving the
+lane stopped for as long as the source stays revised, and a new freeze that
+re-states the months and moves the baseline; Aaron chose neither.
+
+**The read was waived, and this record says so, as D23 did.** SESSION-RULES
+1a puts the first dispatch after a lane change after Aaron has read the
+change and it has merged. Aaron waived that read for this work, verbatim:
+"I don't want to read session A's report. I just want to get this done."
+One session therefore did the whole sequence: merged the diagnostics branch
+(D24), rehearsed it from `main`, built this on
+`build/source-revision-disposition`, merged it, and dispatched the real run.
+What stood in for the read: every gate on the branch, the offline tests
+below, one pull run against the live source into a throwaway tree, and the
+real run's own gates. The page sentence that went public without a read is
+the first line of the session's report.
+
+**The record.** `governance/source-revisions.toml`, one `[[revision]]` per
+dispositioned month, every key required: `code`, `month`, `frozen`,
+`live_at_disposition`, `dispositioned`, `classification` (only
+`"source revision"`), `decision`. It is written by hand in the build lane
+and never by a run: it is not on the allow-list, and `src/live_edge_lane.py`
+now refuses it there by name (`FORBIDDEN`), with a lane test. **The first
+two entries are the PYX months D24 dispositioned: 2026-01 (99, live 96) and
+2026-05 (35, live 34), both D24.**
+
+**What the check now does.** `MATERIAL_DOWNWARD` is unchanged at 0.01. A
+material decrease is **known** when the record lists its code and month at
+the table's frozen count and the live count is at or above
+`live_at_disposition`; it is reported under the run record's
+`known_revisions`, beside `material_downward`, and does not fail. A material
+decrease with no entry, or deeper than its entry, or whose entry's frozen
+count is not the table's, is material and fails exactly as before, with a
+note saying which. A missing record, or a malformed entry, fails the run as
+an error before any request is made; an empty record is valid. The stdout
+prints both lists entry by entry, not as counts (the incident's parking lot
+15b), and the record's entry count is itself a check value.
+
+**What the page says**, rendered from `governance/health.json` by
+`src/build_page.py` and never typed, in the live-edge line of "The snapshot
+and the live edge": "The source has revised N frozen months downward since
+the freeze, by R reports in total; each is dispositioned in the decision
+record (D24) and the frozen table is unchanged." With nothing listed it says
+the source has revised no frozen month downward. A `health.json` written
+before this decision has no such field, and the sentence is then absent
+rather than guessed, which is why the committed pages did not change on the
+branch and the re-render check held. `src/reconcile_live_edge.py` writes the
+fields, lists the known revisions in the re-read table and adds a "Source
+revisions dispositioned" section to `governance/reconciliation.md`.
+
+**Proved offline** (`src/test_live_edge.py`, section 7): a listed revision
+at its dispositioned count passes and is carried as known with its
+decision; a listed revision reading shallower is still known; the same
+decrease with an empty record fails; a listed revision that has deepened
+fails and the note says so; an entry whose frozen count is not the table's
+fails; an empty record is not an error; a malformed entry, a live count not
+below frozen, a duplicate month and a missing file each fail as an error
+before any request; the committed record loads and carries the two D24
+months. The lane test adds the record to the refused allow-list entries.
+Golden test and freeze gate unchanged and passing. **Proved against the
+source:** one pull on 2026-10-13 at 23:31 UTC into a throwaway tree
+(`data/live/` and `governance/run_history.jsonl` in the repository were not
+written) read `2 known revisions, 0 material`, 27 checks, none failed, and
+also saw 2026-09 loaded: 7 months appended, 42 forecasts scored, 42 issued.
+
+**What the rehearsal of D24's step found.** The rehearsal dispatch from
+`main` (run 38481887968) could not reach the rehearsal stop, because the
+pull failed first on the still-undispositioned revision; the diagnostics
+artifact `live-edge-diagnostics-38481887968` appeared with the thirteen files
+D24 names, kept to 2027-01-11, but its summary named the rehearsal input as
+the cause. The summary now reads the run record before the rehearsal input
+(merged 2026-10-13, `fix/live-edge-diagnostics-attribution`, seven offline
+cases including the real record). The rehearsal-stop path is proved by a
+second rehearsal dispatch after the real run.
+
+*Counterfactual:* the lane stops every Tuesday at the same check, correctly
+and uselessly, until someone re-freezes.
+
+**Carried by:**
+- `governance/source-revisions.toml`;
+- `src/pull_live_edge.py` (`load_dispositions`, the re-read, `main`);
+- `src/reconcile_live_edge.py` and `src/build_page.py` (`live_edge_line`);
+- `src/live_edge_lane.py` (`FORBIDDEN`), `src/test_live_edge.py`,
+  `src/test_live_edge_lane.py`;
+- `CLAUDE.md` ("The live edge").

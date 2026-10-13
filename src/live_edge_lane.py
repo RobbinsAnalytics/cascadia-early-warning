@@ -75,6 +75,7 @@ FORBIDDEN = [
     "docs/assets/",
     "governance/freeze.toml",
     "governance/decision-record.md",
+    "governance/source-revisions.toml",
     "data/conformed/record_facts.json",
     "data/raw/",
     "data/reference/",

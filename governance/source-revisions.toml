@@ -1,0 +1,51 @@
+# governance/source-revisions.toml -- frozen months the source has revised
+# downward, each dispositioned by a human and carried by a decision-record entry.
+#
+# Decision record D25. The live edge re-reads every frozen month each week and
+# fails its run when a month reads lower than frozen by more than
+# MATERIAL_DOWNWARD (src/pull_live_edge.py). Reports do not disappear, so a
+# material decrease is either a collection defect or a revision at the source.
+# Once a decrease has been examined and classified, it is entered here. A
+# material decrease that matches an entry, at the same or a shallower live
+# count, is KNOWN: the run reports it under "known_revisions" and does not fail.
+# A material decrease with no entry, or deeper than its entry's
+# live_at_disposition, fails exactly as before.
+#
+# THIS FILE IS WRITTEN BY HAND IN THE BUILD LANE AND READ BY THE LANE. It is not
+# on governance/live-edge-allowlist.txt and src/live_edge_lane.py refuses it
+# there, so a run can never write it. The frozen table
+# (data/conformed/monthly_report_count.csv) is never changed by an entry here;
+# the page says how many months are listed and that the table is unchanged.
+#
+# Every key is required. A missing file, a missing or duplicate key, a code
+# outside the cohort, a month not YYYY-MM, a live_at_disposition not below
+# frozen, or a classification other than "source revision" fails the run as an
+# error before any request is made. An empty file (no [[revision]] tables) is
+# valid and means nothing has been dispositioned.
+#
+#   code                 product code, one of the cohort
+#   month                YYYY-MM, a frozen month (2016-01 to 2026-08)
+#   frozen               the frozen raw count, which must equal the table's
+#   live_at_disposition  the live count on the day the entry was made
+#   dispositioned        YYYY-MM-DD, the day the entry was made
+#   classification       "source revision" (a collection defect is never
+#                        entered here; it is fixed in a new freeze)
+#   decision             the decision-record entry carrying the evidence
+
+[[revision]]
+code = "PYX"
+month = "2026-01"
+frozen = 99
+live_at_disposition = 96
+dispositioned = "2026-10-13"
+classification = "source revision"
+decision = "D24"
+
+[[revision]]
+code = "PYX"
+month = "2026-05"
+frozen = 35
+live_at_disposition = 34
+dispositioned = "2026-10-13"
+classification = "source revision"
+decision = "D24"
