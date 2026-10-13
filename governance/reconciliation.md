@@ -52,3 +52,31 @@ None issued: the frozen outlook (origin 2026-08) is still the latest.
 | meta.last_updated present | 2026-09-29 |  | PASS |
 | meta.last_updated not before the frozen datum | 2026-09-29 |  | PASS |
 
+
+## 2026-10-13: disposition of the first scheduled stop (hand-written, build lane)
+
+*This section was written by hand in the build lane (Brief 2026-10-13, step 3), against the rule in this file's header, because the brief placed the disposition here. The next run that passes regenerates this file and this section goes with it. The durable copy is decision record D24.*
+
+**The run.** `Live edge` run 38461394517, trigger `schedule`, created 2026-10-13T20:15:37Z on commit e7d1337, failed in the `build` job at the pull with exit code 1. The `publish` job did not run and no artifact was uploaded. The log's check line: `FAIL  frozen months rewritten downward by more than 1%: 2`, and its summary line: `frozen months re-read 896: 15 higher (+19 reports), 6 lower, 2 material`. The source's `meta.last_updated` was 2026-10-07; the frozen datum is 2026-09-29. The log prints the counts only. The run record that named the two months was written on the runner and was lost when the job ended.
+
+**The re-read.** This session re-read the seven count series at 2026-10-13T22:36:50Z, the way the pull does (`acquire.count_url(code, "date_received")`, `monthly_from_buckets`, the same comparison against `raw_reports` in `data/conformed/monthly_report_count.csv`). The source's `meta.last_updated` was still 2026-10-07, and every aggregate matched the run's: 896 compared, 15 higher, +19 reports, 6 lower, 2 material. The per-month live values at the pull are therefore taken as equal to this session's; they are inferred from the identical source state and identical aggregates, not read from the lost record.
+
+| Code | Month | Frozen | Live at the pull (2026-10-13 20:16 UTC, inferred) | Live this session (2026-10-13 22:36 UTC) | Change | Days that moved | Classification |
+|---|---|---:|---:|---:|---:|---|---|
+| PYX | 2026-01 | 99 | 96 | 96 | -3 (3.03%) | 2026-01-20 (8 to 7), 2026-01-24 (3 to 2), 2026-01-27 (12 to 11) | (a) source revision |
+| PYX | 2026-05 | 35 | 34 | 34 | -1 (2.86%) | 2026-05-08 (2 to 1) | (a) source revision |
+
+The four months that read lower but inside the tolerance, for the record: LWS 2021-02 (1,371 to 1,370, on 2021-02-20), LWS 2024-04 (2,236 to 2,235, on 2024-04-01), LWS 2024-06 (2,122 to 2,121, on 2024-06-19), LWS 2026-06 (2,059 to 2,058, on 2026-06-30). Each is one report and under 0.1%.
+
+**Evidence for (a), and against (b) a collection defect.**
+- The frozen `raw_reports` column is a distinct count of `mdr_report_key` over the record-level staging (`src/build_model.py`), and it equals the frozen count series `data/raw/counts/*_date_received.json` (source `last_updated` 2026-09-29) at all 896 code-months. `src/validate_measures.py` (M-01) asserts the same equality and passes. Two independent reads of the source at the freeze agree, so the frozen count was right when it was taken.
+- The 2026-10-07 vintage (`data/live/counts/20261007T033113/`, also `last_updated` 2026-09-29) equals the frozen series at every day for PYX and LWS. The decrease appears only in the source state stamped `last_updated` 2026-10-07.
+- PYX's total over the frozen window (2016-01 to 2026-08) fell by exactly 4, from 2,190 to 2,186, and no frozen PYX month gained. The four reports were not re-dated within the window; they left the PYX `date_received` series. The count series cannot say whether they were deleted, re-coded to another product code or re-dated past 2026-08.
+- D17's locked test (2024-01 to 2025-12) is not touched. Both material months are `recent`-period targets. LWS 2024-04 and 2024-06 are locked-period targets and each reads one report lower (0.04%, 0.05%), inside the tolerance; locked scores stand on the frozen actuals and are not revisited.
+
+**What this session did not do.** No frozen path changed. `MATERIAL_DOWNWARD` is still 0.01. The freeze baseline did not move. The allow-list did not change. The seven requests made for the re-read went into the local, gitignored request ledger and nothing under `data/live/` was written.
+
+**The open decision, Aaron's.** Whether a frozen month is ever re-stated downward is a PRINCIPLES question (frozen snapshots; gaps flagged, not filled). Until it is decided, every scheduled run re-reads the same revised source and stops at the same check, publishing nothing, which is the correct outcome. The options as this session sees them, none chosen:
+1. Leave everything as it is. The lane stays stopped for as long as the source stays revised, and the live edge does not advance.
+2. A committed disposition list in the lane: the pull carries the dispositioned (code, month, frozen, accepted live) entries, still reports each one every run, and fails only on a new decrease or a deeper one. The frozen table is untouched. This is build-lane work in `src/pull_live_edge.py` with a lane test.
+3. Re-state the frozen months in a new freeze: a deliberate `src/acquire.py` refresh, a moved baseline, and page claims that change. This is the frozen-snapshot question itself.
