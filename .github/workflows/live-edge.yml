@@ -102,6 +102,86 @@ jobs:
           echo "::error::Rehearsal: rehearse_failure was set, so this run stops here, after every gate and before the commit. Nothing is committed and nothing is pushed."
           exit 1
 
+      # A failed build job leaves evidence (D24). The first scheduled stop,
+      # run 38461394517 on 2026-10-13, failed at the pull and left nothing: the run
+      # record naming the material months was written on the runner and died with
+      # the job, and the log prints only the counts. These two steps run only when
+      # an earlier step failed. They gather the run record, the vintage the pull
+      # wrote, the checks and a summary into a folder OUTSIDE the tree and upload it
+      # under a name the publish job never asks for, kept longer than the bundle.
+      # The summary also goes to the run page, so the failure page names what
+      # stopped the run without a log read. Standard library only; nothing here
+      # changes the tree, the bundle, the publish job or either token.
+      - name: On failure, gather the evidence and write the step summary
+        if: ${{ failure() }}
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REHEARSAL: ${{ inputs.rehearse_failure }}
+          DIAG: ${{ runner.temp }}/diagnostics
+        run: |
+          mkdir -p "$DIAG"
+          if ! command -v python >/dev/null 2>&1; then
+            echo "## Live edge run $RUN_ID stopped before Python was set up; see the job log." | tee -a "$GITHUB_STEP_SUMMARY" > "$DIAG/summary.md"
+            exit 0
+          fi
+          python - <<'EOF'
+          import json, os, pathlib, shutil, subprocess
+          diag = pathlib.Path(os.environ["DIAG"]); diag.mkdir(parents=True, exist_ok=True)
+          run_id = os.environ.get("RUN_ID", "?"); rehearsal = os.environ.get("REHEARSAL", "") == "true"
+          live = pathlib.Path("data/live"); rec_p = live / "last_live_run.json"
+          def git(*a):
+              return subprocess.run(["git", *a], capture_output=True, text=True, check=False)
+          status = git("status", "--porcelain=v1", "--untracked-files=all", "--", "data/live", "governance", "docs").stdout
+          (diag / "git_status.txt").write_text(status or "(the tree equals the run's commit: nothing was written)\n", encoding="utf-8")
+          fresh = git("diff", "--quiet", "--", str(rec_p)).returncode != 0 or (rec_p.exists() and git("ls-files", "--error-unmatch", str(rec_p)).returncode != 0)
+          rec = json.loads(rec_p.read_text(encoding="utf-8")) if rec_p.exists() else None
+          kept = []
+          for p in (rec_p, live / "watermark.json"):
+              if p.exists():
+                  shutil.copy2(p, diag / p.name); kept.append(p.name + ("" if fresh else " (as committed; this run did not write it)"))
+          vint = (rec or {}).get("vintage")
+          vdir = live / "counts" / vint if vint else None
+          if vdir and vdir.is_dir():
+              shutil.copytree(vdir, diag / "vintage" / vint); kept.append("vintage/%s/ (%d files)" % (vint, sum(1 for _ in vdir.iterdir())))
+          checks = (rec or {}).get("checks", []) if fresh else []
+          failed = [c for c in checks if not c.get("passed")]
+          (diag / "checks.txt").write_text("".join("%s  %s: %s\n" % ("PASS" if c.get("passed") else "FAIL", c.get("check"), c.get("value")) for c in checks)
+                                           or "(no checks: this run's pull did not write a record)\n", encoding="utf-8"); kept.append("checks.txt")
+          L = ["## Live edge run %s stopped before the commit; nothing was published" % run_id, ""]
+          if rehearsal:
+              L.append("**What stopped it:** the dispatch input `rehearse_failure` was set. Every gate ran and passed; the rehearsal stop is the failure.")
+          elif rec and fresh and failed:
+              L.append("**What stopped it:** the pull's own check%s failed: %s." % ("s" if len(failed) > 1 else "", "; ".join("`%s` = %s" % (c.get("check"), c.get("value")) for c in failed)))
+          elif rec and fresh and rec.get("status") != "ok":
+              L.append("**What stopped it:** the pull reported status `%s`%s%s." % (rec.get("status"), ("; error %s" % rec["error"]) if rec.get("error") else "", ("; notes %s" % rec["notes"]) if rec.get("notes") else ""))
+          elif rec and fresh:
+              L.append("**What stopped it:** the pull passed (status `%s`, %d checks); a later step failed. The job log names it." % (rec.get("status"), len(checks)))
+          else:
+              L.append("**What stopped it:** a step before the pull wrote a record. The job log names it; `last_live_run.json` here is the committed one, not this run's.")
+          fv = ((rec or {}).get("frozen_variance") or {}) if fresh else {}
+          if fv:
+              L += ["", "**Frozen months re-read:** %s compared, %s reading higher (+%s reports), %s reading lower, %s lower by more than 1%%." % (fv.get("months_compared"), fv.get("months_reading_higher"), fv.get("reports_added_to_frozen_months"), fv.get("months_reading_lower"), len(fv.get("material_downward", [])))]
+              if fv.get("material_downward"):
+                  L += ["", "| Code | Month | Frozen | Live | Change |", "|---|---|---:|---:|---:|"]
+                  L += ["| %s | %s | %s | %s | %+d |" % (m["code"], m["month"], m["frozen"], m["live"], m["live"] - m["frozen"]) for m in fv["material_downward"]]
+                  L += ["", "A frozen month is never re-stated by a run. What happens next is build-lane work: Aaron reads `governance/decision-record.md` D24 and decides."]
+          L += ["", "**Kept in the artifact `live-edge-diagnostics-%s`:** %s." % (run_id, ", ".join(kept)), ""]
+          text = "\n".join(L)
+          (diag / "summary.md").write_text(text, encoding="utf-8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
+              fh.write(text + "\n")
+          print(text)
+          EOF
+
+      - name: On failure, keep the evidence for 90 days, under a name the publish job never takes
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: live-edge-diagnostics-${{ github.run_id }}
+          path: ${{ runner.temp }}/diagnostics
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Path check, then bundle the listed files
         run: python src/live_edge_lane.py --head "$RUN_SHA" bundle --list "$RUNNER_TEMP/allowlist.json" --out "$RUNNER_TEMP/live-edge.tar"
 
