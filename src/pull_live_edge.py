@@ -12,7 +12,11 @@ What one run does, in order, and nothing else:
   3. Re-reads the frozen months (2016-01 to 2026-08) from the new vintage
      and states the variance against the frozen series: late-loaded reports
      make past months read higher; a past month reading materially lower
-     is a failed check, because reports do not disappear.
+     is a failed check, because reports do not disappear. The one exception
+     is a decrease already dispositioned by hand in
+     governance/source-revisions.toml (D25): it is reported as KNOWN, at the
+     same or a shallower live count, and does not fail the run. A decrease
+     with no entry, or deeper than its entry, fails as before.
   4. Appends each month beyond the freeze that the source has now loaded
      past (meta.last_updated later than the month's last day), as seen.
   5. Scores every forecast issued for a month seen for the first time:
@@ -49,7 +53,9 @@ import hashlib
 import json
 import math
 import pathlib
+import re
 import sys
+import tomllib
 import urllib.error
 from datetime import datetime, timezone, timedelta
 
@@ -93,6 +99,7 @@ def paths() -> dict:
         "forecasts": LIVE / "live_forecast.csv",
         "scores": LIVE / "live_scores.csv",
         "history": GOV / "run_history.jsonl",
+        "dispositions": GOV / "source-revisions.toml",
     }
 
 
@@ -186,6 +193,42 @@ def frozen_last_updated() -> str:
     return (json.loads(p.read_text(encoding="utf-8")).get("meta") or {}).get("last_updated", "")
 
 
+DISPOSITION_KEYS = {"code", "month", "frozen", "live_at_disposition", "dispositioned", "classification", "decision"}
+
+
+def load_dispositions(p: pathlib.Path) -> dict[tuple[str, str], dict]:
+    """governance/source-revisions.toml (D25): the frozen months revised downward at the source and
+    dispositioned by hand. Keyed by (code, month). A missing file or a malformed entry raises, so the
+    run fails as an error before any request; an empty file is valid and means nothing is listed."""
+    if not p.exists():
+        raise FileNotFoundError("the disposition record %s is missing; it is a committed file (D25)" % p)
+    with p.open("rb") as fh:
+        doc = tomllib.load(fh)
+    out: dict[tuple[str, str], dict] = {}
+    for i, e in enumerate(doc.get("revision") or [], start=1):
+        where = "source-revisions.toml entry %d" % i
+        if not isinstance(e, dict) or set(e) != DISPOSITION_KEYS:
+            raise ValueError("%s: keys %s; every one of %s is required and nothing else"
+                             % (where, sorted(e) if isinstance(e, dict) else type(e).__name__, sorted(DISPOSITION_KEYS)))
+        if e["code"] not in COHORT:
+            raise ValueError("%s: code %r is not in the cohort %s" % (where, e["code"], COHORT))
+        if not (isinstance(e["month"], str) and re.fullmatch(r"\d{4}-\d{2}", e["month"]) and "2016-01" <= e["month"] <= AS_OF_MONTH):
+            raise ValueError("%s: month %r is not a frozen month YYYY-MM between 2016-01 and %s" % (where, e["month"], AS_OF_MONTH))
+        if not (isinstance(e["frozen"], int) and isinstance(e["live_at_disposition"], int) and 0 <= e["live_at_disposition"] < e["frozen"]):
+            raise ValueError("%s: frozen %r and live_at_disposition %r must be integers with 0 <= live < frozen" % (where, e["frozen"], e["live_at_disposition"]))
+        if not (isinstance(e["dispositioned"], str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", e["dispositioned"])):
+            raise ValueError("%s: dispositioned %r is not a date YYYY-MM-DD" % (where, e["dispositioned"]))
+        if e["classification"] != "source revision":
+            raise ValueError("%s: classification %r; only \"source revision\" is entered here" % (where, e["classification"]))
+        if not (isinstance(e["decision"], str) and re.fullmatch(r"D\d+", e["decision"])):
+            raise ValueError("%s: decision %r is not a decision-record entry like D24" % (where, e["decision"]))
+        k = (e["code"], e["month"])
+        if k in out:
+            raise ValueError("%s: %s %s is listed twice" % (where, *k))
+        out[k] = dict(e)
+    return out
+
+
 def ranges(err_list: list[tuple[str, float]], point: float, cfg: dict) -> dict:
     q = cfg["intervals"]["levels"]
     min_n = cfg["intervals"]["min_calibration_n"]
@@ -271,6 +314,8 @@ def run(client_factory=None) -> dict:
         cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
         frozen_lu = frozen_last_updated()
         check("frozen datum (meta.last_updated at the freeze)", frozen_lu, passed=bool(frozen_lu))
+        dispositions = load_dispositions(P["dispositions"])  # raises before any request if malformed (D25)
+        check("source revisions dispositioned on record (governance/source-revisions.toml)", len(dispositions))
         try:
             budget_ok(len(COHORT))
         except acquire.Budget as exc:
@@ -335,8 +380,10 @@ def run(client_factory=None) -> dict:
         eligible, raw, errs, outlook = frozen_tables()
         live_monthly = {code: monthly_from_buckets(parsed["results"]) for code, (_, parsed) in responses.items()}
 
-        # frozen months, re-read
-        compared, higher, lower, added, material = 0, 0, 0, 0, []
+        # frozen months, re-read. A material decrease is KNOWN when the disposition record lists the
+        # (code, month) at the same frozen count and the live count is at or above the count it was
+        # dispositioned at (D25); anything else material fails the check exactly as before.
+        compared, higher, lower, added, material, known = 0, 0, 0, 0, [], []
         for code in COHORT:
             for m, f in raw.get(code, {}).items():
                 l = live_monthly[code].get(m, 0)
@@ -347,12 +394,25 @@ def run(client_factory=None) -> dict:
                 elif l < f:
                     lower += 1
                     if (f - l) > MATERIAL_DOWNWARD * f:
-                        material.append({"code": code, "month": m, "frozen": f, "live": l})
+                        entry = {"code": code, "month": m, "frozen": f, "live": l}
+                        d = dispositions.get((code, m))
+                        if d and d["frozen"] == f and l >= d["live_at_disposition"]:
+                            entry.update({"live_at_disposition": d["live_at_disposition"], "dispositioned": d["dispositioned"],
+                                          "decision": d["decision"]})
+                            known.append(entry)
+                        else:
+                            if d and d["frozen"] != f:
+                                entry["note"] = "dispositioned against frozen %d, but the table says %d" % (d["frozen"], f)
+                            elif d:
+                                entry["note"] = "dispositioned at %d on %s (%s); reads %d now, deeper than its entry" % (
+                                    d["live_at_disposition"], d["dispositioned"], d["decision"], l)
+                            material.append(entry)
         run_rec["frozen_variance"] = {"months_compared": compared, "months_reading_higher": higher,
                                       "reports_added_to_frozen_months": added, "months_reading_lower": lower,
-                                      "material_downward": material[:20]}
+                                      "known_revisions": known[:20], "material_downward": material[:20]}
         check("frozen months re-read", compared, passed=compared > 0)
         check("frozen months reading higher (late loads)", higher)
+        check("frozen months revised downward and dispositioned (known, D25)", len(known))
         check("frozen months rewritten downward by more than %d%%" % int(MATERIAL_DOWNWARD * 100), len(material), 0)
 
         # months beyond the freeze that the source has loaded past
@@ -455,9 +515,15 @@ def main() -> int:
           % (sum(len(v) for v in r["months_appended"].values()), r["forecasts_scored"], r["forecasts_issued"]))
     if r["frozen_variance"]:
         fv = r["frozen_variance"]
-        print("  frozen months re-read %d: %d higher (+%d reports), %d lower, %d material"
+        print("  frozen months re-read %d: %d higher (+%d reports), %d lower, %d known revisions, %d material"
               % (fv["months_compared"], fv["months_reading_higher"], fv["reports_added_to_frozen_months"],
-                 fv["months_reading_lower"], len(fv["material_downward"])))
+                 fv["months_reading_lower"], len(fv.get("known_revisions", [])), len(fv["material_downward"])))
+        for k in fv.get("known_revisions", []):
+            print("  known     %s %s: frozen %d, live %d, dispositioned at %d on %s (%s)"
+                  % (k["code"], k["month"], k["frozen"], k["live"], k["live_at_disposition"], k["dispositioned"], k["decision"]))
+        for m in fv["material_downward"]:
+            print("  material  %s %s: frozen %d, live %d%s" % (m["code"], m["month"], m["frozen"], m["live"],
+                                                              ("; " + m["note"]) if m.get("note") else "; no disposition on record"))
     for c in r["checks"]:
         print("  %s  %s: %s" % ("PASS" if c["passed"] else "FAIL", c["check"], c["value"]))
     if r["error"]:

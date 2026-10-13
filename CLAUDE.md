@@ -197,6 +197,16 @@ is committed. The runner is ubuntu-24.04 with Python 3.14.6 and
 needs no DuckDB, because the page reads `data/conformed/record_facts.json`
 (see "The freeze").
 
+**A frozen month that reads lower at the source by more than 1% fails the
+run, unless it is dispositioned.** `governance/source-revisions.toml` (D25)
+lists each revision a human has examined: code, month, frozen count, live
+count at disposition, date, classification, decision. The pull reports a
+listed month as known and passes; an unlisted or deeper decrease fails as
+before. The file is written by hand in the build lane, is refused on the
+allow-list by name, and never changes the frozen table. The page says how
+many months are listed. A failed build job uploads
+`live-edge-diagnostics-<run id>` (90 days) and writes a step summary (D24).
+
 **What a run may change:** `data/live/`, `governance/run_history.jsonl`,
 `governance/health.json`, `governance/reconciliation.md`, `docs/index.html`
 and `docs/case-study.html`. Neither page is on the freeze gate's protected

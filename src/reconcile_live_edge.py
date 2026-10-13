@@ -30,6 +30,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import tomllib
 from datetime import datetime, timezone
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
@@ -99,6 +100,14 @@ def main() -> int:
     latest_outlook = [r for r in live_fc if r["origin"] == latest_origin and r["model"] == in_use.get(r["product_code"]) and r["horizon"] == "1"] if latest_origin else []
 
     fv = run.get("frozen_variance") or {}
+
+    # the disposition record (D25): hand-written, read here as the lane reads it, never written by a run
+    disp_p = GOV / "source-revisions.toml"
+    with disp_p.open("rb") as fh:
+        dispositions = list(tomllib.load(fh).get("revision") or [])
+    disp_reports = sum(int(e["frozen"]) - int(e["live_at_disposition"]) for e in dispositions)
+    disp_decisions = sorted({e["decision"] for e in dispositions})
+
     health = {
         "generated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "module": "cascadia-early-warning",
@@ -118,6 +127,11 @@ def main() -> int:
             "frozen_months_reading_higher": fv.get("months_reading_higher"),
             "reports_added_to_frozen_months": fv.get("reports_added_to_frozen_months"),
             "frozen_months_reading_lower": fv.get("months_reading_lower"),
+            "frozen_months_revised_known": len(fv["known_revisions"]) if fv.get("known_revisions") is not None else None,
+            "frozen_months_material_downward": len(fv["material_downward"]) if fv.get("material_downward") is not None else None,
+            "source_revisions_dispositioned": len(dispositions),
+            "source_revisions_reports_removed": disp_reports,
+            "source_revisions_decisions": disp_decisions,
             "forecasts_issued_total": len(live_fc),
             "latest_live_origin": latest_origin,
             "forecasts_scored_total": len(scores),
@@ -177,14 +191,42 @@ def main() -> int:
         a("| Reading higher than frozen (late-loaded reports) | %s |" % nf(fv.get("months_reading_higher", 0)))
         a("| Reports added to frozen months, in total | %s |" % nf(fv.get("reports_added_to_frozen_months", 0)))
         a("| Reading lower than frozen | %s |" % nf(fv.get("months_reading_lower", 0)))
-        a("| Lower by more than 1%% (a failed check) | %s |" % nf(len(fv.get("material_downward", []))))
+        a("| Lower by more than 1%%, dispositioned as a source revision (known, D25) | %s |" % nf(len(fv.get("known_revisions", []))))
+        a("| Lower by more than 1%% with no disposition (a failed check) | %s |" % nf(len(fv.get("material_downward", []))))
         a("")
         a("**It does not balance, and it is not supposed to.** A report is counted by the day FDA received it, and "
           "the source keeps loading reports for weeks after that day, so a month read later reads higher. That is "
-          "the lag chart 5 draws. A month reading *lower* would mean the source removed reports from its past; "
-          "a material case fails the run and is reported, never absorbed.")
+          "the lag chart 5 draws. A month reading *lower* means the source removed reports from its past; "
+          "a material case fails the run and is reported, never absorbed, unless a human has already examined it "
+          "and entered it in `governance/source-revisions.toml`, in which case it is reported as known.")
+        for label, rows in (("Known revisions this run", fv.get("known_revisions", [])), ("Material decreases with no disposition", fv.get("material_downward", []))):
+            if rows:
+                a("")
+                a("%s:" % label)
+                a("")
+                a("| Code | Month | Frozen | Live | Change | Disposition |")
+                a("|---|---|---:|---:|---:|---|")
+                for m in rows:
+                    disp = ("%s, at %s on %s" % (m["decision"], nf(m["live_at_disposition"]), m["dispositioned"])) if "decision" in m else (m.get("note") or "none")
+                    a("| %s | %s | %s | %s | %+d | %s |" % (m["code"], m["month"], nf(m["frozen"]), nf(m["live"]), m["live"] - m["frozen"], disp))
     else:
         a("The last run did not reach the re-read (status: %s)." % run["status"])
+    a("")
+    a("## Source revisions dispositioned")
+    a("")
+    if dispositions:
+        a("The source has revised %d frozen month%s downward since the freeze, by %s report%s in total. Each was examined, "
+          "classified a source revision and entered by hand in `governance/source-revisions.toml` (%s). The frozen table "
+          "`data/conformed/monthly_report_count.csv` is unchanged; a run reads the record and never writes it."
+          % (len(dispositions), "" if len(dispositions) == 1 else "s", nf(disp_reports), "" if disp_reports == 1 else "s", ", ".join(disp_decisions)))
+        a("")
+        a("| Code | Month | Frozen | Live at disposition | Change | Dispositioned | Decision |")
+        a("|---|---|---:|---:|---:|---|---|")
+        for e in sorted(dispositions, key=lambda e: (e["code"], e["month"])):
+            a("| %s | %s | %s | %s | %+d | %s | %s |" % (e["code"], e["month"], nf(e["frozen"]), nf(e["live_at_disposition"]),
+                                                       int(e["live_at_disposition"]) - int(e["frozen"]), e["dispositioned"], e["decision"]))
+    else:
+        a("None. No frozen month has been dispositioned as a source revision; `governance/source-revisions.toml` lists nothing.")
     a("")
     a("## Months appended, as seen")
     a("")

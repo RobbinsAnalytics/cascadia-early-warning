@@ -44,14 +44,38 @@ class FakeClient:
         return body, parsed, {"status": self.status}
 
 
-def fresh(tmp):
+EMPTY_DISPOSITIONS = "# nothing dispositioned\n"
+PYX_2026_01 = ('[[revision]]\ncode = "PYX"\nmonth = "2026-01"\nfrozen = 99\nlive_at_disposition = 96\n'
+               'dispositioned = "2026-10-13"\nclassification = "source revision"\ndecision = "D24"\n')
+
+
+def fresh(tmp, dispositions: str | None = EMPTY_DISPOSITIONS):
+    """Point the pull at a throwaway tree. The disposition record (D25) is written there too: empty by
+    default, the given text otherwise, and absent when None."""
     ple.LIVE = tmp / "live"
     ple.GOV = tmp / "gov"
     ple.budget_ok = lambda n: None
+    ple.GOV.mkdir(parents=True, exist_ok=True)
+    p = ple.GOV / "source-revisions.toml"
+    if dispositions is None:
+        if p.exists():
+            p.unlink()
+    else:
+        p.write_text(dispositions, encoding="utf-8")
 
 
-def run_with(tmp, client):
-    fresh(tmp)
+def pyx_lower(by: int):
+    """A fake-source mutation: PYX 2026-01 reads `by` reports lower than frozen (99), taken off 2026-01-27."""
+    def mutate(code, parsed):
+        if code == "PYX":
+            for b in parsed["results"]:
+                if b["time"] == "20260127":
+                    b["count"] -= by
+    return mutate
+
+
+def run_with(tmp, client, dispositions: str | None = EMPTY_DISPOSITIONS):
+    fresh(tmp, dispositions)
     return ple.run(client_factory=lambda: client)
 
 
@@ -133,6 +157,54 @@ def main() -> int:
                "a later vintage of the same month scores and issues nothing new (%s, %d, %d)" % (r3["status"], r3["forecasts_scored"], r3["forecasts_issued"]))
         series = ple.read_csv(tmp / "live" / "live_series.csv")
         expect(len([x for x in series if x["month"] == "2026-09"]) == 14, "both vintages' readings of 2026-09 are kept")
+
+    # 7. the disposition record (D25): a dispositioned source revision is known and passes; anything else fails
+    frozen_pyx_jan = sum(int(b["count"]) for b in FROZEN["PYX"]["results"] if b["time"].startswith("202601"))
+    expect(frozen_pyx_jan == 99, "the fixture's PYX 2026-01 is the frozen 99 the entry names (%d)" % frozen_pyx_jan)
+    with tempfile.TemporaryDirectory() as d:  # known: listed at 96, reads 96
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07", mutate=pyx_lower(3)), PYX_2026_01)
+        fv = r["frozen_variance"]
+        expect(r["status"] == "ok" and r["passed"] and not failed(r), "a listed revision at its dispositioned count passes (%s, %s)" % (r["status"], failed(r)))
+        expect(len(fv["known_revisions"]) == 1 and fv["known_revisions"][0]["month"] == "2026-01" and fv["known_revisions"][0]["live"] == 96
+               and fv["known_revisions"][0]["decision"] == "D24", "and the record carries it as known, with its decision")
+        expect(fv["material_downward"] == [] and fv["months_reading_lower"] == 1, "nothing material; the month still counts as reading lower")
+        expect(any(c["check"].startswith("source revisions dispositioned") and c["value"] == 1 for c in r["checks"]), "the record's entry count is a check value")
+    with tempfile.TemporaryDirectory() as d:  # known, shallower: listed at 96, reads 97 (still over 1%)
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07", mutate=pyx_lower(2)), PYX_2026_01)
+        expect(r["passed"] and len(r["frozen_variance"]["known_revisions"]) == 1, "a listed revision reading shallower than its entry is still known (%s)" % failed(r))
+    with tempfile.TemporaryDirectory() as d:  # unlisted: empty record, reads 96
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07", mutate=pyx_lower(3)))
+        expect(r["status"] == "failed" and any("rewritten downward" in c for c in failed(r)), "the same decrease with an empty record fails (%s)" % failed(r))
+        expect(r["frozen_variance"]["known_revisions"] == [] and r["frozen_variance"]["material_downward"][0]["month"] == "2026-01",
+               "and is material, not known")
+    with tempfile.TemporaryDirectory() as d:  # deepened: listed at 96, reads 95
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07", mutate=pyx_lower(4)), PYX_2026_01)
+        m = r["frozen_variance"]["material_downward"]
+        expect(r["status"] == "failed" and any("rewritten downward" in c for c in failed(r)), "a listed revision that has deepened fails (%s)" % failed(r))
+        expect(len(m) == 1 and m[0]["live"] == 95 and "deeper than its entry" in m[0].get("note", ""), "and the record says it is deeper than its entry")
+    with tempfile.TemporaryDirectory() as d:  # frozen mismatch: the entry's frozen count is not the table's
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07", mutate=pyx_lower(3)), PYX_2026_01.replace("frozen = 99", "frozen = 98"))
+        expect(r["status"] == "failed" and "the table says 99" in r["frozen_variance"]["material_downward"][0].get("note", ""),
+               "an entry whose frozen count is not the table's does not match, and fails (%s)" % failed(r))
+    with tempfile.TemporaryDirectory() as d:  # empty record, no decrease: not an error
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07"))
+        expect(r["status"] == "ok" and r["passed"] and r["error"] is None, "an empty disposition record is not an error (%s, %s)" % (r["status"], r["error"]))
+    with tempfile.TemporaryDirectory() as d:  # malformed: missing keys
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07"), '[[revision]]\ncode = "PYX"\nmonth = "2026-01"\n')
+        expect(r["status"] == "failed" and r["error"] and "source-revisions.toml entry 1" in r["error"] and r["requests_made"] == 0,
+               "a malformed entry fails as an error before any request (%s)" % r["error"])
+    with tempfile.TemporaryDirectory() as d:  # malformed: live not below frozen
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07"), PYX_2026_01.replace("live_at_disposition = 96", "live_at_disposition = 99"))
+        expect(r["status"] == "failed" and r["error"] and "0 <= live < frozen" in r["error"], "a live count not below frozen is malformed (%s)" % r["error"])
+    with tempfile.TemporaryDirectory() as d:  # malformed: a month twice
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07"), PYX_2026_01 + "\n" + PYX_2026_01)
+        expect(r["status"] == "failed" and r["error"] and "listed twice" in r["error"], "a duplicate entry is malformed (%s)" % r["error"])
+    with tempfile.TemporaryDirectory() as d:  # missing file
+        r = run_with(pathlib.Path(d), FakeClient("2026-10-07"), None)
+        expect(r["status"] == "failed" and r["error"] and "missing" in r["error"] and r["requests_made"] == 0,
+               "a missing disposition record fails as an error before any request (%s)" % r["error"])
+    real = ple.load_dispositions(REPO / "governance" / "source-revisions.toml")
+    expect(set(real) >= {("PYX", "2026-01"), ("PYX", "2026-05")}, "the committed record loads and carries the two D24 months")
 
     # 6. the pure pieces
     expect(ple.seen_months("2026-09-29") == [], "last_updated 2026-09-29 sees no month past the freeze")
