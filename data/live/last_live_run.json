@@ -1,12 +1,18 @@
 {
- "started_utc": "2026-10-09T01:50:25+00:00",
- "finished_utc": "2026-10-09T01:50:32+00:00",
- "status": "skipped: source unchanged since 2026-09-29",
+ "started_utc": "2026-10-13T23:38:50+00:00",
+ "finished_utc": "2026-10-13T23:38:58+00:00",
+ "status": "ok",
  "passed": true,
  "checks": [
   {
    "check": "frozen datum (meta.last_updated at the freeze)",
    "value": "2026-09-29",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "source revisions dispositioned on record (governance/source-revisions.toml)",
+   "value": 2,
    "expected": null,
    "passed": true
   },
@@ -18,7 +24,7 @@
   },
   {
    "check": "response schema, DSQ",
-   "value": "5874 buckets, 0 malformed",
+   "value": "5898 buckets, 0 malformed",
    "expected": null,
    "passed": true
   },
@@ -30,7 +36,7 @@
   },
   {
    "check": "response schema, OZD",
-   "value": "1842 buckets, 0 malformed",
+   "value": "1864 buckets, 0 malformed",
    "expected": null,
    "passed": true
   },
@@ -42,7 +48,7 @@
   },
   {
    "check": "response schema, PYX",
-   "value": "697 buckets, 0 malformed",
+   "value": "715 buckets, 0 malformed",
    "expected": null,
    "passed": true
   },
@@ -54,7 +60,7 @@
   },
   {
    "check": "response schema, NPT",
-   "value": "3848 buckets, 0 malformed",
+   "value": "3874 buckets, 0 malformed",
    "expected": null,
    "passed": true
   },
@@ -66,7 +72,7 @@
   },
   {
    "check": "response schema, NIK",
-   "value": "5262 buckets, 0 malformed",
+   "value": "5290 buckets, 0 malformed",
    "expected": null,
    "passed": true
   },
@@ -78,7 +84,7 @@
   },
   {
    "check": "response schema, LWS",
-   "value": "7868 buckets, 0 malformed",
+   "value": "7896 buckets, 0 malformed",
    "expected": null,
    "passed": true
   },
@@ -90,30 +96,132 @@
   },
   {
    "check": "response schema, DSP",
-   "value": "5372 buckets, 0 malformed",
+   "value": "5394 buckets, 0 malformed",
    "expected": null,
    "passed": true
   },
   {
    "check": "meta.last_updated present",
-   "value": "2026-09-29",
+   "value": "2026-10-07",
    "expected": null,
    "passed": true
   },
   {
    "check": "meta.last_updated not before the frozen datum",
-   "value": "2026-09-29",
+   "value": "2026-10-07",
    "expected": null,
+   "passed": true
+  },
+  {
+   "check": "responses saved as a vintage",
+   "value": 7,
+   "expected": 7,
+   "passed": true
+  },
+  {
+   "check": "frozen months re-read",
+   "value": 896,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "frozen months reading higher (late loads)",
+   "value": 15,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "frozen months revised downward and dispositioned (known, D25)",
+   "value": 2,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "frozen months rewritten downward by more than 1%",
+   "value": 0,
+   "expected": 0,
+   "passed": true
+  },
+  {
+   "check": "months elapsed and loaded beyond the freeze",
+   "value": "2026-09",
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "forecasts scored at first sight of their month",
+   "value": 42,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "forecasts issued this run",
+   "value": 42,
+   "expected": null,
+   "passed": true
+  },
+  {
+   "check": "candidate fits that failed",
+   "value": 0,
+   "expected": 0,
    "passed": true
   }
  ],
  "error": null,
  "requests_made": 7,
- "last_updated": "2026-09-29",
- "vintage": null,
- "months_appended": {},
- "forecasts_issued": 0,
- "forecasts_scored": 0,
- "frozen_variance": null,
+ "last_updated": "2026-10-07",
+ "vintage": "20261013T233850",
+ "months_appended": {
+  "DSQ": [
+   "2026-09"
+  ],
+  "OZD": [
+   "2026-09"
+  ],
+  "PYX": [
+   "2026-09"
+  ],
+  "NPT": [
+   "2026-09"
+  ],
+  "NIK": [
+   "2026-09"
+  ],
+  "LWS": [
+   "2026-09"
+  ],
+  "DSP": [
+   "2026-09"
+  ]
+ },
+ "forecasts_issued": 42,
+ "forecasts_scored": 42,
+ "frozen_variance": {
+  "months_compared": 896,
+  "months_reading_higher": 15,
+  "reports_added_to_frozen_months": 19,
+  "months_reading_lower": 6,
+  "known_revisions": [
+   {
+    "code": "PYX",
+    "month": "2026-01",
+    "frozen": 99,
+    "live": 96,
+    "live_at_disposition": 96,
+    "dispositioned": "2026-10-13",
+    "decision": "D24"
+   },
+   {
+    "code": "PYX",
+    "month": "2026-05",
+    "frozen": 35,
+    "live": 34,
+    "live_at_disposition": 34,
+    "dispositioned": "2026-10-13",
+    "decision": "D24"
+   }
+  ],
+  "material_downward": []
+ },
  "notes": []
 }

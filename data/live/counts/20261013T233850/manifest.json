@@ -1,0 +1,13 @@
+{
+ "vintage_utc": "2026-10-13T23:38:50+00:00",
+ "last_updated": "2026-10-07",
+ "sha256": {
+  "DSQ_date_received.json": "ae1786c8d6e825c5fbebfe4c25bbbd82d545435f7b02eebff09b14fdcdc3553d",
+  "OZD_date_received.json": "30a2ab6ea084412df1450c40dff6a5f270ba0c1b03cfc29155bee56f6ac14a14",
+  "PYX_date_received.json": "b431834ac3bba902f5f137d745a276f21d0e5c473a2d9163349141982cc3cf69",
+  "NPT_date_received.json": "a678ed71937ddc3d8bd4679aeb14338380dbf234c44b3d4818ca035802f14834",
+  "NIK_date_received.json": "a654392e2f03f83d6b73203ec970188dcd285905b51aed24b46291eaba0bd64e",
+  "LWS_date_received.json": "8640fe2996cce6787861e92a8203e8a166fdf9c3e10967d6de85c5aa192c127a",
+  "DSP_date_received.json": "58b6737ebac88511e0e53fe82259c57047291d5f71ee5a907a83f4aeac50a6bc"
+ }
+}

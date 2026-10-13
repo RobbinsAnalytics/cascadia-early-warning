@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-10-09T01:50:32+00:00",
+ "generated_utc": "2026-10-13T23:38:58+00:00",
  "module": "cascadia-early-warning",
  "frozen_baseline": {
   "as_of": "2026-08-31",
@@ -18,53 +18,63 @@
   "outlook_origin": "2026-08"
  },
  "live_edge": {
-  "source_last_updated_seen": "2026-09-29",
-  "runs_total": 2,
+  "source_last_updated_seen": "2026-10-07",
+  "runs_total": 3,
   "vintages": [
-   "20261007T033113"
+   "20261007T033113",
+   "20261013T233850"
   ],
-  "months_seen_beyond_freeze": [],
-  "readings_recorded": 0,
+  "months_seen_beyond_freeze": [
+   "2026-09"
+  ],
+  "readings_recorded": 7,
   "basis": "raw count by receipt date as seen at the vintage; no exclusion applied",
-  "frozen_months_re_read": null,
-  "frozen_months_reading_higher": null,
-  "reports_added_to_frozen_months": null,
-  "frozen_months_reading_lower": null,
-  "forecasts_issued_total": 0,
-  "latest_live_origin": null,
-  "forecasts_scored_total": 0,
-  "model_in_use_h1_scored": 0,
-  "model_in_use_h1_mae": null,
-  "model_in_use_h1_coverage80": null
+  "frozen_months_re_read": 896,
+  "frozen_months_reading_higher": 15,
+  "reports_added_to_frozen_months": 19,
+  "frozen_months_reading_lower": 6,
+  "frozen_months_revised_known": 2,
+  "frozen_months_material_downward": 0,
+  "source_revisions_dispositioned": 2,
+  "source_revisions_reports_removed": 4,
+  "source_revisions_decisions": [
+   "D24"
+  ],
+  "forecasts_issued_total": 42,
+  "latest_live_origin": "2026-09",
+  "forecasts_scored_total": 42,
+  "model_in_use_h1_scored": 7,
+  "model_in_use_h1_mae": 70.394,
+  "model_in_use_h1_coverage80": 1.0
  },
  "last_run": {
-  "started_utc": "2026-10-09T01:50:25+00:00",
-  "finished_utc": "2026-10-09T01:50:32+00:00",
-  "status": "skipped: source unchanged since 2026-09-29",
+  "started_utc": "2026-10-13T23:38:50+00:00",
+  "finished_utc": "2026-10-13T23:38:58+00:00",
+  "status": "ok",
   "passed": true,
-  "checks_total": 17,
+  "checks_total": 27,
   "checks_failed": [],
   "error": null,
   "requests_made": 7,
   "notes": []
  },
  "run_history": {
-  "runs_recorded": 2,
+  "runs_recorded": 3,
   "history_started": "2026-10-07T03:31:13+00:00",
   "last_successful_run": {
-   "started_utc": "2026-10-07T03:31:13+00:00",
-   "finished_utc": "2026-10-07T03:31:19+00:00",
+   "started_utc": "2026-10-13T23:38:50+00:00",
+   "finished_utc": "2026-10-13T23:38:58+00:00",
    "status": "ok",
    "passed": true,
    "requests_made": 7,
-   "last_updated": "2026-09-29",
-   "vintage": "20261007T033113",
-   "forecasts_issued": 0,
-   "forecasts_scored": 0,
+   "last_updated": "2026-10-07",
+   "vintage": "20261013T233850",
+   "forecasts_issued": 42,
+   "forecasts_scored": 42,
    "error": null,
-   "checks_total": 25,
+   "checks_total": 27,
    "checks_failed": [],
-   "months_appended": 0
+   "months_appended": 7
   },
   "last_run_not_ok": {
    "started_utc": "2026-10-09T01:50:25+00:00",

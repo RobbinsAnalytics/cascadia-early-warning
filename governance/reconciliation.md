@@ -5,10 +5,10 @@
 | | |
 |---|---|
 | Frozen snapshot | receipts through **2026-08-31**, retrieved 2026-10-06, source last_updated 2026-09-29 |
-| Live edge, source last_updated seen | **2026-09-29** |
-| Runs recorded | 2 (1 with status ok) |
-| Last run | **skipped: source unchanged since 2026-09-29**, started 2026-10-09T01:50:25+00:00, 17 checks, 0 failed |
-| Months seen beyond the freeze | none: the source has not loaded past 2026-08-31 |
+| Live edge, source last_updated seen | **2026-10-07** |
+| Runs recorded | 3 (2 with status ok) |
+| Last run | **ok**, started 2026-10-13T23:38:50+00:00, 27 checks, 0 failed |
+| Months seen beyond the freeze | 2026-09 |
 
 ## What a run is allowed to change
 
@@ -16,67 +16,106 @@ Nothing under `data/raw/` or `data/conformed/`, and no figure on the frozen page
 
 ## The frozen months, re-read
 
-The last run did not reach the re-read (status: skipped: source unchanged since 2026-09-29).
+The last run re-read every frozen month (2016-01 to 2026-08) for the seven codes from the new vintage.
+
+| | |
+|---|---:|
+| Code-months compared | 896 |
+| Reading higher than frozen (late-loaded reports) | 15 |
+| Reports added to frozen months, in total | 19 |
+| Reading lower than frozen | 6 |
+| Lower by more than 1%, dispositioned as a source revision (known, D25) | 2 |
+| Lower by more than 1% with no disposition (a failed check) | 0 |
+
+**It does not balance, and it is not supposed to.** A report is counted by the day FDA received it, and the source keeps loading reports for weeks after that day, so a month read later reads higher. That is the lag chart 5 draws. A month reading *lower* means the source removed reports from its past; a material case fails the run and is reported, never absorbed, unless a human has already examined it and entered it in `governance/source-revisions.toml`, in which case it is reported as known.
+
+Known revisions this run:
+
+| Code | Month | Frozen | Live | Change | Disposition |
+|---|---|---:|---:|---:|---|
+| PYX | 2026-01 | 99 | 96 | -3 | D24, at 96 on 2026-10-13 |
+| PYX | 2026-05 | 35 | 34 | -1 | D24, at 34 on 2026-10-13 |
+
+## Source revisions dispositioned
+
+The source has revised 2 frozen months downward since the freeze, by 4 reports in total. Each was examined, classified a source revision and entered by hand in `governance/source-revisions.toml` (D24). The frozen table `data/conformed/monthly_report_count.csv` is unchanged; a run reads the record and never writes it.
+
+| Code | Month | Frozen | Live at disposition | Change | Dispositioned | Decision |
+|---|---|---:|---:|---:|---|---|
+| PYX | 2026-01 | 99 | 96 | -3 | 2026-10-13 | D24 |
+| PYX | 2026-05 | 35 | 34 | -1 | 2026-10-13 | D24 |
 
 ## Months appended, as seen
 
-None. The source's last_updated (2026-09-29) is not past the end of September 2026, so no month beyond the freeze has been loaded; the frozen outlook for 2026-09 stands unscored.
+| Code | 2026-09 |
+|---|---:|
+| DSP | 649 |
+| DSQ | 739 |
+| LWS | 1,927 |
+| NIK | 950 |
+| NPT | 903 |
+| OZD | 1,039 |
+| PYX | 39 |
+
+Each cell is the latest vintage's reading; earlier readings of the same month stay in `data/live/live_series.csv`.
 
 ## Forecasts scored as their months elapsed
 
-None yet: no forecast's target month has been seen.
+| Code | Model in use | Origin | Target | Point | 80%% range | Actual as seen | Error | Inside 80%% |
+|---|---|---|---|---:|---|---:|---:|---|
+| DSP | baseline_a | 2026-08 | 2026-09 | 695 | 553 to 805 | 649 | -46 | true |
+| DSQ | candidate | 2026-08 | 2026-09 | 672 | 329 to 838 | 739 | 67 | true |
+| LWS | baseline_a | 2026-08 | 2026-09 | 1,942 | 1,574 to 2,150 | 1,927 | -15 | true |
+| NIK | baseline_a | 2026-08 | 2026-09 | 892 | 754 to 966 | 950 | 58 | true |
+| NPT | candidate | 2026-08 | 2026-09 | 791 | 689 to 929 | 903 | 112 | true |
+| OZD | baseline_a | 2026-08 | 2026-09 | 1,227 | 399 to 2,125 | 1,039 | -188 | true |
+| PYX | baseline_a | 2026-08 | 2026-09 | 33 | 0 to 67 | 39 | 6 | true |
+
+Model in use, horizon one: 7 scored, mean absolute error 70, 80% coverage 100%. Scores are taken once, at the first vintage that shows the month, and are not revised as the month fills.
 
 ## The latest live outlook
 
-None issued: the frozen outlook (origin 2026-08) is still the latest.
+Issued from origin 2026-09 by the same locked structure (`config/model.json`), ranges from the 36 latest elapsed errors.
+
+| Code | Model in use | Target | Point | 50%% range | 80%% range | Errors behind the range |
+|---|---|---|---:|---|---|---:|
+| DSP | baseline_a | 2026-10 | 709 | 633 to 752 | 567 to 819 | 36 |
+| DSQ | candidate | 2026-10 | 772 | 547 to 844 | 429 to 938 | 36 |
+| LWS | baseline_a | 2026-10 | 1,898 | 1,736 to 1,945 | 1,626 to 2,106 | 36 |
+| NIK | baseline_a | 2026-10 | 898 | 843 to 941 | 790 to 972 | 36 |
+| NPT | candidate | 2026-10 | 1,138 | 1,070 to 1,234 | 1,035 to 1,275 | 36 |
+| OZD | baseline_a | 2026-10 | 1,009 | 672 to 1,271 | 181 to 1,907 | 36 |
+| PYX | baseline_a | 2026-10 | 34 | 14 to 46 | 0 to 67 | 36 |
 
 ## Last run, check by check
 
 | Check | Value | Expected | Result |
 |---|---|---|---|
 | frozen datum (meta.last_updated at the freeze) | 2026-09-29 |  | PASS |
+| source revisions dispositioned on record (governance/source-revisions.toml) | 2 |  | PASS |
 | HTTP status, DSQ | 200 | 200 | PASS |
-| response schema, DSQ | 5874 buckets, 0 malformed |  | PASS |
+| response schema, DSQ | 5898 buckets, 0 malformed |  | PASS |
 | HTTP status, OZD | 200 | 200 | PASS |
-| response schema, OZD | 1842 buckets, 0 malformed |  | PASS |
+| response schema, OZD | 1864 buckets, 0 malformed |  | PASS |
 | HTTP status, PYX | 200 | 200 | PASS |
-| response schema, PYX | 697 buckets, 0 malformed |  | PASS |
+| response schema, PYX | 715 buckets, 0 malformed |  | PASS |
 | HTTP status, NPT | 200 | 200 | PASS |
-| response schema, NPT | 3848 buckets, 0 malformed |  | PASS |
+| response schema, NPT | 3874 buckets, 0 malformed |  | PASS |
 | HTTP status, NIK | 200 | 200 | PASS |
-| response schema, NIK | 5262 buckets, 0 malformed |  | PASS |
+| response schema, NIK | 5290 buckets, 0 malformed |  | PASS |
 | HTTP status, LWS | 200 | 200 | PASS |
-| response schema, LWS | 7868 buckets, 0 malformed |  | PASS |
+| response schema, LWS | 7896 buckets, 0 malformed |  | PASS |
 | HTTP status, DSP | 200 | 200 | PASS |
-| response schema, DSP | 5372 buckets, 0 malformed |  | PASS |
-| meta.last_updated present | 2026-09-29 |  | PASS |
-| meta.last_updated not before the frozen datum | 2026-09-29 |  | PASS |
+| response schema, DSP | 5394 buckets, 0 malformed |  | PASS |
+| meta.last_updated present | 2026-10-07 |  | PASS |
+| meta.last_updated not before the frozen datum | 2026-10-07 |  | PASS |
+| responses saved as a vintage | 7 | 7 | PASS |
+| frozen months re-read | 896 |  | PASS |
+| frozen months reading higher (late loads) | 15 |  | PASS |
+| frozen months revised downward and dispositioned (known, D25) | 2 |  | PASS |
+| frozen months rewritten downward by more than 1% | 0 | 0 | PASS |
+| months elapsed and loaded beyond the freeze | 2026-09 |  | PASS |
+| forecasts scored at first sight of their month | 42 |  | PASS |
+| forecasts issued this run | 42 |  | PASS |
+| candidate fits that failed | 0 | 0 | PASS |
 
-
-## 2026-10-13: disposition of the first scheduled stop (hand-written, build lane)
-
-*This section was written by hand in the build lane (Brief 2026-10-13, step 3), against the rule in this file's header, because the brief placed the disposition here. The next run that passes regenerates this file and this section goes with it. The durable copy is decision record D24.*
-
-**The run.** `Live edge` run 38461394517, trigger `schedule`, created 2026-10-13T20:15:37Z on commit e7d1337, failed in the `build` job at the pull with exit code 1. The `publish` job did not run and no artifact was uploaded. The log's check line: `FAIL  frozen months rewritten downward by more than 1%: 2`, and its summary line: `frozen months re-read 896: 15 higher (+19 reports), 6 lower, 2 material`. The source's `meta.last_updated` was 2026-10-07; the frozen datum is 2026-09-29. The log prints the counts only. The run record that named the two months was written on the runner and was lost when the job ended.
-
-**The re-read.** This session re-read the seven count series at 2026-10-13T22:36:50Z, the way the pull does (`acquire.count_url(code, "date_received")`, `monthly_from_buckets`, the same comparison against `raw_reports` in `data/conformed/monthly_report_count.csv`). The source's `meta.last_updated` was still 2026-10-07, and every aggregate matched the run's: 896 compared, 15 higher, +19 reports, 6 lower, 2 material. The per-month live values at the pull are therefore taken as equal to this session's; they are inferred from the identical source state and identical aggregates, not read from the lost record.
-
-| Code | Month | Frozen | Live at the pull (2026-10-13 20:16 UTC, inferred) | Live this session (2026-10-13 22:36 UTC) | Change | Days that moved | Classification |
-|---|---|---:|---:|---:|---:|---|---|
-| PYX | 2026-01 | 99 | 96 | 96 | -3 (3.03%) | 2026-01-20 (8 to 7), 2026-01-24 (3 to 2), 2026-01-27 (12 to 11) | (a) source revision |
-| PYX | 2026-05 | 35 | 34 | 34 | -1 (2.86%) | 2026-05-08 (2 to 1) | (a) source revision |
-
-The four months that read lower but inside the tolerance, for the record: LWS 2021-02 (1,371 to 1,370, on 2021-02-20), LWS 2024-04 (2,236 to 2,235, on 2024-04-01), LWS 2024-06 (2,122 to 2,121, on 2024-06-19), LWS 2026-06 (2,059 to 2,058, on 2026-06-30). Each is one report and under 0.1%.
-
-**Evidence for (a), and against (b) a collection defect.**
-- The frozen `raw_reports` column is a distinct count of `mdr_report_key` over the record-level staging (`src/build_model.py`), and it equals the frozen count series `data/raw/counts/*_date_received.json` (source `last_updated` 2026-09-29) at all 896 code-months. `src/validate_measures.py` (M-01) asserts the same equality and passes. Two independent reads of the source at the freeze agree, so the frozen count was right when it was taken.
-- The 2026-10-07 vintage (`data/live/counts/20261007T033113/`, also `last_updated` 2026-09-29) equals the frozen series at every day for PYX and LWS. The decrease appears only in the source state stamped `last_updated` 2026-10-07.
-- PYX's total over the frozen window (2016-01 to 2026-08) fell by exactly 4, from 2,190 to 2,186, and no frozen PYX month gained. The four reports were not re-dated within the window; they left the PYX `date_received` series. The count series cannot say whether they were deleted, re-coded to another product code or re-dated past 2026-08.
-- D17's locked test (2024-01 to 2025-12) is not touched. Both material months are `recent`-period targets. LWS 2024-04 and 2024-06 are locked-period targets and each reads one report lower (0.04%, 0.05%), inside the tolerance; locked scores stand on the frozen actuals and are not revisited.
-
-**What this session did not do.** No frozen path changed. `MATERIAL_DOWNWARD` is still 0.01. The freeze baseline did not move. The allow-list did not change. The seven requests made for the re-read went into the local, gitignored request ledger and nothing under `data/live/` was written.
-
-**The open decision, Aaron's.** Whether a frozen month is ever re-stated downward is a PRINCIPLES question (frozen snapshots; gaps flagged, not filled). Until it is decided, every scheduled run re-reads the same revised source and stops at the same check, publishing nothing, which is the correct outcome. The options as this session sees them, none chosen:
-1. Leave everything as it is. The lane stays stopped for as long as the source stays revised, and the live edge does not advance.
-2. A committed disposition list in the lane: the pull carries the dispositioned (code, month, frozen, accepted live) entries, still reports each one every run, and fails only on a new decrease or a deeper one. The frozen table is untouched. This is build-lane work in `src/pull_live_edge.py` with a lane test.
-3. Re-state the frozen months in a new freeze: a deliberate `src/acquire.py` refresh, a moved baseline, and page claims that change. This is the frozen-snapshot question itself.
