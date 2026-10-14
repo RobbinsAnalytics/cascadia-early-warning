@@ -123,9 +123,10 @@ been run in this clone**, and on POSIX it is also inert unless
 deliberately.** Hooks load only from the primary working directory, so the
 session that installed the guard layer was not governed by it; the session
 then changed its working directory here, and everything after the root commit
-was done under the guard. The hook-manifest entry in
-`cascadia-standards/governance/hook_manifest.json` is owed to a session rooted
-there and is not written from here.
+was done under the guard. This repo's entry in
+`cascadia-standards/governance/hook_manifest.json` was written from a session
+rooted there on 2026-10-13 and is never written from here;
+`check_hook_drift.py` is the authority on this repo's guard state.
 
 **A stale `.git/index.lock` is benign** - delete it and retry.
 `git update-index --refresh` reveals one; `git status` does not.
