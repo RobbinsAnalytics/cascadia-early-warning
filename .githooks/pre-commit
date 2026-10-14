@@ -5,7 +5,7 @@
 #     1. secret_scan.py            -- the credential gate
 #     2. no_whitespace_commits.py  -- the whitespace check
 #
-#     cascadia-standards template v2.0.0
+#     cascadia-standards template v2.1.0
 #     THIS IS THE CANONICAL COPY. Copied verbatim into each repo's .githooks/.
 #     Do not edit per repo -- fix it here and re-sync outward.
 #
@@ -53,12 +53,22 @@
 #     Windows launcher is exactly where hooks die silently. Resolve it here
 #     rather than trusting a shebang, and FAIL CLOSED if none is found. A gate
 #     that opens when it breaks is not a gate.
+#
+#     A NAME THAT RESOLVES IS NOT AN INTERPRETER THAT RUNS. On 2026-10-12 a
+#     Windows App Installer execution alias named python3 satisfied
+#     `command -v`, printed a Store advertisement and exited non-zero, and
+#     v2.0.0 of this file refused every commit on that machine for a day while
+#     a working interpreter sat two names further down the loop. So a candidate
+#     is accepted only if it also runs `-c pass`. The order is unchanged, and a
+#     loop that finds nothing runnable still blocks. hook_test_matrix.py drives
+#     a real commit with a non-functional python3 first on PATH and expects the
+#     commit to go through (v3.1.0).
 
 set -e
 
 PY=""
 for candidate in python3 python py; do
-    if command -v "$candidate" >/dev/null 2>&1; then
+    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c pass >/dev/null 2>&1; then
         PY="$candidate"
         break
     fi
@@ -67,7 +77,8 @@ done
 if [ -z "$PY" ]; then
     echo "" >&2
     echo "COMMIT BLOCKED -- the pre-commit gates cannot run." >&2
-    echo "No Python interpreter found on PATH (tried python3, python, py)." >&2
+    echo "No working Python interpreter found on PATH (tried python3, python, py;" >&2
+    echo "a name that resolves but cannot run '-c pass' is skipped)." >&2
     echo "This blocks rather than passes, by design." >&2
     echo "" >&2
     exit 1
