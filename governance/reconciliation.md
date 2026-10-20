@@ -6,8 +6,8 @@
 |---|---|
 | Frozen snapshot | receipts through **2026-08-31**, retrieved 2026-10-06, source last_updated 2026-09-29 |
 | Live edge, source last_updated seen | **2026-10-07** |
-| Runs recorded | 3 (2 with status ok) |
-| Last run | **ok**, started 2026-10-13T23:38:50+00:00, 27 checks, 0 failed |
+| Runs recorded | 4 (2 with status ok) |
+| Last run | **skipped: source unchanged since 2026-10-07**, started 2026-10-20T18:28:46+00:00, 18 checks, 0 failed |
 | Months seen beyond the freeze | 2026-09 |
 
 ## What a run is allowed to change
@@ -16,25 +16,7 @@ Nothing under `data/raw/` or `data/conformed/`, and no figure on the frozen page
 
 ## The frozen months, re-read
 
-The last run re-read every frozen month (2016-01 to 2026-08) for the seven codes from the new vintage.
-
-| | |
-|---|---:|
-| Code-months compared | 896 |
-| Reading higher than frozen (late-loaded reports) | 15 |
-| Reports added to frozen months, in total | 19 |
-| Reading lower than frozen | 6 |
-| Lower by more than 1%, dispositioned as a source revision (known, D25) | 2 |
-| Lower by more than 1% with no disposition (a failed check) | 0 |
-
-**It does not balance, and it is not supposed to.** A report is counted by the day FDA received it, and the source keeps loading reports for weeks after that day, so a month read later reads higher. That is the lag chart 5 draws. A month reading *lower* means the source removed reports from its past; a material case fails the run and is reported, never absorbed, unless a human has already examined it and entered it in `governance/source-revisions.toml`, in which case it is reported as known.
-
-Known revisions this run:
-
-| Code | Month | Frozen | Live | Change | Disposition |
-|---|---|---:|---:|---:|---|
-| PYX | 2026-01 | 99 | 96 | -3 | D24, at 96 on 2026-10-13 |
-| PYX | 2026-05 | 35 | 34 | -1 | D24, at 34 on 2026-10-13 |
+The last run did not reach the re-read (status: skipped: source unchanged since 2026-10-07).
 
 ## Source revisions dispositioned
 
@@ -109,13 +91,4 @@ Issued from origin 2026-09 by the same locked structure (`config/model.json`), r
 | response schema, DSP | 5394 buckets, 0 malformed |  | PASS |
 | meta.last_updated present | 2026-10-07 |  | PASS |
 | meta.last_updated not before the frozen datum | 2026-10-07 |  | PASS |
-| responses saved as a vintage | 7 | 7 | PASS |
-| frozen months re-read | 896 |  | PASS |
-| frozen months reading higher (late loads) | 15 |  | PASS |
-| frozen months revised downward and dispositioned (known, D25) | 2 |  | PASS |
-| frozen months rewritten downward by more than 1% | 0 | 0 | PASS |
-| months elapsed and loaded beyond the freeze | 2026-09 |  | PASS |
-| forecasts scored at first sight of their month | 42 |  | PASS |
-| forecasts issued this run | 42 |  | PASS |
-| candidate fits that failed | 0 | 0 | PASS |
 

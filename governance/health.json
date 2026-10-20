@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-10-13T23:38:58+00:00",
+ "generated_utc": "2026-10-20T18:28:54+00:00",
  "module": "cascadia-early-warning",
  "frozen_baseline": {
   "as_of": "2026-08-31",
@@ -19,7 +19,7 @@
  },
  "live_edge": {
   "source_last_updated_seen": "2026-10-07",
-  "runs_total": 3,
+  "runs_total": 4,
   "vintages": [
    "20261007T033113",
    "20261013T233850"
@@ -29,12 +29,12 @@
   ],
   "readings_recorded": 7,
   "basis": "raw count by receipt date as seen at the vintage; no exclusion applied",
-  "frozen_months_re_read": 896,
-  "frozen_months_reading_higher": 15,
-  "reports_added_to_frozen_months": 19,
-  "frozen_months_reading_lower": 6,
-  "frozen_months_revised_known": 2,
-  "frozen_months_material_downward": 0,
+  "frozen_months_re_read": null,
+  "frozen_months_reading_higher": null,
+  "reports_added_to_frozen_months": null,
+  "frozen_months_reading_lower": null,
+  "frozen_months_revised_known": null,
+  "frozen_months_material_downward": null,
   "source_revisions_dispositioned": 2,
   "source_revisions_reports_removed": 4,
   "source_revisions_decisions": [
@@ -48,18 +48,18 @@
   "model_in_use_h1_coverage80": 1.0
  },
  "last_run": {
-  "started_utc": "2026-10-13T23:38:50+00:00",
-  "finished_utc": "2026-10-13T23:38:58+00:00",
-  "status": "ok",
+  "started_utc": "2026-10-20T18:28:46+00:00",
+  "finished_utc": "2026-10-20T18:28:53+00:00",
+  "status": "skipped: source unchanged since 2026-10-07",
   "passed": true,
-  "checks_total": 27,
+  "checks_total": 18,
   "checks_failed": [],
   "error": null,
   "requests_made": 7,
   "notes": []
  },
  "run_history": {
-  "runs_recorded": 3,
+  "runs_recorded": 4,
   "history_started": "2026-10-07T03:31:13+00:00",
   "last_successful_run": {
    "started_utc": "2026-10-13T23:38:50+00:00",
@@ -77,17 +77,17 @@
    "months_appended": 7
   },
   "last_run_not_ok": {
-   "started_utc": "2026-10-09T01:50:25+00:00",
-   "finished_utc": "2026-10-09T01:50:32+00:00",
-   "status": "skipped: source unchanged since 2026-09-29",
+   "started_utc": "2026-10-20T18:28:46+00:00",
+   "finished_utc": "2026-10-20T18:28:53+00:00",
+   "status": "skipped: source unchanged since 2026-10-07",
    "passed": true,
    "requests_made": 7,
-   "last_updated": "2026-09-29",
+   "last_updated": "2026-10-07",
    "vintage": null,
    "forecasts_issued": 0,
    "forecasts_scored": 0,
    "error": null,
-   "checks_total": 17,
+   "checks_total": 18,
    "checks_failed": [],
    "months_appended": 0
   },
