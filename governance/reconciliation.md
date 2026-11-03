@@ -5,9 +5,9 @@
 | | |
 |---|---|
 | Frozen snapshot | receipts through **2026-08-31**, retrieved 2026-10-06, source last_updated 2026-09-29 |
-| Live edge, source last_updated seen | **2026-10-13** |
-| Runs recorded | 5 (3 with status ok) |
-| Last run | **ok**, started 2026-10-27T19:27:00+00:00, 27 checks, 0 failed |
+| Live edge, source last_updated seen | **2026-10-20** |
+| Runs recorded | 6 (4 with status ok) |
+| Last run | **ok**, started 2026-11-03T20:30:46+00:00, 27 checks, 0 failed |
 | Months seen beyond the freeze | 2026-09 |
 
 ## What a run is allowed to change
@@ -107,8 +107,8 @@ Issued from origin 2026-09 by the same locked structure (`config/model.json`), r
 | response schema, LWS | 7896 buckets, 0 malformed |  | PASS |
 | HTTP status, DSP | 200 | 200 | PASS |
 | response schema, DSP | 5394 buckets, 0 malformed |  | PASS |
-| meta.last_updated present | 2026-10-13 |  | PASS |
-| meta.last_updated not before the frozen datum | 2026-10-13 |  | PASS |
+| meta.last_updated present | 2026-10-20 |  | PASS |
+| meta.last_updated not before the frozen datum | 2026-10-20 |  | PASS |
 | responses saved as a vintage | 7 | 7 | PASS |
 | frozen months re-read | 896 |  | PASS |
 | frozen months reading higher (late loads) | 15 |  | PASS |

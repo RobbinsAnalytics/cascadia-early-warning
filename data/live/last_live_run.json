@@ -1,6 +1,6 @@
 {
- "started_utc": "2026-10-27T19:27:00+00:00",
- "finished_utc": "2026-10-27T19:27:07+00:00",
+ "started_utc": "2026-11-03T20:30:46+00:00",
+ "finished_utc": "2026-11-03T20:30:52+00:00",
  "status": "ok",
  "passed": true,
  "checks": [
@@ -102,13 +102,13 @@
   },
   {
    "check": "meta.last_updated present",
-   "value": "2026-10-13",
+   "value": "2026-10-20",
    "expected": null,
    "passed": true
   },
   {
    "check": "meta.last_updated not before the frozen datum",
-   "value": "2026-10-13",
+   "value": "2026-10-20",
    "expected": null,
    "passed": true
   },
@@ -169,8 +169,8 @@
  ],
  "error": null,
  "requests_made": 7,
- "last_updated": "2026-10-13",
- "vintage": "20261027T192700",
+ "last_updated": "2026-10-20",
+ "vintage": "20261103T203046",
  "months_appended": {
   "DSQ": [
    "2026-09"
